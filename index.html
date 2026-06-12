@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>三勇者塔防 — Tower Defense</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+    background: #1a1a2e;
+    color: #eee;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 12px;
+    user-select: none;
+  }
+  h1 { font-size: 22px; margin-bottom: 8px; color: #ffd866; }
+  #topbar {
+    display: flex;
+    gap: 24px;
+    background: #16213e;
+    border: 2px solid #0f3460;
+    border-radius: 10px;
+    padding: 8px 20px;
+    margin-bottom: 10px;
+    font-size: 16px;
+  }
+  #topbar span b { color: #ffd866; }
+  #game-wrap { position: relative; }
+  canvas {
+    background: #2d4a2b;
+    border: 3px solid #0f3460;
+    border-radius: 8px;
+    display: block;
+    cursor: crosshair;
+  }
+  #panel {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    align-items: stretch;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .tower-btn {
+    background: #16213e;
+    border: 2px solid #0f3460;
+    border-radius: 10px;
+    color: #eee;
+    padding: 8px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    text-align: center;
+    transition: transform .1s, border-color .1s;
+    font-family: inherit;
+  }
+  .tower-btn:hover { transform: translateY(-2px); }
+  .tower-btn.selected { border-color: #ffd866; background: #1f2b50; }
+  .tower-btn.disabled { opacity: .45; cursor: not-allowed; transform: none; }
+  .tower-btn .icon { font-size: 26px; display: block; }
+  .tower-btn .cost { color: #ffd866; }
+  #wave-btn, #speed-btn {
+    background: #e94560;
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 15px;
+    font-weight: bold;
+    padding: 8px 18px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  #speed-btn { background: #0f3460; }
+  #wave-btn:disabled { opacity: .4; cursor: not-allowed; }
+  #info {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #9aa5ce;
+    min-height: 18px;
+    text-align: center;
+  }
+  #overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 10, 25, .85);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    z-index: 5;
+  }
+  #overlay h2 { font-size: 40px; margin-bottom: 12px; }
+  #overlay p { font-size: 18px; margin-bottom: 20px; color: #9aa5ce; }
+  #overlay button {
+    background: #e94560;
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 18px;
+    font-weight: bold;
+    padding: 12px 30px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  #sellpop {
+    position: absolute;
+    display: none;
+    background: #16213e;
+    border: 2px solid #ffd866;
+    border-radius: 8px;
+    padding: 8px;
+    z-index: 4;
+    font-size: 13px;
+    width: 150px;
+    text-align: center;
+  }
+  #sellpop button {
+    width: 100%;
+    margin-top: 6px;
+    padding: 5px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    font-family: inherit;
+  }
+  #upg-btn { background: #4caf50; color: #fff; }
+  #upg-btn:disabled { opacity: .4; cursor: not-allowed; }
+  #sell-btn { background: #e94560; color: #fff; }
+</style>
+</head>
+<body>
+  <h1>⚔️ 三勇者塔防 Three Heroes Tower Defense 🏰</h1>
+
+  <div id="topbar">
+    <span>💰 金幣 <b id="gold">200</b></span>
+    <span>❤️ 生命 <b id="lives">20</b></span>
+    <span>🌊 波數 <b id="wave">0</b> / 10</span>
+    <span>👹 敵人 <b id="enemies">0</b></span>
+  </div>
+
+  <div id="game-wrap">
+    <canvas id="game" width="780" height="540"></canvas>
+    <div id="overlay">
+      <h2 id="overlay-title">勝利！</h2>
+      <p id="overlay-msg"></p>
+      <button onclick="location.reload()">再玩一次</button>
+    </div>
+    <div id="sellpop">
+      <div id="sellpop-info"></div>
+      <button id="upg-btn">升級</button>
+      <button id="sell-btn">出售</button>
+    </div>
+  </div>
+
+  <div id="panel">
+    <button class="tower-btn" data-type="swordsman">
+      <span class="icon">劍</span>劍士 <span class="cost">$80</span><br>
+      <small>近戰快攻</small>
+    </button>
+    <button class="tower-btn" data-type="archer">
+      <span class="icon">弓</span>弓箭手 <span class="cost">$120</span><br>
+      <small>遠程狙擊</small>
+    </button>
+    <button class="tower-btn" data-type="mage">
+      <span class="icon">法</span>法師 <span class="cost">$160</span><br>
+      <small>範圍爆裂</small>
+    </button>
+    <button id="wave-btn">開始下一波 ▶</button>
+    <button id="speed-btn">速度 x1</button>
+  </div>
+  <div id="info">選擇一位勇者，點擊草地佈陣。點擊已放置的勇者可升級或出售。敵人走完小路你就會扣血！</div>
+
+<script>
+"use strict";
+
+// ---------- Constants ----------
+const CELL = 60, COLS = 13, ROWS = 9;
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+// Path waypoints in grid coordinates (col, row)
+const PATH = [
+  [0, 4], [3, 4], [3, 1], [7, 1], [7, 6], [4, 6], [4, 8],
+  [10, 8], [10, 3], [12, 3]
+];
+
+// Expand waypoints into the set of path cells (for build-blocking)
+const pathCells = new Set();
+for (let i = 0; i < PATH.length - 1; i++) {
+  let [x1, y1] = PATH[i], [x2, y2] = PATH[i + 1];
+  const dx = Math.sign(x2 - x1), dy = Math.sign(y2 - y1);
+  let x = x1, y = y1;
+  pathCells.add(x + "," + y);
+  while (x !== x2 || y !== y2) {
+    x += dx; y += dy;
+    pathCells.add(x + "," + y);
+  }
+}
+
+// Pixel-space waypoints (cell centers)
+const WP = PATH.map(([c, r]) => [c * CELL + CELL / 2, r * CELL + CELL / 2]);
+
+// ---------- The 三個 characters (three hero tower types) ----------
+const TOWER_TYPES = {
+  swordsman: {
+    name: "劍士", glyph: "劍", color: "#7fd1ff",
+    cost: 80, range: 80, damage: 18, cooldown: 0.45,
+    splash: 0, projSpeed: 520, projGlyph: "⚔️",
+    desc: "近戰快攻"
+  },
+  archer: {
+    name: "弓箭手", glyph: "弓", color: "#a6e22e",
+    cost: 120, range: 170, damage: 30, cooldown: 0.9,
+    splash: 0, projSpeed: 620, projGlyph: "➳",
+    desc: "遠程狙擊"
+  },
+  mage: {
+    name: "法師", glyph: "法", color: "#d4a0ff",
+    cost: 160, range: 120, damage: 24, cooldown: 1.3,
+    splash: 55, projSpeed: 380, projGlyph: "🔥",
+    desc: "範圍爆裂"
+  }
+};
+const UPGRADE_MULT = { damage: 1.5, range: 1.12, cost: 0.8 };
+const MAX_LEVEL = 3;
+
+// ---------- Enemy types ----------
+const ENEMY_TYPES = {
+  goblin: { glyph: "👹", hp: 60,  speed: 75,  gold: 8,  dmg: 1 },
+  ghost:  { glyph: "👻", hp: 40,  speed: 120, gold: 10, dmg: 1 },
+  orc:    { glyph: "🐗", hp: 160, speed: 55,  gold: 16, dmg: 2 },
+  dragon: { glyph: "🐲", hp: 900, speed: 45,  gold: 100, dmg: 5 }
+};
+
+// 10 waves: arrays of [type, count]
+const WAVES = [
+  [["goblin", 6]],
+  [["goblin", 8], ["ghost", 3]],
+  [["ghost", 8], ["goblin", 5]],
+  [["orc", 4], ["goblin", 8]],
+  [["ghost", 10], ["orc", 4]],
+  [["orc", 8], ["ghost", 6]],
+  [["goblin", 12], ["orc", 6], ["ghost", 6]],
+  [["orc", 10], ["ghost", 10]],
+  [["orc", 12], ["goblin", 10], ["ghost", 8]],
+  [["dragon", 1], ["orc", 8], ["ghost", 8]]
+];
+const HP_SCALE = 1.18; // per-wave hp multiplier
+
+// ---------- Game state ----------
+let gold = 200, lives = 20, waveIdx = 0;
+let towers = [], enemies = [], projectiles = [], particles = [];
+let spawnQueue = [], spawnTimer = 0;
+let waveActive = false, gameOver = false;
+let selectedType = null, selectedTower = null;
+let mouseCell = null;
+let speedMult = 1;
+
+// ---------- UI helpers ----------
+const $ = id => document.getElementById(id);
+function refreshHUD() {
+  $("gold").textContent = gold;
+  $("lives").textContent = lives;
+  $("wave").textContent = waveIdx;
+  $("enemies").textContent = enemies.length + spawnQueue.length;
+  document.querySelectorAll(".tower-btn[data-type]").forEach(btn => {
+    const t = TOWER_TYPES[btn.dataset.type];
+    btn.classList.toggle("disabled", gold < t.cost);
+    btn.classList.toggle("selected", selectedType === btn.dataset.type);
+  });
+  $("wave-btn").disabled = waveActive || gameOver || waveIdx >= WAVES.length;
+}
+
+document.querySelectorAll(".tower-btn[data-type]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const type = btn.dataset.type;
+    if (gold < TOWER_TYPES[type].cost) return;
+    selectedType = (selectedType === type) ? null : type;
+    selectedTower = null;
+    hideSellPop();
+    refreshHUD();
+  });
+});
+
+$("wave-btn").addEventListener("click", startWave);
+$("speed-btn").addEventListener("click", () => {
+  speedMult = speedMult === 1 ? 2 : speedMult === 2 ? 3 : 1;
+  $("speed-btn").textContent = "速度 x" + speedMult;
+});
+
+function startWave() {
+  if (waveActive || gameOver || waveIdx >= WAVES.length) return;
+  const wave = WAVES[waveIdx];
+  waveIdx++;
+  spawnQueue = [];
+  for (const [type, count] of wave)
+    for (let i = 0; i < count; i++) spawnQueue.push(type);
+  // shuffle so types interleave
+  for (let i = spawnQueue.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [spawnQueue[i], spawnQueue[j]] = [spawnQueue[j], spawnQueue[i]];
+  }
+  spawnTimer = 0;
+  waveActive = true;
+  refreshHUD();
+}
+
+// ---------- Entities ----------
+function makeEnemy(type) {
+  const base = ENEMY_TYPES[type];
+  const hp = Math.round(base.hp * Math.pow(HP_SCALE, waveIdx - 1));
+  return {
+    type, glyph: base.glyph,
+    hp, maxHp: hp,
+    speed: base.speed, gold: base.gold, dmg: base.dmg,
+    x: WP[0][0] - CELL, y: WP[0][1],
+    wp: 0, // index of next waypoint
+    slow: 0,
+    dead: false
+  };
+}
+
+function makeTower(type, col, row) {
+  const t = TOWER_TYPES[type];
+  return {
+    type, col, row,
+    x: col * CELL + CELL / 2, y: row * CELL + CELL / 2,
+    level: 1,
+    damage: t.damage, range: t.range, cooldown: t.cooldown,
+    splash: t.splash, projSpeed: t.projSpeed,
+    cd: 0, spent: t.cost,
+    flash: 0
+  };
+}
+
+// ---------- Input ----------
+canvas.addEventListener("mousemove", e => {
+  const r = canvas.getBoundingClientRect();
+  const x = (e.clientX - r.left) * (canvas.width / r.width);
+  const y = (e.clientY - r.top) * (canvas.height / r.height);
+  mouseCell = [Math.floor(x / CELL), Math.floor(y / CELL)];
+});
+canvas.addEventListener("mouseleave", () => { mouseCell = null; });
+
+canvas.addEventListener("click", e => {
+  if (gameOver) return;
+  const r = canvas.getBoundingClientRect();
+  const x = (e.clientX - r.left) * (canvas.width / r.width);
+  const y = (e.clientY - r.top) * (canvas.height / r.height);
+  const col = Math.floor(x / CELL), row = Math.floor(y / CELL);
+  if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return;
+
+  const existing = towers.find(t => t.col === col && t.row === row);
+  if (existing) {
+    selectedTower = existing;
+    selectedType = null;
+    showSellPop(existing);
+    refreshHUD();
+    return;
+  }
+  hideSellPop();
+  selectedTower = null;
+
+  if (selectedType) {
+    if (pathCells.has(col + "," + row)) {
+      flashInfo("不能蓋在小路上！");
+      return;
+    }
+    const t = TOWER_TYPES[selectedType];
+    if (gold < t.cost) return;
+    gold -= t.cost;
+    towers.push(makeTower(selectedType, col, row));
+    if (gold < t.cost) selectedType = null;
+    refreshHUD();
+  }
+});
+
+function flashInfo(msg) {
+  const el = $("info");
+  el.textContent = msg;
+  el.style.color = "#e94560";
+  setTimeout(() => {
+    el.textContent = "選擇一位勇者，點擊草地佈陣。點擊已放置的勇者可升級或出售。";
+    el.style.color = "";
+  }, 1500);
+}
+
+// ---------- Sell / upgrade popup ----------
+function upgradeCost(tower) {
+  return Math.round(TOWER_TYPES[tower.type].cost * UPGRADE_MULT.cost * tower.level);
+}
+function sellValue(tower) {
+  return Math.round(tower.spent * 0.6);
+}
+function showSellPop(tower) {
+  const pop = $("sellpop");
+  const t = TOWER_TYPES[tower.type];
+  const canUp = tower.level < MAX_LEVEL;
+  $("sellpop-info").innerHTML =
+    `<b style="color:${t.color}">${t.name}</b> Lv.${tower.level}<br>` +
+    `攻擊 ${Math.round(tower.damage)} ｜ 射程 ${Math.round(tower.range)}`;
+  const upBtn = $("upg-btn");
+  upBtn.disabled = !canUp || gold < upgradeCost(tower);
+  upBtn.textContent = canUp ? `升級 ($${upgradeCost(tower)})` : "已滿級";
+  $("sell-btn").textContent = `出售 (+$${sellValue(tower)})`;
+  pop.style.display = "block";
+  const wrap = document.getElementById("game-wrap");
+  let left = tower.x + 36, top = tower.y - 40;
+  if (left + 150 > canvas.width) left = tower.x - 36 - 150;
+  if (top < 0) top = 4;
+  if (top + 110 > canvas.height) top = canvas.height - 110;
+  pop.style.left = left + "px";
+  pop.style.top = top + "px";
+}
+function hideSellPop() {
+  $("sellpop").style.display = "none";
+}
+$("upg-btn").addEventListener("click", () => {
+  const t = selectedTower;
+  if (!t || t.level >= MAX_LEVEL) return;
+  const cost = upgradeCost(t);
+  if (gold < cost) return;
+  gold -= cost;
+  t.spent += cost;
+  t.level++;
+  t.damage *= UPGRADE_MULT.damage;
+  t.range *= UPGRADE_MULT.range;
+  t.cooldown *= 0.88;
+  if (t.splash) t.splash *= 1.15;
+  showSellPop(t);
+  refreshHUD();
+});
+$("sell-btn").addEventListener("click", () => {
+  const t = selectedTower;
+  if (!t) return;
+  gold += sellValue(t);
+  towers = towers.filter(x => x !== t);
+  selectedTower = null;
+  hideSellPop();
+  refreshHUD();
+});
+
+// ---------- Update ----------
+function update(dt) {
+  // spawn
+  if (waveActive && spawnQueue.length > 0) {
+    spawnTimer -= dt;
+    if (spawnTimer <= 0) {
+      enemies.push(makeEnemy(spawnQueue.shift()));
+      spawnTimer = 0.7;
+      refreshHUD();
+    }
+  }
+
+  // enemies move along waypoints
+  for (const en of enemies) {
+    const speed = en.speed * (en.slow > 0 ? 0.5 : 1);
+    en.slow = Math.max(0, en.slow - dt);
+    let remaining = speed * dt;
+    while (remaining > 0 && en.wp < WP.length) {
+      const [tx, ty] = WP[en.wp];
+      const dx = tx - en.x, dy = ty - en.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist <= remaining) {
+        en.x = tx; en.y = ty; en.wp++;
+        remaining -= dist;
+      } else {
+        en.x += dx / dist * remaining;
+        en.y += dy / dist * remaining;
+        remaining = 0;
+      }
+    }
+    if (en.wp >= WP.length) {
+      en.dead = true;
+      lives -= en.dmg;
+      if (lives <= 0) { lives = 0; endGame(false); }
+    }
+  }
+
+  // towers acquire targets & fire
+  for (const tw of towers) {
+    tw.cd -= dt;
+    tw.flash = Math.max(0, tw.flash - dt);
+    if (tw.cd > 0) continue;
+    // target the enemy furthest along the path within range
+    let best = null, bestProg = -1;
+    for (const en of enemies) {
+      if (en.dead) continue;
+      const d = Math.hypot(en.x - tw.x, en.y - tw.y);
+      if (d <= tw.range) {
+        const prog = en.wp * 10000 - Math.hypot(WP[Math.min(en.wp, WP.length - 1)][0] - en.x, WP[Math.min(en.wp, WP.length - 1)][1] - en.y);
+        if (prog > bestProg) { bestProg = prog; best = en; }
+      }
+    }
+    if (best) {
+      tw.cd = tw.cooldown;
+      tw.flash = 0.15;
+      projectiles.push({
+        x: tw.x, y: tw.y - 10,
+        target: best,
+        speed: tw.projSpeed,
+        damage: tw.damage,
+        splash: tw.splash,
+        glyph: TOWER_TYPES[tw.type].projGlyph,
+        color: TOWER_TYPES[tw.type].color,
+        type: tw.type,
+        dead: false
+      });
+    }
+  }
+
+  // projectiles home in
+  for (const p of projectiles) {
+    if (p.dead) continue;
+    if (p.target.dead) {
+      // keep flying to last position briefly, just kill it
+      p.dead = true;
+      continue;
+    }
+    const dx = p.target.x - p.x, dy = p.target.y - p.y;
+    const dist = Math.hypot(dx, dy);
+    const step = p.speed * dt;
+    if (dist <= step + 8) {
+      hit(p);
+      p.dead = true;
+    } else {
+      p.x += dx / dist * step;
+      p.y += dy / dist * step;
+    }
+  }
+
+  // particles
+  for (const pa of particles) {
+    pa.life -= dt;
+    pa.x += pa.vx * dt;
+    pa.y += pa.vy * dt;
+    pa.vy += 60 * dt;
+  }
+  particles = particles.filter(p => p.life > 0);
+
+  // cleanup dead enemies, award gold
+  const before = enemies.length;
+  enemies = enemies.filter(en => {
+    if (en.dead && en.hp <= 0) {
+      gold += en.gold;
+      burst(en.x, en.y, "#ffd866", 8);
+    }
+    return !en.dead;
+  });
+  projectiles = projectiles.filter(p => !p.dead);
+  if (before !== enemies.length) refreshHUD();
+
+  // wave finished?
+  if (waveActive && spawnQueue.length === 0 && enemies.length === 0) {
+    waveActive = false;
+    if (waveIdx >= WAVES.length) {
+      endGame(true);
+    } else {
+      gold += 40 + waveIdx * 10; // wave clear bonus
+      flashInfo(`第 ${waveIdx} 波清除！獎勵 $${40 + waveIdx * 10} 💰`);
+    }
+    refreshHUD();
+  }
+}
+
+function hit(p) {
+  damageEnemy(p.target, p.damage, p.type);
+  if (p.splash > 0) {
+    burst(p.target.x, p.target.y, "#ff9040", 12);
+    for (const en of enemies) {
+      if (en === p.target || en.dead) continue;
+      if (Math.hypot(en.x - p.target.x, en.y - p.target.y) <= p.splash) {
+        damageEnemy(en, p.damage * 0.6, p.type);
+      }
+    }
+  } else {
+    burst(p.target.x, p.target.y, p.color, 4);
+  }
+}
+
+function damageEnemy(en, dmg, towerType) {
+  en.hp -= dmg;
+  if (towerType === "mage") en.slow = 1.2; // mage flames slow enemies
+  if (en.hp <= 0 && !en.dead) en.dead = true;
+}
+
+function burst(x, y, color, n) {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const s = 40 + Math.random() * 90;
+    particles.push({
+      x, y,
+      vx: Math.cos(a) * s, vy: Math.sin(a) * s - 30,
+      life: 0.4 + Math.random() * 0.3,
+      color
+    });
+  }
+}
+
+function endGame(won) {
+  if (gameOver) return;
+  gameOver = true;
+  $("overlay-title").textContent = won ? "🎉 勝利！" : "💀 失敗…";
+  $("overlay-msg").textContent = won
+    ? `三位勇者守住了城堡！剩餘生命 ${lives} ❤️`
+    : `城堡淪陷了，撐到第 ${waveIdx} 波。再接再厲！`;
+  $("overlay").style.display = "flex";
+}
+
+// ---------- Render ----------
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // grass checkerboard
+  for (let c = 0; c < COLS; c++) {
+    for (let r = 0; r < ROWS; r++) {
+      ctx.fillStyle = (c + r) % 2 === 0 ? "#2d4a2b" : "#33522f";
+      ctx.fillRect(c * CELL, r * CELL, CELL, CELL);
+    }
+  }
+  // path
+  for (const key of pathCells) {
+    const [c, r] = key.split(",").map(Number);
+    ctx.fillStyle = "#b08d57";
+    ctx.fillRect(c * CELL, r * CELL, CELL, CELL);
+    ctx.fillStyle = "rgba(0,0,0,0.08)";
+    ctx.fillRect(c * CELL, r * CELL, CELL, 4);
+  }
+  // start & goal markers
+  ctx.font = "30px serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("⛩️", WP[0][0], WP[0][1]);
+  ctx.fillText("🏰", WP[WP.length - 1][0], WP[WP.length - 1][1]);
+
+  // build preview
+  if (selectedType && mouseCell) {
+    const [c, r] = mouseCell;
+    if (c >= 0 && c < COLS && r >= 0 && r < ROWS) {
+      const blocked = pathCells.has(c + "," + r) || towers.some(t => t.col === c && t.row === r);
+      const t = TOWER_TYPES[selectedType];
+      ctx.globalAlpha = 0.45;
+      ctx.fillStyle = blocked ? "#e94560" : "#4caf50";
+      ctx.fillRect(c * CELL, r * CELL, CELL, CELL);
+      if (!blocked) {
+        ctx.strokeStyle = t.color;
+        ctx.beginPath();
+        ctx.arc(c * CELL + CELL / 2, r * CELL + CELL / 2, t.range, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // towers
+  for (const tw of towers) {
+    const t = TOWER_TYPES[tw.type];
+    // base
+    ctx.fillStyle = "#16213e";
+    ctx.strokeStyle = tw.flash > 0 ? "#fff" : t.color;
+    ctx.lineWidth = 2;
+    roundRect(tw.x - 22, tw.y - 22, 44, 44, 9);
+    ctx.fill();
+    ctx.stroke();
+    // hero glyph (the character!)
+    ctx.fillStyle = t.color;
+    ctx.font = "bold 28px 'Noto Sans TC', serif";
+    ctx.fillText(t.glyph, tw.x, tw.y + 1);
+    // level pips
+    ctx.fillStyle = "#ffd866";
+    for (let i = 0; i < tw.level; i++) {
+      ctx.beginPath();
+      ctx.arc(tw.x - 12 + i * 12, tw.y + 17, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // selected tower range
+  if (selectedTower) {
+    ctx.strokeStyle = "rgba(255,216,102,0.8)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(selectedTower.x, selectedTower.y, selectedTower.range, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // enemies
+  for (const en of enemies) {
+    ctx.font = "26px serif";
+    if (en.slow > 0) {
+      ctx.fillStyle = "rgba(120,180,255,0.35)";
+      ctx.beginPath();
+      ctx.arc(en.x, en.y, 18, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillText(en.glyph, en.x, en.y);
+    // hp bar
+    const w = 30, pct = Math.max(0, en.hp / en.maxHp);
+    ctx.fillStyle = "#111";
+    ctx.fillRect(en.x - w / 2, en.y - 24, w, 5);
+    ctx.fillStyle = pct > 0.5 ? "#4caf50" : pct > 0.25 ? "#ffd866" : "#e94560";
+    ctx.fillRect(en.x - w / 2, en.y - 24, w * pct, 5);
+  }
+
+  // projectiles
+  for (const p of projectiles) {
+    ctx.font = "16px serif";
+    ctx.fillText(p.glyph, p.x, p.y);
+  }
+
+  // particles
+  for (const pa of particles) {
+    ctx.globalAlpha = Math.max(0, pa.life * 2);
+    ctx.fillStyle = pa.color;
+    ctx.beginPath();
+    ctx.arc(pa.x, pa.y, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+// ---------- Main loop ----------
+let last = performance.now();
+function loop(now) {
+  let dt = Math.min((now - last) / 1000, 0.05);
+  last = now;
+  if (!gameOver) {
+    for (let i = 0; i < speedMult; i++) update(dt);
+  }
+  draw();
+  requestAnimationFrame(loop);
+}
+refreshHUD();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
