@@ -1,0 +1,49 @@
+{
+  "directed": false,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "label": "My Project",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "readme_my_project",
+      "community": 0,
+      "community_name": "Project README",
+      "norm_label": "my project"
+    },
+    {
+      "label": "test10",
+      "file_type": "concept",
+      "source_file": "README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "readme_test10",
+      "community": 0,
+      "community_name": "Project README",
+      "norm_label": "test10"
+    }
+  ],
+  "links": [
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "AMBIGUOUS",
+      "confidence_score": 0.3,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "source": "readme_test10",
+      "target": "readme_my_project"
+    }
+  ],
+  "hyperedges": [],
+  "built_at_commit": "37a0d5133d9cfe087ddcf0a34d7943a0638d9ec4"
+}
