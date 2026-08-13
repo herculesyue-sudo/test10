@@ -9,6 +9,7 @@
 
 import { matchTreatments, buildPhasedPlan, ALL_TREATMENTS, FINDING_LABELS } from '../src/lib/treatments';
 import type { Finding, FindingKey } from '../src/lib/treatments';
+import { buildBookingUrl } from '../src/lib/booking';
 
 let failures = 0;
 function check(name: string, cond: boolean, detail = '') {
@@ -127,6 +128,25 @@ console.log('\n── 個案 G：停工期同預算限制會標示 ──');
   const co2 = out.find((r) => r.treatment.id === 'co2-fractional');
   check('CO2 激光有停工期警示', Boolean(co2?.flags.some((x) => x.includes('停工期'))));
   check('有預算超支警示', out.some((r) => r.flags.some((x) => x.includes('預算'))));
+}
+
+console.log('\n── MVP 預約連結 ──');
+{
+  const url = buildBookingUrl({ phone: '852 1234 5678', goals: ['lift', 'brighten'], treatments: ['Ultherapy 超聲刀', '皮秒激光'] });
+  check('號碼會清走空格同符號', url?.startsWith('https://wa.me/85212345678?text=') ?? false, url ?? 'null');
+
+  const decoded = decodeURIComponent(url!.split('text=')[1]);
+  check('訊息含改善目標', decoded.includes('緊緻提升') && decoded.includes('美白去斑'));
+  check('訊息含建議療程', decoded.includes('Ultherapy 超聲刀'));
+  check('中文有正確 encode（唔會變空白）', url!.includes('%E4%BD%A0%E5%A5%BD'));
+  check('換行有 encode', url!.includes('%0A'));
+
+  check('冇號碼時回傳 null（避免死連結）', buildBookingUrl({ phone: undefined, goals: [], treatments: [] }) === null);
+  check('空字串號碼都要當冇設定', buildBookingUrl({ phone: '', goals: [], treatments: [] }) === null);
+  check('純符號號碼都要當冇設定', buildBookingUrl({ phone: '---', goals: [], treatments: [] }) === null);
+
+  const bare = buildBookingUrl({ phone: '85212345678', goals: [], treatments: [] });
+  check('冇目標冇療程都要出到連結', bare !== null);
 }
 
 console.log(failures === 0 ? '\n✅ 全部通過\n' : `\n❌ ${failures} 項失敗\n`);

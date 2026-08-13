@@ -1,8 +1,18 @@
 # AI 視像面診 · 香港醫學美容
 
-手機自拍 → AI 分析皮膚狀況同面部輪廓 → 配對香港市場可用嘅針劑同儀器療程，出分階段方案同預算估算。
+手機自拍 → AI 分析皮膚狀況同面部輪廓 → 配對香港市場可用嘅針劑同儀器療程。
 
 用手機瀏覽器就用得，唔使裝 app。
+
+## 兩個版本
+
+| 路徑 | 俾邊個用 | 內容 |
+|---|---|---|
+| **`/`** | **客人（MVP）** | 一張相 + 揀想改善 → 3 個建議 + **WhatsApp 預約**。固定行最平模式（約 HK$0.05/次） |
+| `/pro` | 診所內部 | 3 張相、個人條件、模式選擇、分階段方案、逐項療程詳情、成本顯示 |
+
+**MVP 刻意刪走**：側面相、年齡性別、預算、停工期、模式選擇、分階段方案、療程詳情。
+每加一格輸入就跌一批客人。MVP 要驗證嘅唔係「分析有幾準」，而係「客人肯唔肯影相，同肯唔肯㩒預約」。
 
 ---
 
@@ -10,9 +20,20 @@
 
 ```bash
 npm install
-cp .env.example .env        # 填入 ANTHROPIC_API_KEY
+cp .env.example .env        # 填入 ANTHROPIC_API_KEY 同診所 WhatsApp 號碼
 npm run dev                 # http://localhost:3000
 ```
+
+**MVP 要設定嘅嘢**（`.env`）：
+
+```bash
+NEXT_PUBLIC_CLINIC_NAME=你嘅診所名
+NEXT_PUBLIC_WHATSAPP=85212345678     # 國際格式，唔要 + 號
+```
+
+⚠️ `NEXT_PUBLIC_*` 係 **build 時**寫死入前端 bundle 嘅。改完號碼要重新 `npm run build` 同重新部署，
+`.env` 改咗但唔重 build 係唔會生效。冇填號碼嘅話，預約按鈕會變成一個提示你去填嘅警告框
+（唔會出死連結）。
 
 手機測試：`npm run dev -- -H 0.0.0.0`，再用同一個 Wi-Fi 嘅手機開 `http://<電腦IP>:3000`。
 （iOS Safari 要 HTTPS 先可以用相機，用 `npx localtunnel --port 3000` 或者 Vercel 部署最方便。）
@@ -57,6 +78,9 @@ npm run build
 | `src/lib/treatments/injectables.ts` | 針劑療程庫（肉毒、透明質酸、少女針、童顏針、嬰兒針…） |
 | `src/lib/treatments/devices.ts` | 儀器療程庫（HIFU、射頻、皮秒、CO2、冷凍溶脂…） |
 | `src/lib/treatments/index.ts` | 配對引擎 + 分階段方案 |
+| `src/lib/booking.ts` | WhatsApp 預約連結（預填客人目標同建議療程） |
+| `src/app/page.tsx` | MVP 客人版 |
+| `src/app/pro/page.tsx` | 完整診所版 |
 | `src/app/api/consult/route.ts` | API endpoint（驗證、限流保護、錯誤處理） |
 | `scripts/eval.ts` | 準確度量度 |
 | `scripts/test-engine.ts` | 引擎邏輯測試 |
@@ -82,7 +106,8 @@ npm run build
 - **相片壓縮** — 前端先縮到長邊 2000px（貼近模型高解析度上限），避免上傳無用嘅像素。
 - **多相非必須** — 淨係正面相都跑得，加側面相準確度較高但成本亦按張數增加。
 
-如果要再平：`CONSULT_TIER=budget` 做前置篩選，只有客人真係有意向先跑 `balanced`。
+MVP（`/`）**固定行經濟模式**，因為免費體驗版燒唔起貴模型 —— 1,000 個客人試玩得約 HK$50。
+客人預約到診之後，職員喺 `/pro` 用推薦或最準模式再跑一次，成本用喺真正有價值嘅地方。
 
 ---
 
