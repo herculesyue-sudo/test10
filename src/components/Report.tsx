@@ -55,6 +55,10 @@ export interface ConsultResponse {
     passes: number;
     usage: { inputTokens: number; outputTokens: number };
     costHKD: number;
+    /** 測試模式先會有 */
+    demo?: boolean;
+    demoCaseId?: string;
+    demoCaseLabel?: string;
   };
 }
 
@@ -321,9 +325,15 @@ export default function Report({ data, onReset }: { data: ConsultResponse; onRes
       </div>
 
       <div className="cost">
+        {meta.demo ? (
+          <>🧪 測試模式 · 示範數據 · 冇呼叫 AI · 零成本</>
+        ) : (
+          <>
         {meta.tierLabel} · {meta.model}
         {meta.passes > 1 ? ` · ${meta.passes} 次共識分析` : ''} · 本次 AI 成本 HK${meta.costHKD.toFixed(2)}（
         {meta.usage.inputTokens.toLocaleString()} in / {meta.usage.outputTokens.toLocaleString()} out）
+          </>
+        )}
       </div>
 
       <button className="primary" onClick={onReset} style={{ marginTop: 18 }}>

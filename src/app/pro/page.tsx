@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import PhotoCapture, { DEFAULT_SHOTS, type Shot } from '@/components/PhotoCapture';
 import Report, { type ConsultResponse } from '@/components/Report';
+import { useDemoMode, DemoBanner, DemoCasePicker } from '@/components/DemoMode';
 import { GOALS, type GoalKey } from '@/lib/treatments/types';
 
 type Step = 'photo' | 'goals' | 'loading' | 'report';
@@ -14,6 +15,9 @@ const TIER_OPTIONS = [
 ] as const;
 
 export default function Page() {
+  const demo = useDemoMode();
+  const isDemo = demo?.demo === true;
+  const [demoCaseId, setDemoCaseId] = useState<string | undefined>();
   const [step, setStep] = useState<Step>('photo');
   const [shots, setShots] = useState<Shot[]>(DEFAULT_SHOTS);
   const [goals, setGoals] = useState<GoalKey[]>([]);
@@ -28,7 +32,8 @@ export default function Page() {
   const [data, setData] = useState<ConsultResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const hasFront = Boolean(shots[0]?.data);
+  // 測試模式唔需要相片 —— 冇相都要試得到
+  const hasFront = isDemo || Boolean(shots[0]?.data);
 
   function toggleGoal(g: GoalKey) {
     setGoals((prev) => (prev.includes(g) ? prev.filter((x) => x !== g) : [...prev, g]));
@@ -54,6 +59,7 @@ export default function Page() {
           maxDowntimeDays: downtime ? Number(downtime) : undefined,
           noInjectables: noInj,
           isPregnantOrNursing: pregnant,
+          demoCaseId,
         }),
       });
       const json = await res.json();
@@ -83,6 +89,8 @@ export default function Page() {
         <h1>AI 視像面診</h1>
         <p>自拍分析 · 香港可用療程配對</p>
       </header>
+
+      {isDemo && step !== 'report' && <DemoBanner />}
 
       <div className="steps">
         {[0, 1, 2].map((i) => (
@@ -208,6 +216,10 @@ export default function Page() {
             </label>
           </div>
 
+          {isDemo && demo && (
+            <DemoCasePicker cases={demo.cases} value={demoCaseId} onChange={setDemoCaseId} />
+          )}
+
           <div className="card">
             <h2>4. 分析模式</h2>
             <p className="sub">準確度同成本嘅取捨。診所自用建議「推薦」；免費體驗版可用「經濟」。</p>
@@ -247,7 +259,12 @@ export default function Page() {
         </div>
       )}
 
-      {step === 'report' && data && <Report data={data} onReset={reset} />}
+      {step === 'report' && data && (
+        <>
+          {data.meta.demo && <DemoBanner caseLabel={data.meta.demoCaseLabel} />}
+          <Report data={data} onReset={reset} />
+        </>
+      )}
     </div>
   );
 }

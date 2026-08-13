@@ -1,9 +1,29 @@
 import { NextResponse } from 'next/server';
 import { analyzeWithConsensus, TIERS, type ImageInput, type Tier } from '@/lib/anthropic';
-import { matchTreatments, buildPhasedPlan, GOALS, type Finding, type GoalKey } from '@/lib/treatments';
+import {
+  matchTreatments,
+  buildPhasedPlan,
+  GOALS,
+  MIN_PRESENTABLE_SCORE,
+  type Finding,
+  type GoalKey,
+  type ScoredTreatment,
+} from '@/lib/treatments';
+import { pickDemoCase, DEMO_CASES } from '@/lib/demo';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
+
+/** 測試模式：唔呼叫 API、唔使 key、零成本。喺 .env 設 DEMO_MODE=1 開啟。 */
+const DEMO = process.env.DEMO_MODE === '1' || process.env.DEMO_MODE === 'true';
+
+/** 前端用嚟知道而家係咪測試模式（顯示橫額、跳過影相、揀個案）。 */
+export async function GET() {
+  return NextResponse.json({
+    demo: DEMO,
+    cases: DEMO ? DEMO_CASES.map((c) => ({ id: c.id, label: c.label })) : [],
+  });
+}
 
 const MAX_IMAGES = 4;
 const MAX_BYTES_PER_IMAGE = 6 * 1024 * 1024;
@@ -21,10 +41,17 @@ interface Body {
   maxDowntimeDays?: number;
   noInjectables?: boolean;
   isPregnantOrNursing?: boolean;
+  /** 測試模式：指定用邊個示範個案 */
+  demoCaseId?: string;
 }
 
 function bad(msg: string, status = 400) {
   return NextResponse.json({ error: msg }, { status });
+}
+
+/** 只交夠分嘅推薦俾前端 —— 低分配對唔應該以「建議」嘅身份出現喺客人面前。 */
+function presentable(scored: ScoredTreatment[]) {
+  return scored.filter((s) => s.score >= MIN_PRESENTABLE_SCORE).slice(0, 10);
 }
 
 export async function POST(req: Request) {
@@ -33,6 +60,51 @@ export async function POST(req: Request) {
     body = await req.json();
   } catch {
     return bad('請求格式錯誤');
+  }
+
+  const validGoalKeys = new Set(GOALS.map((g) => g.key));
+  const goals = (body.goals ?? []).filter((g): g is GoalKey => validGoalKeys.has(g as GoalKey));
+
+  // ── 測試模式：唔呼叫 API、唔使相片 ──
+  // 假嘅只係「AI 睇相嘅結果」；下面嘅配對引擎、過濾、計價全部行真嘅邏輯，
+  // 所以測試版睇到嘅推薦 = 正式版睇到嘅推薦。
+  if (DEMO) {
+    const demoCase = pickDemoCase(goals, body.demoCaseId);
+    await new Promise((r) => setTimeout(r, 900)); // 模擬分析延遲，令 loading 畫面測得到
+
+    const findings: Finding[] = demoCase.analysis.findings.map((f) => ({
+      key: f.key as Finding['key'],
+      severity: f.severity,
+      confidence: f.confidence,
+      observation: f.observation,
+      location: f.location,
+    }));
+
+    const scored = matchTreatments({
+      findings,
+      goals,
+      budgetHKD: body.budgetHKD,
+      maxDowntimeDays: body.maxDowntimeDays,
+      noInjectables: body.noInjectables,
+      isPregnantOrNursing: body.isPregnantOrNursing,
+    });
+
+    return NextResponse.json({
+      analysis: demoCase.analysis,
+      recommendations: presentable(scored),
+      plan: buildPhasedPlan(scored),
+      meta: {
+        model: '（測試模式 · 冇呼叫 AI）',
+        tier: 'demo',
+        tierLabel: '測試模式',
+        passes: 0,
+        usage: { inputTokens: 0, outputTokens: 0 },
+        costHKD: 0,
+        demo: true,
+        demoCaseId: demoCase.id,
+        demoCaseLabel: demoCase.label,
+      },
+    });
   }
 
   // ── 驗證相片 ──
@@ -58,9 +130,6 @@ export async function POST(req: Request) {
   }
 
   // ── 驗證其他輸入 ──
-  const validGoalKeys = new Set(GOALS.map((g) => g.key));
-  const goals = (body.goals ?? []).filter((g): g is GoalKey => validGoalKeys.has(g as GoalKey));
-
   const tier: Tier = body.tier && body.tier in TIERS ? body.tier : ((process.env.CONSULT_TIER as Tier) ?? 'balanced');
   const passes = Math.min(Math.max(body.passes ?? Number(process.env.CONSULT_PASSES ?? 1), 1), 5);
 
@@ -100,7 +169,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       analysis: result.analysis,
-      recommendations: scored.slice(0, 10),
+      recommendations: presentable(scored),
       plan,
       meta: {
         model: result.model,

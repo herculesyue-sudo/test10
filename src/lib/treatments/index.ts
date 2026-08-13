@@ -52,6 +52,12 @@ const SEVERITY_FLOOR = 25;
 const GOAL_BOOST = 1.35;
 /** 飽和常數：調細 = 分數升得快，調大 = 拉開高分之間嘅差距。 */
 const SATURATION_K = 1.2;
+/**
+ * 低過呢個分數就唔應該當「推薦」顯示。
+ * 引擎照計照回傳（方便 debug 同 eval），但 API 只交高過呢條線嘅俾前端 ——
+ * 攞住一個 10 分嘅配對去同客人講「建議你做」，係誤導。
+ */
+export const MIN_PRESENTABLE_SCORE = 20;
 
 /**
  * 將 AI 觀察 + 客人條件配對到療程。

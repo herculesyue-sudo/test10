@@ -16,7 +16,44 @@
 
 ---
 
-## 快速開始
+## 🧪 測試版：即刻試，唔使 API key，零成本
+
+```bash
+npm install
+echo "DEMO_MODE=1" > .env
+npm run dev                 # http://localhost:3000
+```
+
+就係咁。**唔使 `ANTHROPIC_API_KEY`、唔使影相、唔會有任何 API 費用。**
+
+測試模式之下：
+
+- 假嘅**只有「AI 睇相嘅結果」**。療程配對、計分、安全過濾、價格計算、
+  預約連結全部行緊**真嘅**邏輯 —— 所以測試版睇到嘅推薦 = 正式版睇到嘅推薦
+- 4 個示範個案可以逐個試：
+
+  | 個案 | 用嚟測 |
+  |---|---|
+  | 26 歲 · 暗瘡同印為主 | 膚質類療程配對、分階段方案 |
+  | 35 歲 · 色斑同暗啞為主 | 色素類配對、曬斑 vs 黃褐斑嘅區分 |
+  | 47 歲 · 鬆弛同容積流失 | 提升 / 填充類配對、注射類排喺後期 |
+  | 需要轉介（紅旗示範） | **紅色轉介警示**、化妝警告、低信心收斂 |
+
+- 揀「自動配對」就會按你㩒嘅改善目標配對最貼題嘅個案
+- 同時試埋條件過濾：剔「懷孕」→ 推薦應該清零；剔「唔想打針」→ 淨返儀器類
+- 頁面頂部有明顯嘅 🧪 橫額，避免有人攞示範數據當真實分析
+
+要順便試埋預約按鈕，喺 `.env` 加：
+
+```bash
+NEXT_PUBLIC_WHATSAPP=85212345678
+```
+
+**轉去真實分析**：`.env` 移除 `DEMO_MODE`、填入 `ANTHROPIC_API_KEY`、重新 `npm run build`。
+
+---
+
+## 正式使用
 
 ```bash
 npm install
@@ -39,7 +76,7 @@ NEXT_PUBLIC_WHATSAPP=85212345678     # 國際格式，唔要 + 號
 （iOS Safari 要 HTTPS 先可以用相機，用 `npx localtunnel --port 3000` 或者 Vercel 部署最方便。）
 
 ```bash
-npm run test:engine   # 療程配對引擎測試（唔使 API key）
+npm run test:engine   # 引擎 + 示範數據 + 預約連結測試，48 項（唔使 API key）
 npm run eval          # 準確度量度（需要標註資料集，見下面）
 npm run build
 ```
@@ -79,6 +116,8 @@ npm run build
 | `src/lib/treatments/devices.ts` | 儀器療程庫（HIFU、射頻、皮秒、CO2、冷凍溶脂…） |
 | `src/lib/treatments/index.ts` | 配對引擎 + 分階段方案 |
 | `src/lib/booking.ts` | WhatsApp 預約連結（預填客人目標同建議療程） |
+| `src/lib/demo.ts` | 測試模式嘅 4 個示範個案 |
+| `src/components/DemoMode.tsx` | 測試模式橫額同個案選擇器 |
 | `src/app/page.tsx` | MVP 客人版 |
 | `src/app/pro/page.tsx` | 完整診所版 |
 | `src/app/api/consult/route.ts` | API endpoint（驗證、限流保護、錯誤處理） |

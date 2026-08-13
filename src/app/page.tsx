@@ -10,23 +10,31 @@
  * 唔係做到最準，而係搵出「客人肯唔肯影相同肯唔肯㩒預約」。
  *
  * 固定行 budget 模式（約 HK$0.05 一次）—— 免費體驗版燒唔起貴模型。
+ * 測試模式（DEMO_MODE=1）之下唔使影相、唔使 API key、零成本。
  */
 
 import { useState } from 'react';
 import PhotoCapture, { type Shot } from '@/components/PhotoCapture';
 import MvpResult, { type ConsultResponse } from '@/components/MvpResult';
+import { useDemoMode, DemoBanner, DemoCasePicker } from '@/components/DemoMode';
 import { GOALS, type GoalKey } from '@/lib/treatments/types';
 
 const ONE_SHOT: Shot[] = [{ angle: '正面', label: '正面自拍', required: true }];
 
 export default function Page() {
+  const demo = useDemoMode();
+  const isDemo = demo?.demo === true;
+
   const [shots, setShots] = useState<Shot[]>(ONE_SHOT);
   const [goals, setGoals] = useState<GoalKey[]>([]);
+  const [demoCaseId, setDemoCaseId] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
   const [data, setData] = useState<ConsultResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const ready = Boolean(shots[0]?.data) && goals.length > 0;
+  const hasPhoto = Boolean(shots[0]?.data);
+  // 測試模式唔需要相片 —— 冇相都要試得到，否則測試版本身就有門檻
+  const ready = (isDemo || hasPhoto) && goals.length > 0;
 
   function toggle(g: GoalKey) {
     setGoals((p) => (p.includes(g) ? p.filter((x) => x !== g) : [...p, g]));
@@ -40,9 +48,12 @@ export default function Page() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          images: [{ data: shots[0].data, mediaType: shots[0].mediaType, angle: '正面' }],
+          images: hasPhoto
+            ? [{ data: shots[0].data, mediaType: shots[0].mediaType, angle: '正面' }]
+            : [],
           goals,
           tier: 'budget',
+          demoCaseId,
         }),
       });
       const json = await res.json();
@@ -71,6 +82,7 @@ export default function Page() {
           <h1>你嘅分析結果</h1>
           <p>{process.env.NEXT_PUBLIC_CLINIC_NAME || 'AI 視像面診'}</p>
         </header>
+        {data.meta.demo && <DemoBanner caseLabel={data.meta.demoCaseLabel} />}
         <MvpResult data={data} goals={goals} onReset={reset} />
       </div>
     );
@@ -83,10 +95,11 @@ export default function Page() {
         <p>自拍一張相，30 秒睇到適合你嘅療程方向</p>
       </header>
 
+      {isDemo && <DemoBanner />}
       {error && <div className="alert danger">{error}</div>}
 
       <div className="card">
-        <h2>1. 影張正面自拍</h2>
+        <h2>1. 影張正面自拍{isDemo && <span style={{ fontWeight: 400, fontSize: '0.8rem', color: 'var(--text-dim)' }}>（測試模式可以跳過）</span>}</h2>
         <p className="sub">素顏、自然光、對正鏡頭、唔好笑。相片只用嚟即時分析，唔會儲存。</p>
         <div style={{ maxWidth: 200, margin: '0 auto' }}>
           <PhotoCapture shots={shots} onChange={setShots} />
@@ -111,8 +124,22 @@ export default function Page() {
         </div>
       </div>
 
+      {isDemo && demo && (
+        <DemoCasePicker cases={demo.cases} value={demoCaseId} onChange={setDemoCaseId} />
+      )}
+
       <button className="primary" disabled={!ready || busy} onClick={submit}>
-        {busy ? '分析緊…（約 30 秒）' : ready ? '免費分析' : !shots[0]?.data ? '請先影相' : '請揀最少一項'}
+        {busy
+          ? isDemo
+            ? '產生示範結果…'
+            : '分析緊…（約 30 秒）'
+          : ready
+            ? isDemo
+              ? '睇示範結果'
+              : '免費分析'
+            : !isDemo && !hasPhoto
+              ? '請先影相'
+              : '請揀最少一項'}
       </button>
 
       <p style={{ fontSize: '0.74rem', color: 'var(--text-dim)', textAlign: 'center', marginTop: 14 }}>

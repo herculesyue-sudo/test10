@@ -7,9 +7,16 @@
  * npm run test:engine
  */
 
-import { matchTreatments, buildPhasedPlan, ALL_TREATMENTS, FINDING_LABELS } from '../src/lib/treatments';
+import {
+  matchTreatments,
+  buildPhasedPlan,
+  ALL_TREATMENTS,
+  FINDING_LABELS,
+  MIN_PRESENTABLE_SCORE,
+} from '../src/lib/treatments';
 import type { Finding, FindingKey } from '../src/lib/treatments';
 import { buildBookingUrl } from '../src/lib/booking';
+import { DEMO_CASES, pickDemoCase } from '../src/lib/demo';
 
 let failures = 0;
 function check(name: string, cond: boolean, detail = '') {
@@ -128,6 +135,42 @@ console.log('\n── 個案 G：停工期同預算限制會標示 ──');
   const co2 = out.find((r) => r.treatment.id === 'co2-fractional');
   check('CO2 激光有停工期警示', Boolean(co2?.flags.some((x) => x.includes('停工期'))));
   check('有預算超支警示', out.some((r) => r.flags.some((x) => x.includes('預算'))));
+}
+
+console.log('\n── 測試模式示範數據 ──');
+{
+  check('有示範個案', DEMO_CASES.length >= 3);
+
+  const badKey = DEMO_CASES.flatMap((c) => c.analysis.findings).find((f) => !(f.key in FINDING_LABELS));
+  check('所有 finding key 都合法', !badKey, badKey?.key);
+
+  const badRange = DEMO_CASES.flatMap((c) => c.analysis.findings).find(
+    (f) => f.severity < 0 || f.severity > 100 || f.confidence < 0 || f.confidence > 1,
+  );
+  check('severity / confidence 喺合法範圍', !badRange, badRange?.key);
+
+  check('有紅旗示範個案（測得到轉介警示）', DEMO_CASES.some((c) => c.analysis.redFlags.length > 0));
+  check('有化妝示範個案（測得到相片質素警告）', DEMO_CASES.some((c) => c.analysis.imageQuality.makeupDetected));
+
+  // 每個「正常」個案都要行得出推薦，否則測試版會出空白畫面
+  for (const c of DEMO_CASES.filter((x) => x.id !== 'redflag')) {
+    const out = matchTreatments({ findings: c.analysis.findings as Finding[], goals: c.matches });
+    const presentable = out.filter((r) => r.score >= MIN_PRESENTABLE_SCORE);
+    check(`「${c.label}」出到推薦`, presentable.length >= 3, `只有 ${presentable.length} 項`);
+  }
+
+  // 低信心個案應該收斂，唔應該扮到好肯定
+  const rf = DEMO_CASES.find((c) => c.id === 'redflag')!;
+  const rfOut = matchTreatments({ findings: rf.analysis.findings as Finding[], goals: ['brighten'] });
+  const rfShown = rfOut.filter((r) => r.score >= MIN_PRESENTABLE_SCORE);
+  check('低信心個案推薦收斂（≤3 項）', rfShown.length <= 3, `出咗 ${rfShown.length} 項`);
+
+  // 目標配對：揀「緊緻提升」應該行到老化個案而唔係暗瘡個案
+  check('揀緊緻提升 → 老化個案', pickDemoCase(['lift']).id === 'aging');
+  check('揀暗瘡 → 暗瘡個案', pickDemoCase(['clear_acne']).id === 'acne');
+  check('揀美白 → 色斑個案', pickDemoCase(['brighten']).id === 'pigment');
+  check('可以指定個案', pickDemoCase(['lift'], 'redflag').id === 'redflag');
+  check('指定唔存在嘅個案會 fallback', pickDemoCase(['lift'], 'nope').id === 'aging');
 }
 
 console.log('\n── MVP 預約連結 ──');
