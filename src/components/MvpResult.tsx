@@ -39,6 +39,7 @@ export default function MvpResult({
   const totalMin = recs.reduce((s, r) => s + r.estCostHKD.min, 0);
   const totalMax = recs.reduce((s, r) => s + r.estCostHKD.max, 0);
   const anyUnpriced = recs.some((r) => !r.priceConfirmed);
+  const showPricing = data.meta.pricingEnabled === true;
 
   return (
     <>
@@ -115,6 +116,7 @@ export default function MvpResult({
                 停工期：<b>{downtimeText(r.treatment.downtimeDays)}</b>
               </span>
             </div>
+            {showPricing && (
             <div style={{ fontSize: '0.82rem', marginTop: 8 }}>
               價錢：
               {r.priceConfirmed ? (
@@ -128,10 +130,11 @@ export default function MvpResult({
                 <b>請洽診所</b>
               )}
             </div>
+            )}
           </div>
         ))}
 
-        {recs.length > 0 && totalMax > 0 && (
+        {showPricing && recs.length > 0 && totalMax > 0 && (
           <div
             style={{
               borderTop: '1px solid var(--border)',
@@ -195,7 +198,9 @@ export default function MvpResult({
       <div className="disclaimer">
         呢份報告由 AI 根據相片產生，屬<b>初步參考</b>，並非醫學診斷，唔可以取代註冊醫生嘅面對面檢查。
         光線、角度、化妝都會影響判斷。喺香港，注射同高能量儀器療程均須由<b>註冊醫生</b>評估及施行。
-        顯示「請洽診所」代表該療程價錢未錄入系統；一切收費以診所報價為準。
+        {showPricing
+          ? '顯示「請洽診所」代表該療程價錢未錄入系統；一切收費以診所報價為準。'
+          : '療程收費請直接向診所查詢。'}
       </div>
     </>
   );

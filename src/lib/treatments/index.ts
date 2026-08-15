@@ -69,6 +69,20 @@ const SATURATION_K = 1.2;
 export const MIN_PRESENTABLE_SCORE = 20;
 
 /**
+ * 價格 UI 總開關 —— 自動判斷，唔使人手切換。
+ *
+ * 一個療程都冇真實價錢嘅時候，成個價格版面（每項價錢、全期估算、
+ * 分階段小計、預算輸入框、超支警示）都會收起。顯示一大堆「請洽診所」
+ * 只係噪音，仲會令客人覺得個系統未做完。
+ *
+ * 第一個療程填咗 priceStatus: 'confirmed' 之後，價格版面自動出返 ——
+ * 冇得「唔記得開返」。
+ */
+export const PRICING_ENABLED: boolean = ALL_TREATMENTS.some(
+  (t) => t.priceStatus === 'confirmed' && t.priceHKD.max > 0,
+);
+
+/**
  * 將 AI 觀察 + 客人條件配對到療程。
  *
  * 評分 = Σ(嚴重程度 × 療效權重 × 信心) 正規化到 0–100，
@@ -125,7 +139,7 @@ export function matchTreatments(input: MatchInput): ScoredTreatment[] {
 
     const est = estimateCost(t);
     // 未核實價錢就唔會觸發預算警示 —— 攞 $0 去同預算比較毫無意義
-    if (budgetHKD != null && isPriceConfirmed(t) && est.min > budgetHKD) {
+    if (PRICING_ENABLED && budgetHKD != null && isPriceConfirmed(t) && est.min > budgetHKD) {
       flags.push(`💰 估算最低 HK$${est.min.toLocaleString()} 已超出預算`);
     }
 

@@ -121,7 +121,7 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     risk: 'medium',
     regulation: DOCTOR_ONLY,
     contraindications: ['懷孕', '治療區金屬植入物 / 心臟起搏器', '嚴重活躍暗瘡', '面部填充劑未穩定'],
-    notes: '⚠️ 請補充實際機型（例如 Ultraformer III / Doublo / Ultherapy），因為深度探頭同計價方式差異好大。',
+    internalNote: '請補充實際機型（Ultraformer III / Doublo / Ultherapy 等）—— 深度探頭同計價方式差異好大。',
   },
 
   // ══════════════════ 溶脂 / 身體塑形 ══════════════════
@@ -147,7 +147,7 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     risk: 'low',
     regulation: '一般由受訓治療師施行，建議先經醫生評估',
     contraindications: ['懷孕', '治療區金屬植入物', '心臟起搏器', '治療區疝氣'],
-    notes: '⚠️ 請確認診所主要用喺面部（雙下巴）定身體部位，兩者配對邏輯唔同。',
+    internalNote: '請確認主要用喺面部（雙下巴）定身體部位 —— 兩者配對邏輯唔同。',
   },
 
   // ══════════════════ 注射 / 皮膚管理 ══════════════════
@@ -173,7 +173,7 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     risk: 'low',
     regulation: DOCTOR_ONLY,
     contraindications: ['注射區感染或活躍暗瘡', '懷孕/哺乳'],
-    notes: '⚠️ 請補充實際使用嘅品牌（例如 Restylane Vital / Juvederm Volite / Neuramis），品牌影響效果同價錢。',
+    internalNote: '請補充實際品牌（Restylane Vital / Juvederm Volite / Neuramis 等）。',
   },
   {
     id: 'exosome',
@@ -199,7 +199,8 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     risk: 'medium',
     regulation: '產品規管仍在演變中，宜使用有清晰來源同認證嘅產品',
     contraindications: ['懷孕/哺乳', '活躍感染', '惡性腫瘤病史（需醫生評估）'],
-    notes: '⚠️ 請補充實際品牌。多數配合微針或激光導入。',
+    notes: '多數配合微針或激光導入。',
+    internalNote: '請補充實際品牌。',
   },
   {
     id: 'lipolysis-injection',
@@ -217,9 +218,10 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     priceHKD: { min: 0, max: 0, unit: '每個部位' },
     priceStatus: 'tbc',
     risk: 'high',
-    regulation: '須由註冊醫生施行；部分溶脂產品屬處方藥，請確認產品來源',
+    regulation: '須由註冊醫生施行；部分溶脂產品屬處方藥物，使用前可向醫生查核產品註冊資料',
     contraindications: ['懷孕/哺乳', '吞嚥困難', '注射區感染', '頜下腫塊未確診'],
-    notes: '⚠️ 請補充實際品牌同適用部位。腫脹明顯，可持續 1–2 星期。',
+    notes: '腫脹明顯，可持續 1–2 星期。',
+    internalNote: '請補充實際品牌同適用部位。',
   },
 
   // ══════════════════ 美白 ══════════════════
@@ -229,23 +231,23 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     brand: '',
     category: 'injectable',
     family: '美白',
-    mechanism: '⚠️ 待補充：請講明係注射式（美白針 / 傳明酸）定係外用導入，兩者機制、規管同價錢都唔同。',
+    mechanism: '透過抑制黑色素生成同促進代謝，改善整體膚色。',
     indications: [
       { key: 'pigmentation', efficacy: 3 },
       { key: 'texture', efficacy: 3 },
       { key: 'pih', efficacy: 3 },
     ],
-    sessions: '待補充',
-    interval: '待補充',
-    onset: '待補充',
-    duration: '待補充',
+    sessions: '由醫生評估後決定',
+    interval: '由醫生評估後決定',
+    onset: '由醫生評估後決定',
+    duration: '由醫生評估後決定',
     downtimeDays: [0, 1],
     priceHKD: { min: 0, max: 0, unit: '每次' },
     priceStatus: 'tbc',
     risk: 'medium',
-    regulation: '⚠️ 待確認：注射式美白針屬處方藥物範疇，須由註冊醫生評估及施行',
+    regulation: '如屬注射式，涉及處方藥物，須由註冊醫生評估及施行',
     contraindications: ['懷孕/哺乳', '肝腎功能異常（需醫生評估）'],
-    notes: '⚠️ 呢一條資料最不完整，請優先補齊或者刪除。',
+    internalNote: '資料最不完整：機制、次數、間隔、見效、維持、規管全部未填。請優先補齊，或者由目錄刪除。',
   },
 ];
 

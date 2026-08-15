@@ -5,6 +5,7 @@ import {
   buildPhasedPlan,
   GOALS,
   MIN_PRESENTABLE_SCORE,
+  PRICING_ENABLED,
   type Finding,
   type GoalKey,
   type ScoredTreatment,
@@ -49,9 +50,26 @@ function bad(msg: string, status = 400) {
   return NextResponse.json({ error: msg }, { status });
 }
 
-/** 只交夠分嘅推薦俾前端 —— 低分配對唔應該以「建議」嘅身份出現喺客人面前。 */
+/**
+ * 只交夠分嘅推薦俾前端，同時剝走內部備註。
+ *
+ * 低分配對唔應該以「建議」嘅身份出現喺客人面前；而 internalNote 就算前端唔
+ * render，留喺 JSON 入面一樣係開 devtools 就睇到 —— 要喺 API 邊界剝走先算數。
+ */
 function presentable(scored: ScoredTreatment[]) {
-  return scored.filter((s) => s.score >= MIN_PRESENTABLE_SCORE).slice(0, 10);
+  return scored
+    .filter((s) => s.score >= MIN_PRESENTABLE_SCORE)
+    .slice(0, 10)
+    .map(stripInternal);
+}
+
+function stripInternal(s: ScoredTreatment): ScoredTreatment {
+  const { internalNote: _omit, ...publicTreatment } = s.treatment;
+  return { ...s, treatment: publicTreatment };
+}
+
+function stripPlanInternal<T extends { items: ScoredTreatment[] }>(p: T): T {
+  return { ...p, items: p.items.map(stripInternal) };
 }
 
 export async function POST(req: Request) {
@@ -92,7 +110,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       analysis: demoCase.analysis,
       recommendations: presentable(scored),
-      plan: buildPhasedPlan(scored),
+      plan: buildPhasedPlan(scored).map(stripPlanInternal),
       meta: {
         model: '（測試模式 · 冇呼叫 AI）',
         tier: 'demo',
@@ -100,6 +118,7 @@ export async function POST(req: Request) {
         passes: 0,
         usage: { inputTokens: 0, outputTokens: 0 },
         costHKD: 0,
+        pricingEnabled: PRICING_ENABLED,
         demo: true,
         demoCaseId: demoCase.id,
         demoCaseLabel: demoCase.label,
@@ -170,7 +189,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       analysis: result.analysis,
       recommendations: presentable(scored),
-      plan,
+      plan: plan.map(stripPlanInternal),
       meta: {
         model: result.model,
         tier,
@@ -178,6 +197,7 @@ export async function POST(req: Request) {
         passes: result.passes,
         usage: result.usage,
         costHKD: Number(result.costHKD.toFixed(3)),
+        pricingEnabled: PRICING_ENABLED,
       },
     });
   } catch (err) {

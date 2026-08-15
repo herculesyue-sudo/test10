@@ -14,6 +14,7 @@ import {
   FINDING_LABELS,
   MIN_PRESENTABLE_SCORE,
   isPriceConfirmed,
+  PRICING_ENABLED,
 } from '../src/lib/treatments';
 import { CLINIC_TREATMENTS } from '../src/lib/treatments/clinic';
 import type { Finding, FindingKey } from '../src/lib/treatments';
@@ -160,6 +161,40 @@ console.log('\n── 個案 G：停工期同預算限制會標示 ──');
   // 未錄入價錢就唔應該報「超出預算」—— 攞 $0 去比較毫無意義
   const unpricedBudgetFlag = out.some((r) => !r.priceConfirmed && r.flags.some((x) => x.includes('預算')));
   check('未核實價錢唔會觸發預算警示', !unpricedBudgetFlag);
+}
+
+console.log('\n── 價格版面開關 ──');
+{
+  const anyConfirmed = ALL_TREATMENTS.some(isPriceConfirmed);
+  check('PRICING_ENABLED 同目錄狀態一致', PRICING_ENABLED === anyConfirmed,
+    `PRICING_ENABLED=${PRICING_ENABLED} 但 ${anyConfirmed ? '有' : '冇'}已核實價錢`);
+
+  const out = matchTreatments({
+    findings: [f('texture', 80), f('pores', 70)],
+    goals: [],
+    budgetHKD: 1,  // 極低預算：如果價格版面開咗，應該人人超支
+  });
+  if (!PRICING_ENABLED) {
+    check('價格版面關閉時唔會出預算警示', !out.some((r) => r.flags.some((x) => x.includes('預算'))));
+    check('價格版面關閉時全部估算為 0', out.every((r) => r.estCostHKD.max === 0));
+    const plan = buildPhasedPlan(out);
+    check('價格版面關閉時分階段小計為 0', plan.every((p) => p.subtotalHKD.max === 0));
+  } else {
+    check('價格版面開啟時有療程計到價', out.some((r) => r.estCostHKD.max > 0));
+  }
+}
+
+console.log('\n── 客人可見文字唔應該有開發備註 ──');
+{
+  // 「請確認」可以係俾客人嘅正當建議，唔計；「請補充」一定係寫俾開發者睇
+  const DEV_MARKER = /待補充|待確認|TODO|⚠️|請補充|XXX/;
+  const leaked = ALL_TREATMENTS.filter((t) =>
+    [t.name, t.brand, t.mechanism, t.sessions, t.interval, t.onset, t.duration, t.regulation, t.notes ?? ''].some(
+      (v) => DEV_MARKER.test(v),
+    ),
+  );
+  check('冇開發備註漏落客人可見欄位', leaked.length === 0, leaked.map((t) => t.id).join(', '));
+  check('internalNote 唔會被當成 notes 顯示', ALL_TREATMENTS.every((t) => t.notes !== t.internalNote || !t.internalNote));
 }
 
 console.log('\n── 測試模式示範數據 ──');

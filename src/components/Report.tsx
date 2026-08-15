@@ -58,6 +58,8 @@ export interface ConsultResponse {
     passes: number;
     usage: { inputTokens: number; outputTokens: number };
     costHKD: number;
+    /** 目錄有真實價錢先會 true；false 時所有價格版面都收起 */
+    pricingEnabled?: boolean;
     /** 測試模式先會有 */
     demo?: boolean;
     demoCaseId?: string;
@@ -94,6 +96,7 @@ function confLabel(c: number) {
 
 export default function Report({ data, onReset }: { data: ConsultResponse; onReset: () => void }) {
   const { analysis: a, recommendations: recs, plan, meta } = data;
+  const showPricing = meta.pricingEnabled === true;
   const total = plan.reduce(
     (s, p) => ({ min: s.min + p.subtotalHKD.min, max: s.max + p.subtotalHKD.max }),
     { min: 0, max: 0 },
@@ -199,29 +202,35 @@ export default function Report({ data, onReset }: { data: ConsultResponse; onRes
                   </span>
                 ))}
               </div>
-              <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: 4 }}>
-                {p.subtotalHKD.max > 0
-                  ? `小計約 ${money(p.subtotalHKD.min)} – ${money(p.subtotalHKD.max)}`
-                  : `小計：${TBC}`}
-                {p.hasUnpricedItems && p.subtotalHKD.max > 0 && '（部分療程價格未列，實際會更高）'}
-              </div>
+              {showPricing && (
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: 4 }}>
+                  {p.subtotalHKD.max > 0
+                    ? `小計約 ${money(p.subtotalHKD.min)} – ${money(p.subtotalHKD.max)}`
+                    : `小計：${TBC}`}
+                  {p.hasUnpricedItems && p.subtotalHKD.max > 0 && '（部分療程價格未列，實際會更高）'}
+                </div>
+              )}
             </div>
           ))}
-          <div
-            style={{
-              borderTop: '1px solid var(--border)',
-              paddingTop: 12,
-              fontSize: '0.9rem',
-              display: 'flex',
-              justifyContent: 'space-between',
-            }}
-          >
-            <b>整體預算估算</b>
-            <b>{total.max > 0 ? `${money(total.min)} – ${money(total.max)}` : TBC}</b>
-          </div>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: 6, marginBottom: 0 }}>
-            價格以診所報價為準。顯示「{TBC}」代表該療程價錢未錄入系統。
-          </p>
+          {showPricing && (
+            <>
+              <div
+                style={{
+                  borderTop: '1px solid var(--border)',
+                  paddingTop: 12,
+                  fontSize: '0.9rem',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <b>整體預算估算</b>
+                <b>{total.max > 0 ? `${money(total.min)} – ${money(total.max)}` : TBC}</b>
+              </div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: 6, marginBottom: 0 }}>
+                價格以診所報價為準。顯示「{TBC}」代表該療程價錢未錄入系統。
+              </p>
+            </>
+          )}
         </div>
       )}
 
@@ -280,22 +289,24 @@ export default function Report({ data, onReset }: { data: ConsultResponse; onRes
                     : `${r.treatment.downtimeDays[0]}–${r.treatment.downtimeDays[1]} 日`}
                 </b>
               </span>
-              <span>
-                價錢：
-                <b>
-                  {r.priceConfirmed
-                    ? `${money(r.treatment.priceHKD.min)}–${money(r.treatment.priceHKD.max)}`
-                    : TBC}
-                </b>
-                {r.priceConfirmed && (
-                  <>
-                    <br />
-                    <span style={{ fontSize: '0.72rem' }}>{r.treatment.priceHKD.unit}</span>
-                  </>
-                )}
-              </span>
+              {showPricing && (
+                <span>
+                  價錢：
+                  <b>
+                    {r.priceConfirmed
+                      ? `${money(r.treatment.priceHKD.min)}–${money(r.treatment.priceHKD.max)}`
+                      : TBC}
+                  </b>
+                  {r.priceConfirmed && (
+                    <>
+                      <br />
+                      <span style={{ fontSize: '0.72rem' }}>{r.treatment.priceHKD.unit}</span>
+                    </>
+                  )}
+                </span>
+              )}
             </div>
-            {r.priceConfirmed && (
+            {showPricing && r.priceConfirmed && (
               <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: 8 }}>
                 全期估算：
                 <b style={{ color: 'var(--text)' }}>

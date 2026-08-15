@@ -202,5 +202,8 @@ export interface Treatment {
   /** 香港規管註記 */
   regulation: string;
   contraindications: string[];
+  /** 客人會見到嘅提醒。⚠️ 呢度嘅字會原封不動出現喺報告，唔好寫開發備註。 */
   notes?: string;
+  /** 內部備註：只會喺 check:catalogue 出現，永遠唔會顯示俾客人。 */
+  internalNote?: string;
 }

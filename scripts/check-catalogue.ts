@@ -14,9 +14,9 @@
 
 import { CLINIC_TREATMENTS, CLINIC_OTHER_SERVICES, CLINIC_POLICY } from '../src/lib/treatments/clinic';
 import { FINDING_LABELS, type FindingKey } from '../src/lib/treatments/types';
-import { isPriceConfirmed } from '../src/lib/treatments';
+import { isPriceConfirmed, PRICING_ENABLED } from '../src/lib/treatments';
 
-const PLACEHOLDER = /待補充|待確認|TBC|TODO|⚠️|XXX/;
+const PLACEHOLDER = /待補充|待確認|TBC|TODO|⚠️|請補充|XXX/;
 
 console.log(`\n${'═'.repeat(62)}`);
 console.log(`  ${CLINIC_POLICY.name} 療程目錄檢查`);
@@ -28,12 +28,17 @@ console.log(`其他服務：${CLINIC_OTHER_SERVICES.length}（唔入配對引擎
 // ── 1. 價錢 ──
 const unpriced = CLINIC_TREATMENTS.filter((t) => !isPriceConfirmed(t));
 console.log(`─ 價錢 ─`);
-if (unpriced.length === 0) {
-  console.log('  ✓ 全部療程都有已核實價錢\n');
+if (!PRICING_ENABLED) {
+  console.log('  ℹ️  價格版面已自動關閉（一個療程都未有真實價錢）');
+  console.log('     報告唔會顯示任何價錢、預算估算或預算輸入框。');
+  console.log(`     ${unpriced.length} 個療程待填：${unpriced.map((t) => t.id).join(', ')}`);
+  console.log("     → 填 priceHKD 並將 priceStatus 改做 'confirmed'，價格版面會自動出返\n");
+} else if (unpriced.length === 0) {
+  console.log('  ✓ 全部療程都有已核實價錢，價格版面已啟用\n');
 } else {
-  console.log(`  ⚠️  ${unpriced.length}/${CLINIC_TREATMENTS.length} 個未有真實價錢，客人會見到「請洽診所」：`);
+  console.log(`  ⚠️  價格版面已啟用，但 ${unpriced.length}/${CLINIC_TREATMENTS.length} 個仲會顯示「請洽診所」：`);
   for (const t of unpriced) console.log(`     · ${t.name.padEnd(20)} (${t.id})`);
-  console.log(`     → 喺 src/lib/treatments/clinic.ts 填 priceHKD 並將 priceStatus 改做 'confirmed'\n`);
+  console.log('');
 }
 
 // ── 2. 佔位文字 ──
@@ -75,6 +80,14 @@ if (noBrand.length) {
   console.log('');
 }
 
+// ── 2b. 內部備註（唔會顯示俾客人，但代表資料未齊）──
+const withInternal = CLINIC_TREATMENTS.filter((t) => t.internalNote);
+if (withInternal.length) {
+  console.log(`  📋 ${withInternal.length} 個療程有內部備註（客人唔會見到）：`);
+  for (const t of withInternal) console.log(`     · ${t.name.padEnd(20)} ${t.internalNote}`);
+  console.log('');
+}
+
 // ── 3. 覆蓋缺口 ──
 console.log(`─ 覆蓋缺口 ─`);
 const coverage = new Map<FindingKey, number>();
@@ -109,11 +122,14 @@ if (weak.length) {
 if (!uncovered.length && !weak.length) console.log('  ✓ 全部特徵都有主力療程覆蓋\n');
 
 // ── 總結 ──
-const blocking = unpriced.length + withPlaceholder.length;
+const blocking = withPlaceholder.length + withInternal.length;
 console.log('═'.repeat(62));
 if (blocking === 0 && uncovered.length === 0) {
   console.log('  ✅ 目錄已經可以上線');
 } else {
-  console.log(`  ⚠️  上線前建議處理：${unpriced.length} 個價錢、${withPlaceholder.length} 個未完成內容、${uncovered.length} 個覆蓋缺口`);
+  console.log(
+    `  ⚠️  待處理：${withPlaceholder.length} 個未完成內容、${withInternal.length} 個內部備註、${uncovered.length} 個覆蓋缺口` +
+      (PRICING_ENABLED ? `、${unpriced.length} 個價錢` : '（價錢暫時唔顯示）'),
+  );
 }
 console.log('═'.repeat(62) + '\n');

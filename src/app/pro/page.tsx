@@ -5,6 +5,7 @@ import PhotoCapture, { DEFAULT_SHOTS, type Shot } from '@/components/PhotoCaptur
 import Report, { type ConsultResponse } from '@/components/Report';
 import { useDemoMode, DemoBanner, DemoCasePicker } from '@/components/DemoMode';
 import { GOALS, type GoalKey } from '@/lib/treatments/types';
+import { PRICING_ENABLED } from '@/lib/treatments';
 
 type Step = 'photo' | 'goals' | 'loading' | 'report';
 
@@ -158,7 +159,9 @@ export default function Page() {
 
           <div className="card">
             <h2>3. 個人條件</h2>
-            <p className="sub">用嚟過濾唔適合嘅療程同估算預算。全部可以留空。</p>
+            <p className="sub">
+              用嚟過濾唔適合嘅療程{PRICING_ENABLED ? '同估算預算' : ''}。全部可以留空。
+            </p>
             <div className="row">
               <div>
                 <label className="f" htmlFor="age">
@@ -178,20 +181,23 @@ export default function Page() {
                 </select>
               </div>
             </div>
-            <div className="row">
-              <div>
-                <label className="f" htmlFor="budget">
-                  預算上限 (HK$)
-                </label>
-                <input
-                  id="budget"
-                  type="number"
-                  inputMode="numeric"
-                  value={budget}
-                  onChange={(e) => setBudget(e.target.value)}
-                  placeholder="例如 30000"
-                />
-              </div>
+            <div className={PRICING_ENABLED ? 'row' : undefined}>
+              {/* 目錄未有真實價錢就唔問預算 —— 問完做唔到嘢，只會令人覺得個系統壞咗 */}
+              {PRICING_ENABLED && (
+                <div>
+                  <label className="f" htmlFor="budget">
+                    預算上限 (HK$)
+                  </label>
+                  <input
+                    id="budget"
+                    type="number"
+                    inputMode="numeric"
+                    value={budget}
+                    onChange={(e) => setBudget(e.target.value)}
+                    placeholder="例如 30000"
+                  />
+                </div>
+              )}
               <div>
                 <label className="f" htmlFor="downtime">
                   可接受停工期（日）

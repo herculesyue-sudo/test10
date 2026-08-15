@@ -257,10 +257,37 @@ npm run check:catalogue    # 睇目錄仲欠咩
 要加新特徵：喺 `FindingKey` 加 key、喺 `FINDING_LABELS` 加中文名，
 schema 同 prompt 會自動跟住更新。
 
-### 價錢點解要分 confirmed / tbc
+### 價錢：而家完全唔顯示
 
-`priceStatus` 預設係 `'tbc'`。報一個錯價俾客人，比報一個「請洽診所」差得多 ——
-所以未核實嘅價錢唔會顯示、唔會計入預算估算、亦唔會觸發「超出預算」警示。
+目錄一個療程都未有真實價錢，所以**整個價格版面已自動關閉** —— 報告唔會出
+每項價錢、全期估算、分階段小計，`/pro` 亦唔會問「預算上限」。顯示一大堆
+「請洽診所」只係噪音，而問一個做唔到嘢嘅預算問題只會令人覺得系統壞咗。
+
+呢個開關（`PRICING_ENABLED`）係**自動推導**嘅：
+
+```ts
+export const PRICING_ENABLED = ALL_TREATMENTS.some(
+  (t) => t.priceStatus === 'confirmed' && t.priceHKD.max > 0,
+);
+```
+
+第一個療程填咗真實價錢 + `priceStatus: 'confirmed'` 之後，價格版面自動出返 ——
+冇得「唔記得開返」。部分填咗嘅情況下，冇價錢嗰啲會顯示「請洽診所」。
+
+未核實嘅價錢永遠唔會計入估算，亦唔會觸發「超出預算」警示 ——
+攞 $0 去同預算比較毫無意義。
+
+### 兩種備註：`notes` vs `internalNote`
+
+| 欄位 | 客人見唔見到 | 用嚟寫咩 |
+|---|---|---|
+| `notes` | **會見到，原文照出** | 客人應該知嘅提醒（副作用、注意事項） |
+| `internalNote` | **永遠見唔到** | 開發／營運備註（「請補充實際機型」之類） |
+
+`internalNote` 喺 API 邊界就會被剝走 —— 唔係靠前端唔 render，因為留喺 JSON
+入面一樣係開 devtools 就睇到。`npm run check:catalogue` 會列出全部內部備註。
+
+測試會擋住開發備註漏入客人可見欄位（`待補充`、`請補充`、`⚠️` 等字眼）。
 
 ### 唔入配對引擎嘅服務
 
