@@ -76,7 +76,8 @@ NEXT_PUBLIC_WHATSAPP=85212345678     # 國際格式，唔要 + 號
 （iOS Safari 要 HTTPS 先可以用相機，用 `npx localtunnel --port 3000` 或者 Vercel 部署最方便。）
 
 ```bash
-npm run test:engine   # 引擎 + 示範數據 + 預約連結測試，48 項（唔使 API key）
+npm run check:catalogue  # 睇療程目錄仲欠咩價錢 / 內容 / 覆蓋
+npm run test:engine      # 引擎 + 示範數據 + 預約連結測試（唔使 API key）
 npm run eval          # 準確度量度（需要標註資料集，見下面）
 npm run build
 ```
@@ -112,8 +113,8 @@ npm run build
 | `src/lib/prompt.ts` | 系統提示（分析準則、誠實準則、觀察指引） |
 | `src/lib/schema.ts` | 輸出 schema，用 structured outputs 強制模型跟格式 |
 | `src/lib/anthropic.ts` | 模型層級、成本計算、多次共識分析 |
-| `src/lib/treatments/injectables.ts` | 針劑療程庫（肉毒、透明質酸、少女針、童顏針、嬰兒針…） |
-| `src/lib/treatments/devices.ts` | 儀器療程庫（HIFU、射頻、皮秒、CO2、冷凍溶脂…） |
+| **`src/lib/treatments/clinic.ts`** | **診所療程目錄 —— 唯一會出現喺推薦入面嘅資料** |
+| `src/lib/treatments/reference/` | 36 個市場通用療程，**冇駁入引擎**，做複製模板 |
 | `src/lib/treatments/index.ts` | 配對引擎 + 分階段方案 |
 | `src/lib/booking.ts` | WhatsApp 預約連結（預填客人目標同建議療程） |
 | `src/lib/demo.ts` | 測試模式嘅 4 個示範個案 |
@@ -204,44 +205,76 @@ npm run eval -- --tier balanced --passes 1
 
 ---
 
-## 改療程庫
+## 療程目錄（最重要嘅一份資料）
 
-全部係普通 TypeScript 陣列，改完 `npm run test:engine` 驗證即可。
+**引擎只會推薦 `src/lib/treatments/clinic.ts` 入面嘅療程。**
+
+推薦一個診所冇提供嘅療程，比冇推薦更差 —— 等於用自己個工具幫客人搵競爭對手。
+所以 `reference/` 入面 36 個市場通用療程**刻意冇駁入引擎**，淨係做複製模板。
+
+```bash
+npm run check:catalogue    # 睇目錄仲欠咩
+```
+
+檢查三樣嘢：
+
+1. **邊啲療程未有真實價錢** —— 未填嘅會顯示「請洽診所」，唔會亂報價
+2. **邊啲條目仲有「待補充」佔位文字** —— 呢啲會直接出現喺客人面前
+3. **AI 偵測得到、但目錄冇療程做嘅問題** —— 報告會指出問題然後冇下文，
+   對客人同對診所都係浪費
+
+### 加一個療程
+
+喺 `reference/injectables.ts` 或 `reference/devices.ts` 搵返類似嘅一條，
+複製去 `clinic.ts`，然後改：
 
 ```ts
 {
   id: 'my-treatment',
-  name: '療程中文名',
-  brand: '品牌 / 儀器名',
-  category: 'injectable',        // injectable | device | topical
-  family: '分類，例如 透明質酸',
+  name: '療程中文名',              // 診所自己嘅叫法
+  brand: '品牌 / 儀器名',           // 客人好多時就係想知用咩牌子
+  category: 'device',             // injectable | device | topical
+  family: '分類，例如 皮秒激光',
   mechanism: '一句講清楚原理',
   indications: [
-    { key: 'nasolabial_fold', efficacy: 4 },   // efficacy 1（輔助）到 5（一線首選）
+    { key: 'pigmentation', efficacy: 5 },   // 1（輔助）到 5（一線首選）
   ],
-  sessions: '3 次為一個療程',      // 引擎會由呢度抽數字估全期成本
-  interval: '每次相隔 4 星期',
-  onset: '2–4 星期',
-  duration: '6–12 個月',
-  downtimeDays: [1, 3],
-  priceHKD: { min: 3000, max: 6500, unit: '每次' },
-  risk: 'medium',                 // low | medium | high
+  sessions: '4–6 次',              // 引擎會由呢度抽數字估全期成本
+  interval: '每次相隔 3–4 星期',
+  onset: '2–3 次後可見',
+  duration: '需防曬維持',
+  downtimeDays: [0, 2],
+  priceHKD: { min: 1500, max: 3000, unit: '每次' },
+  priceStatus: 'confirmed',        // ⚠️ 冇呢一行就當未核實，UI 顯示「請洽診所」
+  risk: 'medium',                  // low | medium | high
   regulation: '香港規管註記',
-  contraindications: ['懷孕/哺乳', '...'],   // 含「懷孕」會被懷孕過濾器捕捉
+  contraindications: ['懷孕', '...'],   // 含「懷孕」會被懷孕過濾器捕捉
   notes: '客人應該知嘅提醒（可選）',
 }
 ```
 
-`indications` 嘅 `key` 必須係 `src/lib/treatments/types.ts` 入面 `FindingKey` 之一。
-要加新特徵：喺 `FindingKey` 加 key、喺 `FINDING_LABELS` 加中文名，schema 同 prompt 會自動跟住更新。
+`indications` 嘅 `key` 必須係 `types.ts` 入面 `FindingKey` 之一。
+要加新特徵：喺 `FindingKey` 加 key、喺 `FINDING_LABELS` 加中文名，
+schema 同 prompt 會自動跟住更新。
+
+### 價錢點解要分 confirmed / tbc
+
+`priceStatus` 預設係 `'tbc'`。報一個錯價俾客人，比報一個「請洽診所」差得多 ——
+所以未核實嘅價錢唔會顯示、唔會計入預算估算、亦唔會觸發「超出預算」警示。
+
+### 唔入配對引擎嘅服務
+
+脫疣、祛癦呢類需要醫生現場判斷性質嘅服務，放喺 `CLINIC_OTHER_SERVICES`。
+會喺報告尾顯示，但唔會經 AI 配對 —— 相片唔應該、亦唔可以判斷皮膚病變性質。
 
 ### 調整配對行為
 
-`src/lib/treatments/index.ts` 頂部三個常數：
+`src/lib/treatments/index.ts` 頂部四個常數：
 
-- `SEVERITY_FLOOR`（預設 25）—— 低過幾多分就唔觸發推薦。調高 = 保守啲
-- `GOAL_BOOST`（預設 1.35）—— 客人揀咗嘅目標加幾多權重
-- `SATURATION_K`（預設 1.2）—— 調細令分數升得快，調大令高分之間差距拉開
+- `SEVERITY_FLOOR`（25）—— 低過幾多分就唔觸發推薦。調高 = 保守啲
+- `GOAL_BOOST`（1.35）—— 客人揀咗嘅目標加幾多權重
+- `SATURATION_K`（1.2）—— 調細令分數升得快，調大令高分之間差距拉開
+- `MIN_PRESENTABLE_SCORE`（20）—— 低過幾多分就唔當「推薦」交俾前端
 
 ---
 
@@ -258,6 +291,7 @@ npm run eval -- --tier balanced --passes 1
 ## 已知限制
 
 - 側面相會提升下顎線同輪廓判斷，但客人好多時只影正面 —— 系統會照跑，唔會夾硬估睇唔到嘅嘢
-- 療程價格係 2025–2026 市場公開參考區間，會過時，建議每半年 review 一次
+- 療程目錄仲未填真實價錢（`npm run check:catalogue` 睇清單）
+- 17 種 AI 偵測得到嘅特徵（注射填充類為主）目錄暫時冇覆蓋
 - 未做用戶帳戶、療程紀錄、前後對比 —— 需要嘅話要另外加資料庫同私隱處理
 - 未做 rate limiting；公開部署前建議加（例如 Vercel middleware 或 Upstash）

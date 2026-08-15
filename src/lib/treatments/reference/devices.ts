@@ -1,4 +1,4 @@
-import type { Treatment } from './types';
+import type { Treatment } from '../types';
 
 /**
  * 香港市場常見儀器類療程（激光、射頻、超聲波等）。

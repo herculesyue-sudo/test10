@@ -1,10 +1,17 @@
-import { INJECTABLES } from './injectables';
-import { DEVICES } from './devices';
+import { CLINIC_TREATMENTS } from './clinic';
 import { FINDING_LABELS, GOALS } from './types';
 import type { FindingKey, GoalKey, Treatment } from './types';
 
 export * from './types';
-export const ALL_TREATMENTS: Treatment[] = [...INJECTABLES, ...DEVICES];
+export { CLINIC_POLICY, CLINIC_OTHER_SERVICES } from './clinic';
+
+/**
+ * 引擎只認診所實際提供嘅療程。
+ *
+ * `reference/` 入面有 36 個市場通用療程做複製模板，**刻意冇 import** ——
+ * 推薦一個診所做唔到嘅療程，等於用自己個工具幫客人搵競爭對手。
+ */
+export const ALL_TREATMENTS: Treatment[] = CLINIC_TREATMENTS;
 
 export const TREATMENT_BY_ID = new Map(ALL_TREATMENTS.map((t) => [t.id, t]));
 
@@ -44,6 +51,8 @@ export interface ScoredTreatment {
   /** 因客人條件而觸發嘅警示 */
   flags: string[];
   estCostHKD: { min: number; max: number };
+  /** 價錢有冇經診所核實。false 嘅話 UI 要顯示「請洽診所」而唔係報 $0。 */
+  priceConfirmed: boolean;
 }
 
 /** 低過呢個嚴重程度就當「唔算問題」，唔會觸發推薦。 */
@@ -115,7 +124,8 @@ export function matchTreatments(input: MatchInput): ScoredTreatment[] {
     if (t.risk === 'high') flags.push('🔴 屬高風險程序，務必揀有經驗嘅註冊醫生');
 
     const est = estimateCost(t);
-    if (budgetHKD != null && est.min > budgetHKD) {
+    // 未核實價錢就唔會觸發預算警示 —— 攞 $0 去同預算比較毫無意義
+    if (budgetHKD != null && isPriceConfirmed(t) && est.min > budgetHKD) {
       flags.push(`💰 估算最低 HK$${est.min.toLocaleString()} 已超出預算`);
     }
 
@@ -126,6 +136,7 @@ export function matchTreatments(input: MatchInput): ScoredTreatment[] {
       rationale: buildRationale(t, targets, goalKeys),
       flags,
       estCostHKD: est,
+      priceConfirmed: isPriceConfirmed(t),
     });
   }
 
@@ -138,7 +149,13 @@ export function matchTreatments(input: MatchInput): ScoredTreatment[] {
   return out.sort((a, b) => b.score - a.score);
 }
 
+/** 預設 'tbc'：報一個未核實嘅價，好過報一個錯價。 */
+export function isPriceConfirmed(t: Treatment): boolean {
+  return t.priceStatus === 'confirmed' && t.priceHKD.max > 0;
+}
+
 function estimateCost(t: Treatment): { min: number; max: number } {
+  if (!isPriceConfirmed(t)) return { min: 0, max: 0 };
   // 由 sessions 字串抽出建議次數，估算整個療程成本
   const m = t.sessions.match(/(\d+)\s*[–\-~]?\s*(\d+)?/);
   const lo = m ? parseInt(m[1], 10) : 1;
@@ -165,6 +182,8 @@ export interface PlanPhase {
   timing: string;
   items: ScoredTreatment[];
   subtotalHKD: { min: number; max: number };
+  /** 呢個階段有冇未核實價錢嘅療程 —— 有嘅話小計係低估咗 */
+  hasUnpricedItems: boolean;
 }
 
 const FOUNDATION: FindingKey[] = [
@@ -189,17 +208,20 @@ export function buildPhasedPlan(scored: ScoredTreatment[], limit = 8): PlanPhase
   const p3 = top.filter((s) => !isFoundation(s) && s.treatment.category === 'injectable').slice(0, 3);
 
   const phases: PlanPhase[] = [
-    { phase: 1, title: '打底：先處理發炎、色素同膚質', timing: '第 0–8 星期', items: p1, subtotalHKD: sum(p1) },
-    { phase: 2, title: '結構：緊緻提升（非注射）', timing: '第 6–16 星期', items: p2, subtotalHKD: sum(p2) },
-    { phase: 3, title: '塑形：容積補充同輪廓（注射）', timing: '第 12 星期起', items: p3, subtotalHKD: sum(p3) },
+    { phase: 1, title: '打底：先處理發炎、色素同膚質', timing: '第 0–8 星期', items: p1, ...totals(p1) },
+    { phase: 2, title: '結構：緊緻提升（非注射）', timing: '第 6–16 星期', items: p2, ...totals(p2) },
+    { phase: 3, title: '塑形：容積補充同輪廓（注射）', timing: '第 12 星期起', items: p3, ...totals(p3) },
   ];
 
   return phases.filter((p) => p.items.length > 0);
 }
 
-function sum(items: ScoredTreatment[]) {
-  return items.reduce(
-    (acc, i) => ({ min: acc.min + i.estCostHKD.min, max: acc.max + i.estCostHKD.max }),
-    { min: 0, max: 0 },
-  );
+function totals(items: ScoredTreatment[]) {
+  return {
+    subtotalHKD: items.reduce(
+      (acc, i) => ({ min: acc.min + i.estCostHKD.min, max: acc.max + i.estCostHKD.max }),
+      { min: 0, max: 0 },
+    ),
+    hasUnpricedItems: items.some((i) => !i.priceConfirmed),
+  };
 }

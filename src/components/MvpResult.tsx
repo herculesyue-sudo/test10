@@ -2,6 +2,7 @@
 
 import { FINDING_LABELS, type FindingKey, type GoalKey } from '@/lib/treatments/types';
 import { buildBookingUrl } from '@/lib/booking';
+import { CLINIC_POLICY, CLINIC_OTHER_SERVICES } from '@/lib/treatments/clinic';
 import type { ConsultResponse } from './Report';
 
 export type { ConsultResponse };
@@ -37,6 +38,7 @@ export default function MvpResult({
 
   const totalMin = recs.reduce((s, r) => s + r.estCostHKD.min, 0);
   const totalMax = recs.reduce((s, r) => s + r.estCostHKD.max, 0);
+  const anyUnpriced = recs.some((r) => !r.priceConfirmed);
 
   return (
     <>
@@ -77,7 +79,10 @@ export default function MvpResult({
 
       <div className="card">
         <h2>建議療程方向</h2>
-        <p className="sub">根據你揀嘅目標同相片分析配對，按適合程度排序。</p>
+        <p className="sub">
+          以下全部係 {CLINIC_POLICY.name} 實際提供嘅療程，根據你揀嘅目標同相片分析配對。
+          {CLINIC_POLICY.payPerSession && <> {CLINIC_POLICY.payPerSessionNote}。</>}
+        </p>
 
         {recs.length === 0 && (
           <p style={{ fontSize: '0.88rem', color: 'var(--text-dim)', margin: 0 }}>
@@ -111,16 +116,22 @@ export default function MvpResult({
               </span>
             </div>
             <div style={{ fontSize: '0.82rem', marginTop: 8 }}>
-              參考價：
-              <b>
-                {money(r.treatment.priceHKD.min)}–{money(r.treatment.priceHKD.max)}
-              </b>
-              <span style={{ color: 'var(--text-dim)' }}> {r.treatment.priceHKD.unit}</span>
+              價錢：
+              {r.priceConfirmed ? (
+                <>
+                  <b>
+                    {money(r.treatment.priceHKD.min)}–{money(r.treatment.priceHKD.max)}
+                  </b>
+                  <span style={{ color: 'var(--text-dim)' }}> {r.treatment.priceHKD.unit}</span>
+                </>
+              ) : (
+                <b>請洽診所</b>
+              )}
             </div>
           </div>
         ))}
 
-        {recs.length > 0 && (
+        {recs.length > 0 && totalMax > 0 && (
           <div
             style={{
               borderTop: '1px solid var(--border)',
@@ -131,13 +142,28 @@ export default function MvpResult({
               fontSize: '0.9rem',
             }}
           >
-            <b>全期預算估算</b>
+            <b>全期預算估算{anyUnpriced && '（部分未計）'}</b>
             <b>
               {money(totalMin)} – {money(totalMax)}
             </b>
           </div>
         )}
       </div>
+
+      {CLINIC_OTHER_SERVICES.length > 0 && (
+        <div className="card">
+          <h2>其他服務</h2>
+          <p className="sub">呢啲服務唔可以靠相片評估，需要醫生現場檢查。</p>
+          {CLINIC_OTHER_SERVICES.map((s) => (
+            <div className="finding" key={s.name}>
+              <div className="top">
+                <b>{s.name}</b>
+              </div>
+              <p>{s.note}</p>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* ── 轉化 ── */}
       <div className="card" style={{ textAlign: 'center' }}>
@@ -169,7 +195,7 @@ export default function MvpResult({
       <div className="disclaimer">
         呢份報告由 AI 根據相片產生，屬<b>初步參考</b>，並非醫學診斷，唔可以取代註冊醫生嘅面對面檢查。
         光線、角度、化妝都會影響判斷。喺香港，注射同高能量儀器療程均須由<b>註冊醫生</b>評估及施行。
-        價格為市場參考區間，實際收費以診所報價為準。
+        顯示「請洽診所」代表該療程價錢未錄入系統；一切收費以診所報價為準。
       </div>
     </>
   );

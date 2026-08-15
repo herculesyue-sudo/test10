@@ -1,4 +1,4 @@
-import type { Treatment } from './types';
+import type { Treatment } from '../types';
 
 /**
  * 香港市場常見注射類療程。

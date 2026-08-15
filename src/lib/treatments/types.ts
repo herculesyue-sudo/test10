@@ -188,8 +188,15 @@ export interface Treatment {
   duration: string;
   /** 停工期（日） */
   downtimeDays: [number, number];
-  /** 香港市場單次參考價（港元），unit 講明計價單位 */
+  /** 單次價（港元），unit 講明計價單位。priceStatus 為 'tbc' 時呢度會被忽略。 */
   priceHKD: { min: number; max: number; unit: string };
+  /**
+   * 'confirmed' = 已由診所核實嘅真實價錢，可以顯示俾客人睇
+   * 'tbc'       = 未填 / 未核實，UI 會顯示「請洽診所」而唔會亂報價
+   *
+   * 預設係 'tbc'：報一個錯價俾客人，好過報一個你冇核實過嘅價。
+   */
+  priceStatus?: 'confirmed' | 'tbc';
   /** 風險等級：low / medium / high */
   risk: 'low' | 'medium' | 'high';
   /** 香港規管註記 */

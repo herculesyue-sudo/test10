@@ -1,6 +1,7 @@
 'use client';
 
 import { FINDING_LABELS, type FindingKey } from '@/lib/treatments/types';
+import { CLINIC_POLICY } from '@/lib/treatments/clinic';
 
 export interface ConsultResponse {
   analysis: {
@@ -40,6 +41,7 @@ export interface ConsultResponse {
     rationale: string;
     flags: string[];
     estCostHKD: { min: number; max: number };
+    priceConfirmed: boolean;
   }[];
   plan: {
     phase: number;
@@ -47,6 +49,7 @@ export interface ConsultResponse {
     timing: string;
     items: ConsultResponse['recommendations'];
     subtotalHKD: { min: number; max: number };
+    hasUnpricedItems: boolean;
   }[];
   meta: {
     model: string;
@@ -81,6 +84,7 @@ const AGING: Record<string, string> = {
 };
 
 const money = (n: number) => `HK$${Math.round(n).toLocaleString()}`;
+const TBC = '請洽診所';
 
 function confLabel(c: number) {
   if (c >= 0.75) return '信心高';
@@ -196,7 +200,10 @@ export default function Report({ data, onReset }: { data: ConsultResponse; onRes
                 ))}
               </div>
               <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: 4 }}>
-                小計約 {money(p.subtotalHKD.min)} – {money(p.subtotalHKD.max)}
+                {p.subtotalHKD.max > 0
+                  ? `小計約 ${money(p.subtotalHKD.min)} – ${money(p.subtotalHKD.max)}`
+                  : `小計：${TBC}`}
+                {p.hasUnpricedItems && p.subtotalHKD.max > 0 && '（部分療程價格未列，實際會更高）'}
               </div>
             </div>
           ))}
@@ -210,12 +217,10 @@ export default function Report({ data, onReset }: { data: ConsultResponse; onRes
             }}
           >
             <b>整體預算估算</b>
-            <b>
-              {money(total.min)} – {money(total.max)}
-            </b>
+            <b>{total.max > 0 ? `${money(total.min)} – ${money(total.max)}` : TBC}</b>
           </div>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: 6, marginBottom: 0 }}>
-            以上為香港市場公開參考價區間，實際收費視乎診所、醫生資歷同用量，請以診所報價為準。
+            價格以診所報價為準。顯示「{TBC}」代表該療程價錢未錄入系統。
           </p>
         </div>
       )}
@@ -223,7 +228,10 @@ export default function Report({ data, onReset }: { data: ConsultResponse; onRes
       {/* ── 逐項療程 ── */}
       <div className="card">
         <h2>療程詳情</h2>
-        <p className="sub">配對分數由本地規則引擎計算（嚴重程度 × 療效權重 × 判斷信心），可追溯。</p>
+        <p className="sub">
+          只包含 {CLINIC_POLICY.name} 實際提供嘅療程。配對分數由本地規則引擎計算
+          （嚴重程度 × 療效權重 × 判斷信心），可追溯。
+        </p>
         {recs.length === 0 && (
           <p style={{ fontSize: '0.88rem', color: 'var(--text-dim)', margin: 0 }}>
             按你嘅條件，暫時冇適合推薦嘅療程。常見原因：
@@ -273,20 +281,28 @@ export default function Report({ data, onReset }: { data: ConsultResponse; onRes
                 </b>
               </span>
               <span>
-                參考價：
+                價錢：
                 <b>
-                  {money(r.treatment.priceHKD.min)}–{money(r.treatment.priceHKD.max)}
+                  {r.priceConfirmed
+                    ? `${money(r.treatment.priceHKD.min)}–${money(r.treatment.priceHKD.max)}`
+                    : TBC}
                 </b>
-                <br />
-                <span style={{ fontSize: '0.72rem' }}>{r.treatment.priceHKD.unit}</span>
+                {r.priceConfirmed && (
+                  <>
+                    <br />
+                    <span style={{ fontSize: '0.72rem' }}>{r.treatment.priceHKD.unit}</span>
+                  </>
+                )}
               </span>
             </div>
-            <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: 8 }}>
-              全期估算：
-              <b style={{ color: 'var(--text)' }}>
-                {money(r.estCostHKD.min)} – {money(r.estCostHKD.max)}
-              </b>
-            </div>
+            {r.priceConfirmed && (
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: 8 }}>
+                全期估算：
+                <b style={{ color: 'var(--text)' }}>
+                  {money(r.estCostHKD.min)} – {money(r.estCostHKD.max)}
+                </b>
+              </div>
+            )}
             {r.treatment.notes && (
               <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: 6 }}>
                 📌 {r.treatment.notes}
