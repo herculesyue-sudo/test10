@@ -40,6 +40,7 @@ export default function MvpResult({
   const totalMax = recs.reduce((s, r) => s + r.estCostHKD.max, 0);
   const anyUnpriced = recs.some((r) => !r.priceConfirmed);
   const showPricing = data.meta.pricingEnabled === true;
+  const uncoveredGoals = (data.goalCoverage ?? []).filter((g) => !g.covered);
 
   return (
     <>
@@ -84,6 +85,14 @@ export default function MvpResult({
           以下全部係 {CLINIC_POLICY.name} 實際提供嘅療程，根據你揀嘅目標同相片分析配對。
           {CLINIC_POLICY.payPerSession && <> {CLINIC_POLICY.payPerSessionNote}。</>}
         </p>
+
+        {uncoveredGoals.length > 0 && recs.length > 0 && (
+          <div className="alert warn" style={{ marginTop: 0 }}>
+            你揀咗嘅<b>{uncoveredGoals.map((g) => g.label).join('、')}</b>，
+            喺呢張相入面觀察唔到明顯相關問題，所以下面嘅建議未有直接針對 ——
+            如果你自己覺得有，面診時同醫生講清楚會準確好多。
+          </div>
+        )}
 
         {recs.length === 0 && (
           <p style={{ fontSize: '0.88rem', color: 'var(--text-dim)', margin: 0 }}>

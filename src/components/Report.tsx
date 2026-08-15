@@ -43,6 +43,7 @@ export interface ConsultResponse {
     estCostHKD: { min: number; max: number };
     priceConfirmed: boolean;
   }[];
+  goalCoverage?: { goal: string; label: string; covered: boolean }[];
   plan: {
     phase: number;
     title: string;

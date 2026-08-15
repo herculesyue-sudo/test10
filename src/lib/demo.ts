@@ -221,6 +221,68 @@ export const DEMO_CASES: DemoCase[] = [
     },
   },
   {
+    id: 'lines',
+    label: '38 歲 · 動態紋同眼周',
+    matches: ['smooth_lines', 'eye_area'],
+    analysis: {
+      imageQuality: { usable: true, lighting: 'good', issues: [], makeupDetected: false },
+      structure: {
+        faceShape: 'oval',
+        faceShapeNote: '鵝蛋面，輪廓比例良好，鬆弛程度輕微，重點應該放喺表情紋同眼周。',
+        symmetryScore: 85,
+        agingPattern: 'minimal',
+        estimatedSkinType: 'III',
+      },
+      findings: [
+        {
+          key: 'glabellar_lines',
+          severity: 68,
+          confidence: 0.86,
+          observation: '眉心兩條垂直紋，靜態時仍然清晰可見，屬習慣性皺眉造成。',
+          location: '眉心',
+        },
+        {
+          key: 'forehead_lines',
+          severity: 60,
+          confidence: 0.84,
+          observation: '額頭有三至四條橫向紋，抬眉時明顯加深。',
+          location: '額頭',
+        },
+        {
+          key: 'crows_feet',
+          severity: 57,
+          confidence: 0.82,
+          observation: '眼尾放射狀細紋，笑起身明顯，靜態時仍見輕微痕跡。',
+          location: '雙側眼尾',
+        },
+        {
+          key: 'tear_trough',
+          severity: 54,
+          confidence: 0.75,
+          observation: '眼下見到淚溝凹陷造成嘅陰影，屬結構型而非色素型。',
+          location: '雙側眼下',
+        },
+        {
+          key: 'dark_circles',
+          severity: 48,
+          confidence: 0.62,
+          observation: '眼下偏暗，部分來自淚溝陰影，亦可能有血管型成分；相片難以完全分辨。',
+          location: '雙側眼下',
+        },
+        {
+          key: 'dehydration',
+          severity: 42,
+          confidence: 0.7,
+          observation: '眼周同面頰有幼細乾紋，光澤度偏低。',
+          location: '眼周、面頰',
+        },
+      ],
+      overallSummary:
+        '你嘅主要問題係表情造成嘅動態紋 —— 眉心、額頭同眼尾，呢啲同肌肉活動有關，唔係鬆弛。眼下嘅暗沉主要來自淚溝陰影（結構型），單靠美白產品幫唔到。面部輪廓同緊緻度仍然良好，暫時唔需要考慮提升類療程。',
+      redFlags: [],
+    },
+  },
+  {
     id: 'redflag',
     label: '需要轉介（紅旗示範）',
     matches: [],
@@ -258,7 +320,14 @@ export const DEMO_CASES: DemoCase[] = [
   },
 ];
 
-/** 按客人揀嘅目標揀最貼題嘅個案；冇揀就用色斑個案。 */
+/**
+ * 按客人揀嘅目標揀最貼題嘅個案；冇揀就用色斑個案。
+ *
+ * 平手時**專一度高嘅贏** —— 涵蓋範圍窄嘅個案（例如淨係針對動態紋同眼周）
+ * 比一個乜都沾少少嘅老化個案更能示範「揀唔同目標會出唔同建議」。
+ * 之前用陣列次序做隱含 tie-break，結果排頭嗰個永遠贏，令新加嘅專門個案
+ * 完全揀唔到。
+ */
 export function pickDemoCase(goals: GoalKey[], forceId?: string): DemoCase {
   if (forceId) {
     const forced = DEMO_CASES.find((c) => c.id === forceId);
@@ -267,11 +336,13 @@ export function pickDemoCase(goals: GoalKey[], forceId?: string): DemoCase {
   if (goals.length === 0) return DEMO_CASES[1];
 
   let best = DEMO_CASES[1];
-  let bestScore = -1;
+  let bestHits = -1;
+  let bestBreadth = Infinity;
   for (const c of DEMO_CASES) {
-    const score = c.matches.filter((m) => goals.includes(m)).length;
-    if (score > bestScore) {
-      bestScore = score;
+    const hits = c.matches.filter((m) => goals.includes(m)).length;
+    if (hits > bestHits || (hits === bestHits && hits > 0 && c.matches.length < bestBreadth)) {
+      bestHits = hits;
+      bestBreadth = c.matches.length;
       best = c;
     }
   }

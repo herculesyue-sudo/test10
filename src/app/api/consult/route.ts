@@ -72,6 +72,21 @@ function stripPlanInternal<T extends { items: ScoredTreatment[] }>(p: T): T {
   return { ...p, items: p.items.map(stripInternal) };
 }
 
+/**
+ * 客人揀咗嘅目標，有邊啲真係有建議覆蓋到。
+ *
+ * 冇覆蓋唔一定係壞事 —— 可能相片睇唔到相關問題，可能診所暫時冇對應療程。
+ * 但客人揀咗「眼周改善」而第一個建議係蘋果肌填充嘅時候，唔講一聲就好似
+ * 冇聽佢講嘢。講清楚反而更可信。
+ */
+function goalCoverage(goals: GoalKey[], shown: ScoredTreatment[]) {
+  const hit = new Set(shown.flatMap((s) => s.targets.map((t) => t.key)));
+  return goals.map((g) => {
+    const def = GOALS.find((x) => x.key === g)!;
+    return { goal: g, label: def.label, covered: def.maps.some((k) => hit.has(k)) };
+  });
+}
+
 export async function POST(req: Request) {
   let body: Body;
   try {
@@ -107,9 +122,11 @@ export async function POST(req: Request) {
       isPregnantOrNursing: body.isPregnantOrNursing,
     });
 
+    const demoShown = presentable(scored);
     return NextResponse.json({
       analysis: demoCase.analysis,
-      recommendations: presentable(scored),
+      recommendations: demoShown,
+      goalCoverage: goalCoverage(goals, demoShown),
       plan: buildPhasedPlan(scored).map(stripPlanInternal),
       meta: {
         model: '（測試模式 · 冇呼叫 AI）',
@@ -186,9 +203,11 @@ export async function POST(req: Request) {
 
     const plan = buildPhasedPlan(scored);
 
+    const shown = presentable(scored);
     return NextResponse.json({
       analysis: result.analysis,
-      recommendations: presentable(scored),
+      recommendations: shown,
+      goalCoverage: goalCoverage(goals, shown),
       plan: plan.map(stripPlanInternal),
       meta: {
         model: result.model,

@@ -227,6 +227,10 @@ console.log('\n── 測試模式示範數據 ──');
 
   // 目標配對：揀「緊緻提升」應該行到老化個案而唔係暗瘡個案
   check('揀緊緻提升 → 老化個案', pickDemoCase(['lift']).id === 'aging');
+  // 平手時專一度高嘅個案要贏，否則新加嘅專門個案永遠揀唔到
+  check('揀撫平皺紋 → 動態紋個案（唔係老化個案）', pickDemoCase(['smooth_lines']).id === 'lines');
+  check('揀眼周改善 → 動態紋個案', pickDemoCase(['eye_area']).id === 'lines');
+  check('揀瘦面 → 老化個案（lines 冇覆蓋）', pickDemoCase(['slim_face']).id === 'aging');
   check('揀暗瘡 → 暗瘡個案', pickDemoCase(['clear_acne']).id === 'acne');
   check('揀美白 → 色斑個案', pickDemoCase(['brighten']).id === 'pigment');
   check('可以指定個案', pickDemoCase(['lift'], 'redflag').id === 'redflag');
