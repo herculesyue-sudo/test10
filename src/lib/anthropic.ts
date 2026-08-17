@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { AnalysisSchema, type Analysis } from './schema';
 import { SYSTEM_PROMPT, buildUserPrompt } from './prompt';
+import { postProcess, usabilityVerdict, type Adjustment } from './postprocess';
 
 export type Tier = 'budget' | 'balanced' | 'max';
 
@@ -89,6 +90,10 @@ export interface AnalyzeResult {
   costHKD: number;
   model: string;
   passes: number;
+  /** 後處理改咗啲乜。空陣列 = 模型完全跟足指示。 */
+  adjustments: Adjustment[];
+  /** 相片夠唔夠好去出報告；唔夠嘅話 UI 應該叫客人重影而唔係扮有結果。 */
+  usability: ReturnType<typeof usabilityVerdict>;
 }
 
 function costOf(tier: Tier, inTok: number, outTok: number): number {
@@ -138,13 +143,21 @@ export async function analyzeOnce(opts: AnalyzeOptions): Promise<AnalyzeResult> 
   const inTok = msg.usage.input_tokens + (msg.usage.cache_creation_input_tokens ?? 0);
   const cacheRead = msg.usage.cache_read_input_tokens ?? 0;
 
+  // 確定性後處理：prompt 求個模型跟嘅規則，喺呢度變成保證。
+  const { analysis, adjustments } = postProcess(msg.parsed_output);
+  if (adjustments.length && process.env.NODE_ENV !== 'production') {
+    console.log(`[postprocess] ${adjustments.length} 項修正：`, adjustments.map((x) => x.rule).join(', '));
+  }
+
   return {
-    analysis: msg.parsed_output,
+    analysis,
+    adjustments,
     usage: { inputTokens: inTok + cacheRead, outputTokens: msg.usage.output_tokens },
     // 快取讀取只收約 10%
     costHKD: costOf(opts.tier, inTok + cacheRead * 0.1, msg.usage.output_tokens),
     model: cfg.model,
     passes: 1,
+    usability: usabilityVerdict(analysis),
   };
 }
 
@@ -162,14 +175,12 @@ export async function analyzeWithConsensus(opts: AnalyzeOptions, passes: number)
 
   const runs = await Promise.all(Array.from({ length: passes }, () => analyzeOnce(opts)));
 
-  const byKey = new Map<string, { sev: number[]; conf: number[]; obs: string[]; loc: string[] }>();
+  type Obs = { sev: number; conf: number; obs: string; loc: string };
+  const byKey = new Map<string, Obs[]>();
   for (const r of runs) {
     for (const f of r.analysis.findings) {
-      const e = byKey.get(f.key) ?? { sev: [], conf: [], obs: [], loc: [] };
-      e.sev.push(f.severity);
-      e.conf.push(f.confidence);
-      e.obs.push(f.observation);
-      e.loc.push(f.location);
+      const e = byKey.get(f.key) ?? [];
+      e.push({ sev: f.severity, conf: f.confidence, obs: f.observation, loc: f.location });
       byKey.set(f.key, e);
     }
   }
@@ -181,24 +192,50 @@ export async function analyzeWithConsensus(opts: AnalyzeOptions, passes: number)
   };
 
   const merged: Analysis['findings'] = [];
-  for (const [key, e] of byKey) {
-    const agreement = e.sev.length / passes;
+  for (const [key, obs] of byKey) {
+    const agreement = obs.length / passes;
     // 少於一半次數先出現嘅 finding 當雜訊丟棄
     if (agreement < 0.5) continue;
+    const medSev = median(obs.map((o) => o.sev));
+    // 描述文字要嚟自「嚴重程度最接近中位數」嗰次，唔可以求其攞第一次。
+    // 攞錯嘅話會出現「severity 70 但段字寫住輕微」呢種自相矛盾嘅報告 ——
+    // 客人唔會睇個數字，佢淨係睇嗰段字。
+    const rep = obs.reduce((best, o) =>
+      Math.abs(o.sev - medSev) < Math.abs(best.sev - medSev) ? o : best,
+    );
     merged.push({
       key: key as Analysis['findings'][number]['key'],
-      severity: Math.round(median(e.sev)),
+      severity: Math.round(medSev),
       // 用「跨次一致率」調整信心：跑幾次都見到 = 真實訊號
-      confidence: Math.min(1, median(e.conf) * (0.6 + 0.4 * agreement)),
-      observation: e.obs[0],
-      location: e.loc[0],
+      confidence: Math.min(1, median(obs.map((o) => o.conf)) * (0.6 + 0.4 * agreement)),
+      observation: rep.obs,
+      location: rep.loc,
     });
   }
   merged.sort((a, b) => b.severity * b.confidence - a.severity * a.confidence);
 
   const base = runs[0];
+
+  // ── redFlags 取聯集，唔可以照抄第一次 ──
+  // 三次入面得一次見到粒痣有問題，最可能係嗰次睇得最仔細，唔係嗰次亂噏。
+  // 呢度嘅錯誤代價完全不對稱：多報一次，客人白行一趟皮膚科；漏報一次，
+  // 可能係一個延誤咗嘅皮膚癌。所以取聯集，唔投票。
+  const redFlags = [...new Set(runs.flatMap((r) => r.analysis.redFlags.map((f) => f.trim())))].filter(Boolean);
+
+  // ── 相片質素取最悲觀 ──
+  // 任何一次覺得唔可用 / 有化妝 / 光線差，就當係咁。相片質素判斷寧枉毋縱：
+  // 高估質素會令低信心嘅觀察扮到可信。
+  const imageQuality: Analysis['imageQuality'] = {
+    usable: runs.every((r) => r.analysis.imageQuality.usable),
+    lighting: (['poor', 'fair', 'good'] as const).find((l) =>
+      runs.some((r) => r.analysis.imageQuality.lighting === l),
+    )!,
+    makeupDetected: runs.some((r) => r.analysis.imageQuality.makeupDetected),
+    issues: [...new Set(runs.flatMap((r) => r.analysis.imageQuality.issues.map((i) => i.trim())))].filter(Boolean),
+  };
+
   return {
-    analysis: { ...base.analysis, findings: merged },
+    analysis: { ...base.analysis, findings: merged, redFlags, imageQuality },
     usage: {
       inputTokens: runs.reduce((s, r) => s + r.usage.inputTokens, 0),
       outputTokens: runs.reduce((s, r) => s + r.usage.outputTokens, 0),
@@ -206,5 +243,7 @@ export async function analyzeWithConsensus(opts: AnalyzeOptions, passes: number)
     costHKD: runs.reduce((s, r) => s + r.costHKD, 0),
     model: base.model,
     passes,
+    adjustments: runs.flatMap((r) => r.adjustments),
+    usability: usabilityVerdict({ ...base.analysis, findings: merged, redFlags, imageQuality }),
   };
 }

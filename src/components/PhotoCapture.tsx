@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { checkPhoto, type PhotoIssue } from '@/lib/photo-check';
 
 export interface Shot {
   angle: string;
@@ -49,13 +50,25 @@ export default function PhotoCapture({
   const inputs = useRef<(HTMLInputElement | null)[]>([]);
   const [busy, setBusy] = useState<number | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [issues, setIssues] = useState<PhotoIssue[]>([]);
 
   async function handle(i: number, file: File | undefined) {
     if (!file) return;
     setErr(null);
+    setIssues([]);
     setBusy(i);
     try {
       const { data, preview } = await normalise(file);
+
+      // 上傳之前先喺本機檢查。太暗 / 太矇嘅相一樣要收足 API 費用，
+      // 然後回一份冇用嘅報告 —— 喺呢度攔住係零成本，而且即刻話到客人知。
+      const check = await checkPhoto(preview);
+      setIssues(check.issues);
+      if (!check.ok) {
+        setBusy(null);
+        return; // 唔收呢張相，等佢重影
+      }
+
       const next = [...shots];
       next[i] = { ...next[i], data, preview, mediaType: 'image/jpeg' };
       onChange(next);
@@ -108,6 +121,20 @@ export default function PhotoCapture({
         ))}
       </div>
       {err && <p style={{ color: 'var(--danger)', fontSize: '0.82rem' }}>{err}</p>}
+      {issues.map((iss, k) => (
+        <p
+          key={k}
+          style={{
+            color: iss.level === 'blocking' ? 'var(--danger)' : 'var(--text-dim)',
+            fontSize: '0.82rem',
+            margin: '6px 0 0',
+            lineHeight: 1.5,
+          }}
+        >
+          {iss.level === 'blocking' ? '⚠️ ' : 'ℹ️ '}
+          {iss.message}
+        </p>
+      ))}
     </>
   );
 }

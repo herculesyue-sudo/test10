@@ -70,10 +70,24 @@ export default function MvpResult({
         </div>
       )}
 
-      {a.imageQuality.makeupDetected && (
+      {/* 相片唔夠好就直接講，唔好扮有結果。一份由爛相產生嘅精美報告，
+          比冇報告更差 —— 客人會信咗，然後帶住錯嘅期望上嚟。 */}
+      {data.usability && !data.usability.ok ? (
         <div className="alert warn">
-          偵測到化妝 —— 色斑同泛紅嘅判斷會冇咁準。素顏重拍會準確好多。
+          <b>⚠️ {data.usability.reason}</b>
+          <p style={{ margin: '6px 0 0', fontSize: '0.85rem' }}>下面嘅結果參考價值有限。重影一張會準確好多：</p>
+          <ul style={{ margin: '6px 0 0', paddingLeft: 18, fontSize: '0.85rem' }}>
+            {data.usability.retakeHints.slice(0, 4).map((h, i) => (
+              <li key={i}>{h}</li>
+            ))}
+          </ul>
         </div>
+      ) : (
+        a.imageQuality.makeupDetected && (
+          <div className="alert warn">
+            偵測到化妝 —— 色斑同泛紅嘅判斷會冇咁準。素顏重拍會準確好多。
+          </div>
+        )
       )}
 
       <div className="card">

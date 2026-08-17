@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { analyzeWithConsensus, TIERS, type ImageInput, type Tier } from '@/lib/anthropic';
+import { postProcess, usabilityVerdict } from '@/lib/postprocess';
 import {
   matchTreatments,
   buildPhasedPlan,
@@ -107,7 +108,12 @@ export async function POST(req: Request) {
     const demoCase = pickDemoCase(goals, body.demoCaseId);
     await new Promise((r) => setTimeout(r, 900)); // 模擬分析延遲，令 loading 畫面測得到
 
-    const findings: Finding[] = demoCase.analysis.findings.map((f) => ({
+    // 示範數據都要行埋後處理同可用性判斷 —— 否則「測試版 = 正式版除咗
+    // 唔叫 AI」呢個承諾就唔成立，測試版會睇唔到真實嘅守門行為。
+    const demoAnalysis = postProcess(demoCase.analysis).analysis;
+    const demoUsability = usabilityVerdict(demoAnalysis);
+
+    const findings: Finding[] = demoAnalysis.findings.map((f) => ({
       key: f.key as Finding['key'],
       severity: f.severity,
       confidence: f.confidence,
@@ -126,9 +132,10 @@ export async function POST(req: Request) {
 
     const demoShown = presentable(scored);
     return NextResponse.json({
-      analysis: demoCase.analysis,
+      analysis: demoAnalysis,
       recommendations: demoShown,
       goalCoverage: goalCoverage(goals, demoShown),
+      usability: demoUsability,
       plan: buildPhasedPlan(scored).map(stripPlanInternal),
       meta: {
         model: '（測試模式 · 冇呼叫 AI）',
@@ -222,6 +229,9 @@ export async function POST(req: Request) {
       analysis: result.analysis,
       recommendations: shown,
       goalCoverage: goalCoverage(goals, shown),
+      // 相片唔夠好嘅時候要照講。之前 usable:false 係計咗出嚟但冇人理 ——
+      // 系統照樣出一份睇落好肯定嘅報告，客人冇任何線索知道唔可信。
+      usability: result.usability,
       plan: plan.map(stripPlanInternal),
       meta: {
         model: result.model,
@@ -231,6 +241,9 @@ export async function POST(req: Request) {
         usage: result.usage,
         costHKD: Number(result.costHKD.toFixed(3)),
         pricingEnabled: PRICING_ENABLED,
+        // 後處理改咗幾多嘢。持續唔係 0 代表個模型開始唔跟指示，
+        // 應該去 eval 睇下係咪要調 prompt —— 唔會顯示俾客人。
+        adjustments: result.adjustments.length,
       },
     });
   } catch (err) {

@@ -38,6 +38,9 @@ import {
   STEP_LABELS,
 } from '../src/lib/funnel';
 import { trackStep, resetTracking } from '../src/lib/track-client';
+import { postProcess, usabilityVerdict } from '../src/lib/postprocess';
+import type { Analysis } from '../src/lib/schema';
+import { analysePixels, THRESHOLDS } from '../src/lib/photo-check';
 
 let failures = 0;
 function check(name: string, cond: boolean, detail = '') {
@@ -282,6 +285,136 @@ console.log('\n── MVP 預約連結 ──');
 
   const bare = buildBookingUrl({ phone: '85212345678', goals: [], treatments: [] });
   check('冇目標冇療程都要出到連結', bare !== null);
+}
+
+console.log('\n── AI 輸出後處理（prompt 求，code 保證）──');
+{
+  const base = (over: Partial<Analysis> = {}): Analysis => ({
+    imageQuality: { usable: true, lighting: 'good', issues: [], makeupDetected: false },
+    structure: {
+      faceShape: 'oval',
+      faceShapeNote: '',
+      symmetryScore: 90,
+      agingPattern: 'minimal',
+      estimatedSkinType: 'III',
+    },
+    findings: [],
+    overallSummary: '（測試）',
+    redFlags: [],
+    ...over,
+  });
+  const fnd = (key: FindingKey, severity: number, confidence: number): Analysis['findings'][number] => ({
+    key,
+    severity,
+    confidence,
+    observation: '(測試)',
+    location: '整體',
+  });
+
+  // ── 化妝一定要壓低膚質信心 ──
+  // prompt 已經叫個模型咁做，但佢唔跟嘅時候冇人知：schema 照樣通過。
+  const makeup = postProcess(
+    base({
+      imageQuality: { usable: true, lighting: 'good', issues: [], makeupDetected: true },
+      findings: [fnd('pigmentation', 70, 0.9), fnd('jowls', 60, 0.9)],
+    }),
+  );
+  const pig = makeup.analysis.findings.find((f) => f.key === 'pigmentation')!;
+  const jowls = makeup.analysis.findings.find((f) => f.key === 'jowls')!;
+  check('化妝 → 色斑信心被壓低', pig.confidence <= 0.45, String(pig.confidence));
+  check('化妝 → 嚴重程度唔變（severity 同 confidence 係兩件事）', pig.severity === 70);
+  check('化妝 → 結構性特徵唔受影響（粉底遮唔到嘴邊肉）', jowls.confidence === 0.9, String(jowls.confidence));
+  check('修正會有紀錄，唔係靜靜雞改', makeup.adjustments.some((x) => x.rule === 'makeup-cap'));
+
+  // ── 光線差 ──
+  const dark = postProcess(
+    base({
+      imageQuality: { usable: true, lighting: 'poor', issues: [], makeupDetected: false },
+      findings: [fnd('redness', 50, 0.9)],
+    }),
+  );
+  check('光線差 → 膚質信心被壓低', dark.analysis.findings[0].confidence <= 0.5);
+
+  // ── 重複 key ──
+  // schema 攔唔到。唔理嘅話配對引擎會將同一個問題計兩次，分數不合理咁高。
+  const dup = postProcess(base({ findings: [fnd('pores', 40, 0.5), fnd('pores', 80, 0.9)] }));
+  check('同一個 key 只保留一項', dup.analysis.findings.length === 1);
+  check('重複時保留權重較高嗰項', dup.analysis.findings[0].severity === 80);
+
+  // ── 雜訊過濾 ──
+  const noisy = postProcess(base({ findings: [fnd('pores', 40, 0.05), fnd('texture', 0, 0.9), fnd('acne_active', 50, 0.8)] }));
+  check('丟走信心過低嘅觀察', !noisy.analysis.findings.some((f) => f.key === 'pores'));
+  check('丟走 severity 為 0 嘅觀察', !noisy.analysis.findings.some((f) => f.key === 'texture'));
+  check('保留正常觀察', noisy.analysis.findings.some((f) => f.key === 'acne_active'));
+
+  // ── 排序 ──
+  const ord = postProcess(base({ findings: [fnd('pores', 90, 0.3), fnd('melasma', 60, 0.9)] }));
+  check(
+    '按 嚴重程度×信心 排序（低信心嘅高分項唔應該排頭）',
+    ord.analysis.findings[0].key === 'melasma',
+    ord.analysis.findings[0].key,
+  );
+
+  // ── redFlags 絕對唔可以被過濾 ──
+  const rf = postProcess(base({ findings: [fnd('pores', 10, 0.01)], redFlags: ['左顴骨有粒邊界模糊嘅痣，建議由醫生檢查'] }));
+  check('redFlags 永遠保留（漏報代價最高）', rf.analysis.redFlags.length === 1);
+
+  // ── 可用性判斷 ──
+  check('模型話唔可用 → 唔可以扮有結果', usabilityVerdict(base({ imageQuality: { usable: false, lighting: 'poor', issues: [], makeupDetected: false } })).ok === false);
+  const noFace = usabilityVerdict(base({ findings: [], redFlags: [] }));
+  check('乜都觀察唔到 → 當唔可用（大機會唔係一張人臉）', noFace.ok === false);
+  check('唔可用時要有重影建議，唔可以淨係話唔得', noFace.retakeHints.length > 0);
+  check('正常相片 → 可用', usabilityVerdict(base({ findings: [fnd('pores', 40, 0.8)] })).ok === true);
+  const mk = usabilityVerdict(base({ imageQuality: { usable: false, lighting: 'good', issues: [], makeupDetected: true } }));
+  check('化妝會出現喺重影建議入面', mk.retakeHints.some((h) => h.includes('素顏')));
+}
+
+console.log('\n── 相片質素預檢（上傳前，慳 API 錢）──');
+{
+  /** 砌一張 RGBA 測試圖。fn 回 0–255 灰階值。 */
+  const make = (w: number, h: number, fn: (x: number, y: number) => number) => {
+    const d = new Array(w * h * 4).fill(255);
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const p = (y * w + x) * 4;
+        const v = fn(x, y);
+        d[p] = d[p + 1] = d[p + 2] = v;
+      }
+    }
+    return d;
+  };
+  const N = 64;
+
+  const flatMid = analysePixels(make(N, N, () => 128), N, N);
+  check('平坦灰圖：亮度準確', Math.abs(flatMid.brightness - 128) < 1, String(flatMid.brightness));
+  check('平坦圖冇邊緣 → 判定為矇', flatMid.sharpness < THRESHOLDS.BLURRY, String(flatMid.sharpness));
+
+  const dark = analysePixels(make(N, N, () => 20), N, N);
+  check('全黑圖 → 低過過暗門檻', dark.brightness < THRESHOLDS.DARK, String(dark.brightness));
+
+  const blown = analysePixels(make(N, N, () => 250), N, N);
+  check('過曝圖 → 高過過亮門檻', blown.brightness > THRESHOLDS.BRIGHT, String(blown.brightness));
+
+  // 棋盤格 = 最高頻細節，代表對焦準嘅相
+  const sharp = analysePixels(make(N, N, (x, y) => ((x + y) % 2 ? 220 : 40)), N, N);
+  check('高細節圖 → 判定為清晰', sharp.sharpness > THRESHOLDS.BLURRY, String(sharp.sharpness));
+  check('清晰圖嘅方差遠高於矇圖', sharp.sharpness > flatMid.sharpness * 10);
+
+  // 緩慢漸變 = 失焦嘅相，唔應該當成清晰
+  const gradient = analysePixels(make(N, N, (x) => 40 + (x / N) * 180), N, N);
+  check('緩慢漸變（失焦）→ 判定為矇', gradient.sharpness < THRESHOLDS.BLURRY, String(gradient.sharpness));
+
+  // 亮度用 Rec.709 加權，唔係三通道求其平均 —— 純綠應該遠光過純藍
+  const chan = (r: number, g: number, b: number) => {
+    const d = new Array(N * N * 4).fill(255);
+    for (let i = 0; i < N * N; i++) {
+      d[i * 4] = r;
+      d[i * 4 + 1] = g;
+      d[i * 4 + 2] = b;
+    }
+    return analysePixels(d, N, N).brightness;
+  };
+  check('亮度用 Rec.709 加權（綠 > 紅 > 藍）', chan(0, 255, 0) > chan(255, 0, 0) && chan(255, 0, 0) > chan(0, 0, 255));
 }
 
 console.log('\n── 速率限制 ──');

@@ -44,6 +44,7 @@ export interface ConsultResponse {
     priceConfirmed: boolean;
   }[];
   goalCoverage?: { goal: string; label: string; covered: boolean }[];
+  usability?: { ok: boolean; reason?: string; retakeHints: string[] };
   plan: {
     phase: number;
     title: string;
