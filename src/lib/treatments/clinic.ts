@@ -25,6 +25,22 @@ import type { Treatment } from './types';
 
 const DOCTOR_ONLY = '香港：須由註冊醫生施行（衞生署高風險美容程序）';
 
+/**
+ * 診所同時備有多隻牌子。
+ *
+ * 香港客人好多時係直接 search 品牌名（「邊度打 Xeomin」、「Juvederm 邊間平」），
+ * 所以品牌一定要寫出嚟 —— 唔寫等於喺搜尋結果度隱形。
+ *
+ * 但唔可以喺報告度幫客人指定咗用邊隻：揀邊隻係醫生按部位、劑量、
+ * 皮膚厚度同過往反應決定嘅臨床判斷。所以呢度列齊選擇，然後由 notes
+ * 講明「由醫生揀」。
+ */
+const BTX_BRANDS = 'Botox (Allergan) · Dysport (Galderma) · Xeomin (Merz)';
+const BTX_NOTE = '診所三隻牌子都有（Botox / Dysport / Xeomin），由醫生按部位、劑量同你過往反應揀。三者擴散性同起效時間略有分別，效果本身冇高低之分。';
+
+const HA_BRANDS = 'Juvederm (Allergan) · Belotero (Merz)';
+const HA_NOTE = '診所備有 Juvederm 同 Belotero 系列。唔同部位需要唔同硬度（G prime）—— 下巴要撐得起，淚溝要夠軟先唔會凹凸，所以由醫生按部位揀，唔係邊隻貴就邊隻好。';
+
 /** 診所定位：單次消費，唔綁療程套票。 */
 export const CLINIC_POLICY = {
   name: 'Dr Timeless',
@@ -98,12 +114,12 @@ export const CLINIC_TREATMENTS: Treatment[] = [
   // ══════════════════ 超聲波提升 ══════════════════
   {
     id: 'ultraformer',
-    name: 'Ultraformer 聚焦超聲波提升',
-    brand: 'Ultraformer (Classys)',
+    name: 'Ultraformer MPT 聚焦超聲波提升',
+    brand: 'Ultraformer MPT (Classys)',
     category: 'device',
     family: '微聚焦超聲波 (HIFU)',
     mechanism:
-      '多種深度探頭（1.5–13mm）將超聲波能量聚焦於真皮至 SMAS 筋膜層，造成熱凝固點刺激膠原收縮同新生；深層探頭亦可作局部溶脂。',
+      '多種深度探頭（1.5–13mm）將超聲波能量聚焦於真皮至 SMAS 筋膜層，造成熱凝固點刺激膠原收縮同新生；深層探頭亦可作局部溶脂。MPT 型號可調節發數密度同速度，痛感較上一代低。',
     indications: [
       { key: 'skin_laxity', efficacy: 5 },
       { key: 'jowls', efficacy: 5 },
@@ -122,8 +138,8 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     risk: 'medium',
     regulation: DOCTOR_ONLY,
     contraindications: ['懷孕', '治療區金屬植入物 / 心臟起搏器', '嚴重活躍暗瘡', '面部填充劑未穩定（建議相隔 2 週）'],
-    notes: '按「發數」計，但比較發數要留意探頭深度，唔淨係睇總數。',
-    internalNote: '型號係 Ultraformer III 定 MPT？兩者探頭同計價唔同，落價錢嗰陣要分清楚。',
+    notes: '按「發數」計，但比較發數要留意探頭深度，唔淨係睇總數 —— 同樣 300 發，深層探頭同淺層探頭做出嚟嘅效果差好遠。',
+    internalNote: 'MPT 已確認。落價錢嗰陣記住 MPT 同 III 嘅發數計價唔同，唔好照抄舊價目表。',
   },
 
   // ══════════════════ 溶脂 / 身體塑形 ══════════════════
@@ -230,7 +246,7 @@ export const CLINIC_TREATMENTS: Treatment[] = [
   {
     id: 'btx-masseter',
     name: '肉毒瘦面（咬肌）',
-    brand: '',
+    brand: BTX_BRANDS,
     category: 'injectable',
     family: '肉毒桿菌素 (Botulinum Toxin A)',
     mechanism: '阻斷神經肌肉訊號，令肥大嘅咬肌逐步萎縮，面部下半部收窄。',
@@ -248,13 +264,13 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     risk: 'medium',
     regulation: DOCTOR_ONLY,
     contraindications: ['懷孕/哺乳', '神經肌肉疾病（如重症肌無力）', '注射部位感染', '對配方成分過敏'],
-    notes: '劑量或位置唔啱可致咀嚼無力、面頰凹陷、笑容不對稱。',
-    internalNote: '請補充品牌（Botox / Dysport / Xeomin / Botulax / Nabota）—— 客人好多時會指定。',
+    notes: `劑量或位置唔啱可致咀嚼無力、面頰凹陷、笑容不對稱。${BTX_NOTE}`,
+    internalNote: '品牌已確認：Botox / Dysport / Xeomin 三隻都有。落價錢嗰陣三隻應該係唔同價，可能要拆做三個條目 —— 睇你想唔想喺報告度俾客人揀。',
   },
   {
     id: 'btx-upper-face',
     name: '肉毒除皺（上面部）',
-    brand: '',
+    brand: BTX_BRANDS,
     category: 'injectable',
     family: '肉毒桿菌素 (Botulinum Toxin A)',
     mechanism: '放鬆額肌、皺眉肌、眼輪匝肌，撫平因表情產生嘅動態紋。',
@@ -275,13 +291,13 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     risk: 'medium',
     regulation: DOCTOR_ONLY,
     contraindications: ['懷孕/哺乳', '神經肌肉疾病', '注射部位感染'],
-    notes: '適合仍有彈性嘅動態紋；已成形嘅靜態深紋需要配合填充或激光。眼皮下垂為已知風險。',
-    internalNote: '請補充品牌，同確認係咪按「部位」計價。',
+    notes: `適合仍有彈性嘅動態紋；已成形嘅靜態深紋需要配合填充或激光。眼皮下垂為已知風險。${BTX_NOTE}`,
+    internalNote: '品牌已確認（Botox / Dysport / Xeomin）。仲要確認係咪按「部位」計價、定係按單位（unit）計 —— Dysport 嘅單位換算同另外兩隻唔同，唔講清楚客人會以為平咗。',
   },
   {
     id: 'btx-microtox',
     name: '微滴肉毒（水光肉毒）',
-    brand: '',
+    brand: BTX_BRANDS,
     category: 'injectable',
     family: '肉毒桿菌素 (Botulinum Toxin A)',
     mechanism: '極稀釋劑量淺層注射真皮，收細毛孔、減少油脂分泌、提升皮膚光澤。',
@@ -300,14 +316,15 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     risk: 'medium',
     regulation: DOCTOR_ONLY,
     contraindications: ['懷孕/哺乳', '神經肌肉疾病', '注射部位感染'],
-    internalNote: '診所有冇做呢項？如果冇就刪除。',
+    notes: BTX_NOTE,
+    internalNote: '品牌已確認。但「診所有冇做微滴肉毒」仲未答 —— 如果冇做就要刪除呢個條目，否則個工具會推薦一個你唔提供嘅療程。',
   },
 
   // ══════════════════ 透明質酸填充 ══════════════════
   {
     id: 'ha-midface',
     name: '透明質酸填充（中面部 / 蘋果肌）',
-    brand: '',
+    brand: HA_BRANDS,
     category: 'injectable',
     family: '透明質酸 (Hyaluronic Acid)',
     mechanism: '深層補充流失容積，重建中面部支撐；中面部有咗支撐，法令紋同下垂會一併改善。',
@@ -327,13 +344,13 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     risk: 'high',
     regulation: DOCTOR_ONLY,
     contraindications: ['懷孕/哺乳', '自體免疫疾病活躍期', '注射區感染或發炎', '對透明質酸/利多卡因過敏'],
-    notes: '最嚴重風險為血管栓塞致皮膚壞死或失明；必須由熟悉解剖嘅醫生施行，並須備有溶解酶。',
-    internalNote: '請補充品牌（Juvederm Voluma / Restylane Lyft / Teosyal 等）同計價單位（每 cc 定每支）。',
+    notes: '最嚴重風險為血管栓塞致皮膚壞死或失明；必須由熟悉解剖嘅醫生施行，並須備有溶解酶。' + HA_NOTE,
+    internalNote: '品牌系列已確認（Juvederm / Belotero）。中面部一般用高支撐款（Juvederm Voluma 級數）—— 確認下實際入邊隻，同計價單位係每 cc 定每支。',
   },
   {
     id: 'ha-tear-trough',
     name: '透明質酸淚溝填充',
-    brand: '',
+    brand: HA_BRANDS,
     category: 'injectable',
     family: '透明質酸 (Hyaluronic Acid)',
     mechanism: '填補眼下凹陷，減少陰影造成嘅「黑眼圈」觀感。',
@@ -352,13 +369,13 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     risk: 'high',
     regulation: DOCTOR_ONLY,
     contraindications: ['嚴重眼袋（脂肪疝出）', '甲狀腺眼病', '懷孕/哺乳', '注射區感染'],
-    notes: '眼下皮膚薄，易現丁達爾效應（藍光）同水腫。色素型黑眼圈填充無效，要用激光處理。',
-    internalNote: '請補充品牌（Restylane / Belotero Balance / Teosyal Redensity II 等）。',
+    notes: '眼下皮膚薄，易現丁達爾效應（藍光）同水腫。色素型黑眼圈填充無效，要用激光處理。' + HA_NOTE,
+    internalNote: '品牌系列已確認。淚溝一般用最軟嘅款（Belotero Balance / Soft 級數）—— 確認下實際入邊隻。',
   },
   {
     id: 'ha-chin-jaw',
     name: '透明質酸下巴 / 下顎線塑形',
-    brand: '',
+    brand: HA_BRANDS,
     category: 'injectable',
     family: '透明質酸 (Hyaluronic Acid)',
     mechanism: '高支撐力配方延長下巴、勾勒下顎線，改善側面線條、短下巴同嘴角下垂。',
@@ -378,12 +395,13 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     risk: 'high',
     regulation: DOCTOR_ONLY,
     contraindications: ['懷孕/哺乳', '注射區感染', '嚴重咬合問題（應先見牙科 / 正頜）'],
-    internalNote: '請補充品牌（Juvederm Volux / Restylane Defyne 等）。',
+    notes: HA_NOTE,
+    internalNote: '品牌系列已確認。下巴／下顎線要最高支撐力（Juvederm Volux 級數）—— 確認下實際入邊隻。',
   },
   {
     id: 'ha-temple',
     name: '透明質酸太陽穴填充',
-    brand: '',
+    brand: HA_BRANDS,
     category: 'injectable',
     family: '透明質酸 (Hyaluronic Acid)',
     mechanism: '補充顳部凹陷，令上面部飽滿、面形線條更順滑。',
@@ -401,13 +419,13 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     risk: 'high',
     regulation: DOCTOR_ONLY,
     contraindications: ['懷孕/哺乳', '注射區感染'],
-    notes: '顳部血管豐富，屬高風險注射區。',
-    internalNote: '請補充品牌。',
+    notes: '顳部血管豐富，屬高風險注射區。' + HA_NOTE,
+    internalNote: '品牌系列已確認（Juvederm / Belotero）。',
   },
   {
     id: 'ha-lip',
     name: '透明質酸豐唇',
-    brand: '',
+    brand: HA_BRANDS,
     category: 'injectable',
     family: '透明質酸 (Hyaluronic Acid)',
     mechanism: '增加唇部容積、修飾唇珠同唇緣線條。',
@@ -425,8 +443,8 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     risk: 'medium',
     regulation: DOCTOR_ONLY,
     contraindications: ['活躍唇皰疹', '懷孕/哺乳', '注射區感染'],
-    notes: '有唇皰疹病史者宜術前預防性服抗病毒藥。',
-    internalNote: '診所有冇做豐唇？如果冇就刪除。請補充品牌（Juvederm Volift / Restylane Kysse 等）。',
+    notes: '有唇皰疹病史者宜術前預防性服抗病毒藥。' + HA_NOTE,
+    internalNote: '品牌系列已確認。但「診所有冇做豐唇」仲未答 —— 冇做就要刪除呢個條目。',
   },
 
   // ══════════════════ 美白 ══════════════════

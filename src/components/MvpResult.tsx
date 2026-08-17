@@ -112,6 +112,13 @@ export default function MvpResult({
               </div>
             </div>
             <p>{r.rationale}</p>
+            {/* 客人見到「Botox · Dysport · Xeomin」三個名而冇解釋，會當係含糊；
+                有咗「由醫生按部位揀」呢句，同一份資料就變咗賣點。 */}
+            {r.treatment.notes && (
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-dim)', margin: '0 0 8px' }}>
+                📌 {r.treatment.notes}
+              </p>
+            )}
             <div className="meta">
               <span>
                 次數：<b>{r.treatment.sessions}</b>
