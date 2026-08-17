@@ -20,6 +20,24 @@ import { CLINIC_TREATMENTS } from '../src/lib/treatments/clinic';
 import type { Finding, FindingKey } from '../src/lib/treatments';
 import { buildBookingUrl } from '../src/lib/booking';
 import { DEMO_CASES, pickDemoCase } from '../src/lib/demo';
+import {
+  checkRateLimit,
+  recordUsage,
+  usageSnapshot,
+  clientIp,
+  setRateLimitStore,
+  createMemoryStore,
+} from '../src/lib/ratelimit';
+import {
+  track,
+  funnelSnapshot,
+  conversionRates,
+  setFunnelStore,
+  createMemoryFunnel,
+  FUNNEL_STEPS,
+  STEP_LABELS,
+} from '../src/lib/funnel';
+import { trackStep, resetTracking } from '../src/lib/track-client';
 
 let failures = 0;
 function check(name: string, cond: boolean, detail = '') {
@@ -254,6 +272,164 @@ console.log('\n── MVP 預約連結 ──');
 
   const bare = buildBookingUrl({ phone: '85212345678', goals: [], treatments: [] });
   check('冇目標冇療程都要出到連結', bare !== null);
+}
+
+console.log('\n── 速率限制 ──');
+{
+  const req = (ip?: string, real?: string) =>
+    new Request('http://localhost/api/consult', {
+      headers: {
+        ...(ip ? { 'x-forwarded-for': ip } : {}),
+        ...(real ? { 'x-real-ip': real } : {}),
+      },
+    });
+
+  const CFG = { perIp: 3, windowSec: 3600, dailyTotal: 5 };
+
+  // ── 每個 IP 嘅窗口 ──
+  setRateLimitStore(createMemoryStore());
+  const a = req('1.1.1.1');
+  let allowed = 0;
+  for (let i = 0; i < 5; i++) {
+    if (checkRateLimit(a, CFG).ok) {
+      allowed++;
+      recordUsage(a);
+    }
+  }
+  check('同一 IP 只放行 perIp 次', allowed === CFG.perIp, `放行咗 ${allowed} 次`);
+
+  const blocked = checkRateLimit(a, CFG);
+  check('超額之後會擋', !blocked.ok);
+  check('擋嗰陣有 Retry-After 秒數', (blocked.retryAfterSec ?? 0) > 0, String(blocked.retryAfterSec));
+  check('擋嗰陣有俾人睇嘅原因', Boolean(blocked.reason?.length));
+
+  // 唔同 IP 唔應該互相拖累 —— 一個人濫用唔可以封晒所有客人
+  check('第二個 IP 唔受影響', checkRateLimit(req('2.2.2.2'), CFG).ok);
+
+  // ── 驗證失敗唔應該食額度 ──
+  setRateLimitStore(createMemoryStore());
+  const b = req('3.3.3.3');
+  for (let i = 0; i < 10; i++) checkRateLimit(b, CFG); // 淨係 check，冇 recordUsage
+  check('淨係 check 唔會食額度（相片驗證失敗唔應該罰客人）', checkRateLimit(b, CFG).ok);
+
+  // ── 窗口過期 ──
+  setRateLimitStore(createMemoryStore());
+  const c = req('4.4.4.4');
+  // dailyTotal 要放鬆 —— 每日上限係先查嘅，唔隔離就會測緊錯嘅嘢
+  const ZERO = { ...CFG, windowSec: 0, dailyTotal: 1000 };
+  for (let i = 0; i < 10; i++) recordUsage(c);
+  check('窗口過咗就恢復', checkRateLimit(c, ZERO).ok);
+
+  // ── 全站每日總量：分散式濫用嘅硬上限 ──
+  setRateLimitStore(createMemoryStore());
+  for (let i = 0; i < CFG.dailyTotal; i++) recordUsage(req(`10.0.0.${i}`)); // 每個 IP 只用一次
+  const fresh = req('10.0.0.99');
+  const capped = checkRateLimit(fresh, CFG);
+  check('每日總量爆咗，全新 IP 都要擋', !capped.ok);
+  check('每日上限嘅 Retry-After 會等到明日', (capped.retryAfterSec ?? 0) > 0);
+  check(
+    '每日上限訊息會引導客人預約（唔好淨係話 error）',
+    capped.reason?.includes('WhatsApp') === true,
+    capped.reason,
+  );
+
+  const snap = usageSnapshot(CFG);
+  check('usageSnapshot 睇到今日用量', snap.today === CFG.dailyTotal && snap.dailyLimit === CFG.dailyTotal,
+    JSON.stringify(snap));
+
+  // ── clientIp 解析 ──
+  check('x-forwarded-for 取最左邊嗰個', clientIp(req('9.9.9.9, 10.0.0.1, 172.16.0.1')) === '9.9.9.9');
+  check('冇 xff 就用 x-real-ip', clientIp(req(undefined, '8.8.8.8')) === '8.8.8.8');
+  check('乜都冇就 fallback 共用額度（好過完全冇限制）', clientIp(req()) === 'unknown');
+
+  setRateLimitStore(createMemoryStore()); // 唔好污染後面
+}
+
+console.log('\n── 漏斗統計 ──');
+{
+  setFunnelStore(createMemoryFunnel());
+
+  check(
+    '每個步驟都有中文標籤',
+    FUNNEL_STEPS.every((s) => Boolean(STEP_LABELS[s])),
+    FUNNEL_STEPS.filter((s) => !STEP_LABELS[s]).join(','),
+  );
+
+  track('page_view', '2026-01-01');
+  track('page_view', '2026-01-01');
+  track('photo_added', '2026-01-01');
+  const snap = funnelSnapshot();
+  check('計數正確', snap['2026-01-01']?.page_view === 2 && snap['2026-01-01']?.photo_added === 1,
+    JSON.stringify(snap));
+
+  const rates = conversionRates({ page_view: 100, photo_added: 50, goals_selected: 40, booking_clicked: 4 });
+  const photo = rates.find((r) => r.step === 'photo_added')!;
+  check('通過率相對上一步', Math.abs((photo.fromPrev ?? 0) - 0.5) < 1e-9, String(photo.fromPrev));
+  const booking = rates.find((r) => r.step === 'booking_clicked')!;
+  check('通過率相對頂部', Math.abs((booking.fromTop ?? 0) - 0.04) < 1e-9, String(booking.fromTop));
+
+  // 零流量嗰陣唔可以出 NaN / Infinity，否則個 dashboard 一開就係垃圾
+  const empty = conversionRates({});
+  check('零流量唔會出 NaN', empty.every((r) => r.fromPrev === null || Number.isFinite(r.fromPrev)));
+  check('零流量嘅 fromTop 係 null 而唔係 0/0', empty.every((r) => r.fromTop === null));
+
+  // 保留期：長期跑落去唔可以無限食記憶體
+  setFunnelStore(createMemoryFunnel());
+  for (let i = 1; i <= 40; i++) track('page_view', `2026-02-${String(i).padStart(2, '0')}`);
+  const kept = Object.keys(funnelSnapshot());
+  check('只保留最近 30 日', kept.length === 30, `保留咗 ${kept.length} 日`);
+  check('刮走最舊嗰啲', !kept.includes('2026-02-01') && !kept.includes('2026-02-10'));
+  check('留低最新嗰日（最新嘅數據唔可以被刮走）', kept.includes('2026-02-40'));
+  check('snapshot 由新到舊排', kept[0] === '2026-02-40', kept[0]);
+
+  setFunnelStore(createMemoryFunnel());
+}
+
+console.log('\n── 前端埋點 ──');
+{
+  // trackStep 靠 window 判斷係咪喺瀏覽器；喺 node 度模擬一個
+  const g = globalThis as unknown as { window?: unknown; fetch: typeof fetch };
+  const realFetch = g.fetch;
+  let calls: string[] = [];
+  g.window = {};
+  g.fetch = (async (_url: string, init?: RequestInit) => {
+    calls.push(JSON.parse(String(init?.body)).step);
+    return new Response('{}');
+  }) as unknown as typeof fetch;
+
+  resetTracking();
+  calls = [];
+  trackStep('goals_selected');
+  trackStep('goals_selected');
+  trackStep('goals_selected');
+  check('同一步驟每個 session 只計一次', calls.length === 1, `送咗 ${calls.length} 次`);
+
+  trackStep('photo_added');
+  check('唔同步驟各自計一次', calls.length === 2 && calls[1] === 'photo_added', calls.join(','));
+
+  resetTracking();
+  calls = [];
+  trackStep('goals_selected');
+  check('resetTracking 之後可以再計（再分析一次）', calls.length === 1);
+
+  calls = [];
+  trackStep('analyze_failed', { once: false });
+  trackStep('analyze_failed', { once: false });
+  check('once:false 可以重複計', calls.length === 2, String(calls.length));
+
+  // 統計壞咗唔應該炸死個工具
+  g.fetch = (() => Promise.reject(new Error('network down'))) as unknown as typeof fetch;
+  resetTracking();
+  let threw = false;
+  try {
+    trackStep('page_view');
+  } catch {
+    threw = true;
+  }
+  check('埋點失敗唔會拋錯（唔可以阻到客人用）', !threw);
+
+  g.fetch = realFetch;
+  delete g.window;
 }
 
 console.log(failures === 0 ? '\n✅ 全部通過\n' : `\n❌ ${failures} 項失敗\n`);

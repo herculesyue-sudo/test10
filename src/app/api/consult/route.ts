@@ -11,6 +11,7 @@ import {
   type ScoredTreatment,
 } from '@/lib/treatments';
 import { pickDemoCase, DEMO_CASES } from '@/lib/demo';
+import { checkRateLimit, recordUsage, usageSnapshot } from '@/lib/ratelimit';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -23,6 +24,7 @@ export async function GET() {
   return NextResponse.json({
     demo: DEMO,
     cases: DEMO ? DEMO_CASES.map((c) => ({ id: c.id, label: c.label })) : [],
+    usage: usageSnapshot(),
   });
 }
 
@@ -164,6 +166,18 @@ export async function POST(req: Request) {
       angle: img.angle || '相片',
     });
   }
+
+  // ── 速率限制 ──
+  // 放喺相片驗證之後：格式錯嘅請求唔應該食客人額度，但要喺呼叫 API 之前，
+  // 因為呢個 endpoint 每次呼叫都真金白銀。
+  const limit = checkRateLimit(req);
+  if (!limit.ok) {
+    return NextResponse.json(
+      { error: limit.reason },
+      { status: 429, headers: { 'Retry-After': String(limit.retryAfterSec ?? 3600) } },
+    );
+  }
+  recordUsage(req);
 
   // ── 驗證其他輸入 ──
   const tier: Tier = body.tier && body.tier in TIERS ? body.tier : ((process.env.CONSULT_TIER as Tier) ?? 'balanced');

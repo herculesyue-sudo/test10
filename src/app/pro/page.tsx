@@ -4,6 +4,7 @@ import { useState } from 'react';
 import PhotoCapture, { DEFAULT_SHOTS, type Shot } from '@/components/PhotoCapture';
 import Report, { type ConsultResponse } from '@/components/Report';
 import { useDemoMode, DemoBanner, DemoCasePicker } from '@/components/DemoMode';
+import Consent from '@/components/Consent';
 import { GOALS, type GoalKey } from '@/lib/treatments/types';
 import { PRICING_ENABLED } from '@/lib/treatments';
 
@@ -19,6 +20,7 @@ export default function Page() {
   const demo = useDemoMode();
   const isDemo = demo?.demo === true;
   const [demoCaseId, setDemoCaseId] = useState<string | undefined>();
+  const [consented, setConsented] = useState(false);
   const [step, setStep] = useState<Step>('photo');
   const [shots, setShots] = useState<Shot[]>(DEFAULT_SHOTS);
   const [goals, setGoals] = useState<GoalKey[]>([]);
@@ -76,6 +78,7 @@ export default function Page() {
   function reset() {
     setShots(DEFAULT_SHOTS);
     setGoals([]);
+    setConsented(false);
     setNotes('');
     setData(null);
     setError(null);
@@ -226,6 +229,8 @@ export default function Page() {
             <DemoCasePicker cases={demo.cases} value={demoCaseId} onChange={setDemoCaseId} />
           )}
 
+          {!isDemo && <Consent checked={consented} onChange={setConsented} />}
+
           <div className="card">
             <h2>4. 分析模式</h2>
             <p className="sub">準確度同成本嘅取捨。診所自用建議「推薦」；免費體驗版可用「經濟」。</p>
@@ -248,8 +253,13 @@ export default function Page() {
             <button className="ghost" onClick={() => setStep('photo')}>
               上一步
             </button>
-            <button className="primary" style={{ marginTop: 0 }} onClick={submit}>
-              開始分析
+            <button
+              className="primary"
+              style={{ marginTop: 0 }}
+              onClick={submit}
+              disabled={!isDemo && !consented}
+            >
+              {isDemo || consented ? '開始分析' : '請先取得客人同意'}
             </button>
           </div>
         </>

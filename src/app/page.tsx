@@ -13,11 +13,13 @@
  * 測試模式（DEMO_MODE=1）之下唔使影相、唔使 API key、零成本。
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import PhotoCapture, { type Shot } from '@/components/PhotoCapture';
 import MvpResult, { type ConsultResponse } from '@/components/MvpResult';
 import { useDemoMode, DemoBanner, DemoCasePicker } from '@/components/DemoMode';
+import Consent from '@/components/Consent';
 import { GOALS, type GoalKey } from '@/lib/treatments/types';
+import { trackStep, resetTracking } from '@/lib/track-client';
 
 const ONE_SHOT: Shot[] = [{ angle: '正面', label: '正面自拍', required: true }];
 
@@ -28,13 +30,26 @@ export default function Page() {
   const [shots, setShots] = useState<Shot[]>(ONE_SHOT);
   const [goals, setGoals] = useState<GoalKey[]>([]);
   const [demoCaseId, setDemoCaseId] = useState<string | undefined>();
+  const [consented, setConsented] = useState(false);
   const [busy, setBusy] = useState(false);
   const [data, setData] = useState<ConsultResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => trackStep('page_view'), []);
+  useEffect(() => {
+    if (shots[0]?.data) trackStep('photo_added');
+  }, [shots]);
+  useEffect(() => {
+    if (goals.length > 0) trackStep('goals_selected');
+  }, [goals]);
+  useEffect(() => {
+    if (consented) trackStep('consented');
+  }, [consented]);
+
   const hasPhoto = Boolean(shots[0]?.data);
   // 測試模式唔需要相片 —— 冇相都要試得到，否則測試版本身就有門檻
-  const ready = (isDemo || hasPhoto) && goals.length > 0;
+  // 測試模式冇真實相片，唔需要同意；正式模式一定要先同意先可以傳相
+  const ready = (isDemo || (hasPhoto && consented)) && goals.length > 0;
 
   function toggle(g: GoalKey) {
     setGoals((p) => (p.includes(g) ? p.filter((x) => x !== g) : [...p, g]));
@@ -43,6 +58,7 @@ export default function Page() {
   async function submit() {
     setError(null);
     setBusy(true);
+    trackStep('analyze_started');
     try {
       const res = await fetch('/api/consult', {
         method: 'POST',
@@ -58,9 +74,11 @@ export default function Page() {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? '分析失敗');
+      trackStep('analyze_succeeded');
       setData(json);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (e) {
+      trackStep('analyze_failed');
       setError((e as Error).message);
     } finally {
       setBusy(false);
@@ -68,8 +86,10 @@ export default function Page() {
   }
 
   function reset() {
+    resetTracking();
     setShots(ONE_SHOT);
     setGoals([]);
+    setConsented(false);
     setData(null);
     setError(null);
     window.scrollTo({ top: 0 });
@@ -128,6 +148,8 @@ export default function Page() {
         <DemoCasePicker cases={demo.cases} value={demoCaseId} onChange={setDemoCaseId} />
       )}
 
+      {!isDemo && <Consent checked={consented} onChange={setConsented} />}
+
       <button className="primary" disabled={!ready || busy} onClick={submit}>
         {busy
           ? isDemo
@@ -139,7 +161,9 @@ export default function Page() {
               : '免費分析'
             : !isDemo && !hasPhoto
               ? '請先影相'
-              : '請揀最少一項'}
+              : goals.length === 0
+                ? '請揀最少一項'
+                : '請先同意相片處理說明'}
       </button>
 
       <p style={{ fontSize: '0.74rem', color: 'var(--text-dim)', textAlign: 'center', marginTop: 14 }}>

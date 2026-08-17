@@ -204,6 +204,50 @@ npm run eval -- --tier balanced --passes 1
 
 **隱私**：相片經 API route 直接轉發俾 Anthropic，唔會寫入伺服器磁碟、唔會入資料庫。如果要加儲存功能（例如療程前後對比），要另外處理《個人資料（私隱）條例》嘅同意書同保留期。
 
+### 私隱同意（`src/components/Consent.tsx`）
+
+相片係《個人資料（私隱）條例》下嘅個人資料，而且會傳去香港境外嘅第三方（Anthropic）。
+客人**要先剔咗同意**先撳得分析 —— 兩個版本（`/` 同 `/pro`）都有呢個閘。
+
+- 預設**唔剔**。預先剔好嘅同意，喺私隱法下等於冇同意過
+- 摺埋嘅詳情列明：用途、會傳去邊、保留幾耐、唔會做嘅嘢、客人嘅權利
+- 測試模式（`DEMO_MODE=1`）冇真實相片，所以唔會出呢個閘
+
+> ⚠️ 如果日後加咗相片儲存（前後對比、客人檔案），`Consent.tsx` 入面「唔會儲存」嗰句就變咗**虛假陳述**，一定要同步改。檔案入面有註明。
+
+### 速率限制（`src/lib/ratelimit.ts`）
+
+`/api/consult` 係公開 endpoint，每次呼叫都燒錢。兩層防護：
+
+| 層 | 環境變數 | 預設 | 擋咩 |
+|---|---|---|---|
+| 每個 IP 滑動窗口 | `RATE_LIMIT_PER_IP` / `RATE_LIMIT_WINDOW_SEC` | 5 次 / 小時 | 單一來源濫用 |
+| 全站每日總量 | `RATE_LIMIT_DAILY_TOTAL` | 500 次 / 日 | 分散式濫用同你自己個 bug |
+
+第二層先係「**最壞情況會蝕幾多**」嘅硬保證。用預設值 + budget 模式，最壞情況大約 HK$25 一日。
+
+- 只喺真正呼叫 API 嗰刻先計數 —— 相片驗證失敗唔會食客人額度
+- 被擋時回 `429` 連 `Retry-After`，文案會引導客人直接 WhatsApp 預約（擋人都要擋得有轉化）
+- ⚠️ **記憶體實作**：Vercel 呢類 serverless scale out 之後，實際上限係「你設嘅數 × instance 數量」。單 instance 部署（Railway / Fly.io / 自建）就準確。要跨 instance 準確就換 Redis —— `RateLimitStore` 介面已經留好，換實作唔使改呼叫方
+
+### 轉化漏斗（`src/lib/funnel.ts`）
+
+MVP 冇量度就冇意義。冇呢啲數字，你只知有人用過，但唔知係邊一步跌人 —— 而每一步嘅解決方法完全唔同：
+
+```
+到咗但冇影相    → 文案 / 信任問題（同意條款嚇親人？）
+影咗相但冇分析  → 揀目標嗰步太煩
+睇咗報告冇預約  → 報告唔夠說服力，或者 CTA 唔夠明顯
+```
+
+睇數字：`GET /api/track?token=<FUNNEL_TOKEN>`，回傳每日計數同逐步通過率。
+
+- 刻意唔用 GA / Plausible：唔想為咗四個數字引入第三方 cookie，亦唔想再多一份私隱聲明要寫
+- 只記事件計數 —— 冇 cookie、冇 IP、冇任何可以識別到個人嘅嘢
+- 每個步驟每個 session 只計一次，否則客人改一改揀嘅目標就會令 `goals_selected` 谷大，個漏斗會出現「後面步驟多過前面」嘅荒謬數字
+- 冇設 `FUNNEL_TOKEN` 就只可以喺測試模式睇，正式環境直接 403 —— 唔會出現「以為有保護但其實冇」
+- ⚠️ 同樣係記憶體儲存，重啟清零。要長期趨勢就實作 `FunnelStore` 駁去資料庫
+
 ---
 
 ## 療程目錄（最重要嘅一份資料）
@@ -315,7 +359,25 @@ export const PRICING_ENABLED = ALL_TREATMENTS.some(
 
 - **Vercel Hobby** 上限 60 秒 —— 只夠 `budget` / `balanced` 單次分析。要開 `max` 或多次共識，要升 Pro（可去到 300 秒）。
 - **Cloudflare Workers** 唔適合（CPU 時間限制），用 Node runtime 嘅平台（Vercel / Railway / Fly.io / 自建）。
-- 公開部署前記得加 rate limiting —— 冇嘅話，一個 script 就可以幫你燒好多 API 額度。
+
+**上線 checklist**
+
+- [ ] `DEMO_MODE` 移除（或設 `0`）—— 否則客人見到嘅係示範數據
+- [ ] `ANTHROPIC_API_KEY` 已設，並喺 Anthropic console 加埋 spend limit（第二道保險）
+- [ ] `NEXT_PUBLIC_WHATSAPP` 已設，否則冇預約按鈕 —— 個 MVP 就冇咗轉化出口
+- [ ] `NEXT_PUBLIC_SITE_URL` 已設，否則 WhatsApp / IG 分享出唔到預覽卡
+- [ ] `FUNNEL_TOKEN` 設咗一個長隨機字串
+- [ ] `RATE_LIMIT_DAILY_TOTAL` 調到你肯蝕嘅金額（見上面速率限制）
+- [ ] `npm run check:catalogue` 冇 placeholder 文字
+- [ ] `/pro` 有冇需要加密碼保護 —— 佢係診所內部用嘅版本，而家係公開路徑
+
+### 分享預覽
+
+`src/app/opengraph-image.tsx` 喺 build 時產生 1200×630 預覽圖，唔使搵設計師出圖。
+香港最主要嘅傳播途徑係 WhatsApp / IG DM，冇預覽卡嘅光禿禿連結點擊率會低好多。
+
+圖入面**刻意淨係用文字同色塊，唔放樣本相或者前後對比**：一嚟涉及客人肖像同意，
+二嚟香港《不良廣告（醫藥）條例》下用療效相做宣傳係高風險。
 
 ---
 
@@ -326,4 +388,5 @@ export const PRICING_ENABLED = ALL_TREATMENTS.some(
 - 14 個療程未填品牌 / 型號（客人好多時就係想知用咩牌子）
 - 「凹凸洞 / 痘疤」目前冇任何療程覆蓋 —— 客人揀「暗瘡 / 痘疤」會見到覆蓋提示
 - 未做用戶帳戶、療程紀錄、前後對比 —— 需要嘅話要另外加資料庫同私隱處理
-- 未做 rate limiting；公開部署前建議加（例如 Vercel middleware 或 Upstash）
+- 速率限制同漏斗統計都係**記憶體**實作：重啟清零，serverless 多 instance 唔會加埋一齊。兩者都留咗介面（`RateLimitStore` / `FunnelStore`），要準確就換 Redis / 資料庫
+- `/pro` 而家係公開路徑，冇密碼保護

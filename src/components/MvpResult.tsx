@@ -2,6 +2,7 @@
 
 import { FINDING_LABELS, type FindingKey, type GoalKey } from '@/lib/treatments/types';
 import { buildBookingUrl } from '@/lib/booking';
+import { trackStep } from '@/lib/track-client';
 import { CLINIC_POLICY, CLINIC_OTHER_SERVICES } from '@/lib/treatments/clinic';
 import type { ConsultResponse } from './Report';
 
@@ -189,6 +190,7 @@ export default function MvpResult({
             target="_blank"
             rel="noopener noreferrer"
             className="primary"
+            onClick={() => trackStep('booking_clicked')}
             style={{ display: 'block', textDecoration: 'none', marginTop: 0, boxSizing: 'border-box' }}
           >
             WhatsApp 預約免費諮詢
