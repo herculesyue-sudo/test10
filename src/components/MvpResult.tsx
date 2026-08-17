@@ -1,6 +1,13 @@
 'use client';
 
-import { FINDING_LABELS, type FindingKey, type GoalKey } from '@/lib/treatments/types';
+import {
+  FINDING_LABELS,
+  CATEGORY_LABELS,
+  CATEGORY_EXPLAIN,
+  type FindingKey,
+  type GoalKey,
+  type TreatmentCategory,
+} from '@/lib/treatments/types';
 import { buildBookingUrl } from '@/lib/booking';
 import { trackStep } from '@/lib/track-client';
 import { CLINIC_POLICY, CLINIC_OTHER_SERVICES } from '@/lib/treatments/clinic';
@@ -42,6 +49,13 @@ export default function MvpResult({
   const anyUnpriced = recs.some((r) => !r.priceConfirmed);
   const showPricing = data.meta.pricingEnabled === true;
   const uncoveredGoals = (data.goalCoverage ?? []).filter((g) => !g.covered);
+
+  // 固定次序：儀器 → 注射 → 外用。由低侵入性講起，客人比較收得落。
+  const ORDER: TreatmentCategory[] = ['device', 'injectable', 'topical'];
+  const kinds = ORDER.map((cat) => ({
+    cat,
+    count: recs.filter((r) => r.treatment.category === cat).length,
+  })).filter((k) => k.count > 0);
 
   return (
     <>
@@ -95,6 +109,30 @@ export default function MvpResult({
           </div>
         )}
 
+        {/* 講咗有邊幾類，再逐個講。冇呢個總覽，客人係逐張卡咁睇，
+            睇完都唔知自己張方案整體係「要打針」定「淨係做機」。 */}
+        {kinds.length > 0 && (
+          <div className="kinds">
+            <p className="lead">
+              你嘅方案包括{' '}
+              {kinds.map((k, i) => (
+                <span key={k.cat}>
+                  {i > 0 && '、'}
+                  <b>
+                    {k.count} 個{CATEGORY_LABELS[k.cat]}
+                  </b>
+                </span>
+              ))}
+              。
+            </p>
+            {kinds.map((k) => (
+              <p key={k.cat}>
+                <b>{CATEGORY_LABELS[k.cat]}</b>：{CATEGORY_EXPLAIN[k.cat]}
+              </p>
+            ))}
+          </div>
+        )}
+
         {recs.length === 0 && (
           <p style={{ fontSize: '0.88rem', color: 'var(--text-dim)', margin: 0 }}>
             相片入面觀察唔到需要療程介入嘅明顯問題。想更深入評估，歡迎預約面診。
@@ -105,10 +143,12 @@ export default function MvpResult({
           <div className="rec" key={r.treatment.id}>
             <div className="hd">
               <div>
+                {/* 類型行喺療程名前面：客人未聽過「Ultraformer」，但一定知
+                    「打針」同「做機」嘅分別，而嗰個分別先係佢即刻想知嘅嘢。 */}
+                <div className="kind">{CATEGORY_LABELS[r.treatment.category as TreatmentCategory]}</div>
                 <b>
                   {i + 1}. {r.treatment.name}
                 </b>
-                <div className="brand">{r.treatment.brand}</div>
               </div>
             </div>
             <p>{r.rationale}</p>

@@ -192,6 +192,30 @@ button.ghost {
   padding: 2px 8px; border-radius: 20px; white-space: nowrap; font-weight: 600;
 }
 .rec .brand { font-size: 0.76rem; color: var(--text-dim); margin: 1px 0 8px; }
+
+/* 療程類型：擺喺療程名上面，做細細個標籤 —— 客人一眼掃到「打針定做機」 */
+.rec .kind {
+  display: inline-block;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 9px;
+  margin-bottom: 6px;
+}
+
+/* 逐張卡之前先講清楚成張方案有邊幾類 */
+.kinds {
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  background: var(--surface-2);
+}
+.kinds p { margin: 0 0 6px; font-size: 0.82rem; color: var(--text-dim); line-height: 1.55; }
+.kinds p:last-child { margin-bottom: 0; }
+.kinds .lead { font-size: 0.9rem; color: var(--text); margin-bottom: 9px; }
 .rec p { margin: 0 0 9px; font-size: 0.85rem; }
 .meta { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 12px; font-size: 0.78rem; color: var(--text-dim); }
 .meta span b { color: var(--text); font-weight: 600; }

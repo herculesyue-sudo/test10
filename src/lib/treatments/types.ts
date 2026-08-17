@@ -160,6 +160,26 @@ export const GOALS: { key: GoalKey; label: string; desc: string; maps: FindingKe
 
 export type TreatmentCategory = 'injectable' | 'device' | 'topical';
 
+/**
+ * 客人睇嘅療程類型。
+ *
+ * 客人第一個問題永遠係「即係要打針定做機？」—— 唔係「用邊隻牌子」。
+ * 呢個分類直接答咗佢最關心嘅三樣嘢：使唔使打針、痛唔痛、要唔要停工。
+ * 所以喺報告度，類型行喺療程名前面。
+ */
+export const CATEGORY_LABELS: Record<TreatmentCategory, string> = {
+  injectable: '注射療程',
+  device: '儀器療程',
+  topical: '外用護理',
+};
+
+/** 一句講清楚呢類係做咩，俾第一次接觸醫美嘅客人。 */
+export const CATEGORY_EXPLAIN: Record<TreatmentCategory, string> = {
+  injectable: '用幼針注射，即時或數星期見效，效果會隨時間代謝，需要定期補打。',
+  device: '用儀器由皮膚表面導入能量，唔使打針，通常需要做幾次先見到完整效果。',
+  topical: '外用或口服，需要持續使用，屬輔助性質。',
+};
+
 export interface Indication {
   key: FindingKey;
   /** 對呢個問題嘅療效權重，1（輔助）到 5（一線首選）。 */

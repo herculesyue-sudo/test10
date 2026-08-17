@@ -28,18 +28,17 @@ const DOCTOR_ONLY = '香港：須由註冊醫生施行（衞生署高風險美�
 /**
  * 診所同時備有多隻牌子。
  *
- * 香港客人好多時係直接 search 品牌名（「邊度打 Xeomin」、「Juvederm 邊間平」），
- * 所以品牌一定要寫出嚟 —— 唔寫等於喺搜尋結果度隱形。
+ * ⚠️ 品牌**唔會出現喺客人嘅 MVP 報告**（`/` 果版）。
  *
- * 但唔可以喺報告度幫客人指定咗用邊隻：揀邊隻係醫生按部位、劑量、
- * 皮膚厚度同過往反應決定嘅臨床判斷。所以呢度列齊選擇，然後由 notes
- * 講明「由醫生揀」。
+ * 客人第一次見呢個工具嗰陣，仲未知「肉毒」同「透明質酸」有咩分別 ——
+ * 呢個時候擺三個藥廠名出嚟，唔會令佢覺得專業，只會令佢睇唔明。
+ * 佢真正需要知嘅次序係：**呢個係咩類型（打針定做機）→ 做緊咩 → 邊隻牌子**。
+ * 第三樣係面診嗰陣醫生同佢傾嘅嘢，唔係一份初步報告嘅內容。
+ *
+ * 所以品牌資料留喺呢度，俾 `/pro`（診所內部版）同面診用。
  */
 const BTX_BRANDS = 'Botox (Allergan) · Dysport (Galderma) · Xeomin (Merz)';
-const BTX_NOTE = '診所三隻牌子都有（Botox / Dysport / Xeomin），由醫生按部位、劑量同你過往反應揀。三者擴散性同起效時間略有分別，效果本身冇高低之分。';
-
 const HA_BRANDS = 'Juvederm (Allergan) · Restylane (Galderma) · Belotero (Merz)';
-const HA_NOTE = '診所備有 Juvederm、Restylane 同 Belotero 三大系列。唔同部位需要唔同硬度（G prime）—— 下巴要撐得起，淚溝要夠軟先唔會凹凸，所以由醫生按部位揀，唔係邊隻貴就邊隻好。';
 
 /** 診所定位：單次消費，唔綁療程套票。 */
 export const CLINIC_POLICY = {
@@ -264,7 +263,7 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     risk: 'medium',
     regulation: DOCTOR_ONLY,
     contraindications: ['懷孕/哺乳', '神經肌肉疾病（如重症肌無力）', '注射部位感染', '對配方成分過敏'],
-    notes: `劑量或位置唔啱可致咀嚼無力、面頰凹陷、笑容不對稱。${BTX_NOTE}`,
+    notes: '劑量或位置唔啱可致咀嚼無力、面頰凹陷、笑容不對稱。',
     internalNote: '品牌已確認：Botox / Dysport / Xeomin 三隻都有。落價錢嗰陣三隻應該係唔同價，可能要拆做三個條目 —— 睇你想唔想喺報告度俾客人揀。',
   },
   {
@@ -291,7 +290,7 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     risk: 'medium',
     regulation: DOCTOR_ONLY,
     contraindications: ['懷孕/哺乳', '神經肌肉疾病', '注射部位感染'],
-    notes: `適合仍有彈性嘅動態紋；已成形嘅靜態深紋需要配合填充或激光。眼皮下垂為已知風險。${BTX_NOTE}`,
+    notes: '適合仍有彈性嘅動態紋；已成形嘅靜態深紋需要配合填充或激光。眼皮下垂為已知風險。',
     internalNote: '品牌已確認（Botox / Dysport / Xeomin）。仲要確認係咪按「部位」計價、定係按單位（unit）計 —— Dysport 嘅單位換算同另外兩隻唔同，唔講清楚客人會以為平咗。',
   },
   {
@@ -316,7 +315,6 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     risk: 'medium',
     regulation: DOCTOR_ONLY,
     contraindications: ['懷孕/哺乳', '神經肌肉疾病', '注射部位感染'],
-    notes: BTX_NOTE,
     internalNote: '品牌已確認。但「診所有冇做微滴肉毒」仲未答 —— 如果冇做就要刪除呢個條目，否則個工具會推薦一個你唔提供嘅療程。',
   },
 
@@ -344,7 +342,7 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     risk: 'high',
     regulation: DOCTOR_ONLY,
     contraindications: ['懷孕/哺乳', '自體免疫疾病活躍期', '注射區感染或發炎', '對透明質酸/利多卡因過敏'],
-    notes: '最嚴重風險為血管栓塞致皮膚壞死或失明；必須由熟悉解剖嘅醫生施行，並須備有溶解酶。' + HA_NOTE,
+    notes: '最嚴重風險為血管栓塞致皮膚壞死或失明；必須由熟悉解剖嘅醫生施行，並須備有溶解酶。',
     internalNote: '品牌系列已確認（Juvederm / Restylane / Belotero）。中面部要高支撐款，即係 Juvederm Voluma 或者 Restylane Lyft 呢個級數 —— 確認下實際入邊隻，同計價單位係每 cc 定每支。',
   },
   {
@@ -369,7 +367,7 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     risk: 'high',
     regulation: DOCTOR_ONLY,
     contraindications: ['嚴重眼袋（脂肪疝出）', '甲狀腺眼病', '懷孕/哺乳', '注射區感染'],
-    notes: '眼下皮膚薄，易現丁達爾效應（藍光）同水腫。色素型黑眼圈填充無效，要用激光處理。' + HA_NOTE,
+    notes: '眼下皮膚薄，易現丁達爾效應（藍光）同水腫。色素型黑眼圈填充無效，要用激光處理。',
     internalNote: '品牌系列已確認。淚溝要最軟嘅款，即係 Belotero Balance 或者 Restylane Refyne 呢個級數（Juvederm 系列偏親水，眼下較易水腫）—— 確認下實際入邊隻。',
   },
   {
@@ -395,7 +393,6 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     risk: 'high',
     regulation: DOCTOR_ONLY,
     contraindications: ['懷孕/哺乳', '注射區感染', '嚴重咬合問題（應先見牙科 / 正頜）'],
-    notes: HA_NOTE,
     internalNote: '品牌系列已確認。下巴／下顎線要最高支撐力，即係 Juvederm Volux 或者 Restylane Defyne / Lyft 呢個級數 —— 確認下實際入邊隻。',
   },
   {
@@ -419,7 +416,7 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     risk: 'high',
     regulation: DOCTOR_ONLY,
     contraindications: ['懷孕/哺乳', '注射區感染'],
-    notes: '顳部血管豐富，屬高風險注射區。' + HA_NOTE,
+    notes: '顳部血管豐富，屬高風險注射區。',
     internalNote: '品牌系列已確認（Juvederm / Restylane / Belotero）。',
   },
   {
@@ -443,7 +440,7 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     risk: 'medium',
     regulation: DOCTOR_ONLY,
     contraindications: ['活躍唇皰疹', '懷孕/哺乳', '注射區感染'],
-    notes: '有唇皰疹病史者宜術前預防性服抗病毒藥。' + HA_NOTE,
+    notes: '有唇皰疹病史者宜術前預防性服抗病毒藥。',
     internalNote: '品牌系列已確認。但「診所有冇做豐唇」仲未答 —— 冇做就要刪除呢個條目。',
   },
 
