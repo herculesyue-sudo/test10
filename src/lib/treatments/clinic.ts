@@ -38,8 +38,8 @@ const DOCTOR_ONLY = '香港：須由註冊醫生施行（衞生署高風險美�
 const BTX_BRANDS = 'Botox (Allergan) · Dysport (Galderma) · Xeomin (Merz)';
 const BTX_NOTE = '診所三隻牌子都有（Botox / Dysport / Xeomin），由醫生按部位、劑量同你過往反應揀。三者擴散性同起效時間略有分別，效果本身冇高低之分。';
 
-const HA_BRANDS = 'Juvederm (Allergan) · Belotero (Merz)';
-const HA_NOTE = '診所備有 Juvederm 同 Belotero 系列。唔同部位需要唔同硬度（G prime）—— 下巴要撐得起，淚溝要夠軟先唔會凹凸，所以由醫生按部位揀，唔係邊隻貴就邊隻好。';
+const HA_BRANDS = 'Juvederm (Allergan) · Restylane (Galderma) · Belotero (Merz)';
+const HA_NOTE = '診所備有 Juvederm、Restylane 同 Belotero 三大系列。唔同部位需要唔同硬度（G prime）—— 下巴要撐得起，淚溝要夠軟先唔會凹凸，所以由醫生按部位揀，唔係邊隻貴就邊隻好。';
 
 /** 診所定位：單次消費，唔綁療程套票。 */
 export const CLINIC_POLICY = {
@@ -191,7 +191,7 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     risk: 'low',
     regulation: DOCTOR_ONLY,
     contraindications: ['注射區感染或活躍暗瘡', '懷孕/哺乳'],
-    internalNote: '請補充實際品牌（Restylane Vital / Juvederm Volite / Neuramis 等）。',
+    internalNote: '診所有 Restylane 同 Juvederm，所以水光針好大機會就係 Restylane Vital 或者 Juvederm Volite —— 但呢個係我推測，未確認唔可以當真，請落實。',
   },
   {
     id: 'exosome',
@@ -345,7 +345,7 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     regulation: DOCTOR_ONLY,
     contraindications: ['懷孕/哺乳', '自體免疫疾病活躍期', '注射區感染或發炎', '對透明質酸/利多卡因過敏'],
     notes: '最嚴重風險為血管栓塞致皮膚壞死或失明；必須由熟悉解剖嘅醫生施行，並須備有溶解酶。' + HA_NOTE,
-    internalNote: '品牌系列已確認（Juvederm / Belotero）。中面部一般用高支撐款（Juvederm Voluma 級數）—— 確認下實際入邊隻，同計價單位係每 cc 定每支。',
+    internalNote: '品牌系列已確認（Juvederm / Restylane / Belotero）。中面部要高支撐款，即係 Juvederm Voluma 或者 Restylane Lyft 呢個級數 —— 確認下實際入邊隻，同計價單位係每 cc 定每支。',
   },
   {
     id: 'ha-tear-trough',
@@ -370,7 +370,7 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     regulation: DOCTOR_ONLY,
     contraindications: ['嚴重眼袋（脂肪疝出）', '甲狀腺眼病', '懷孕/哺乳', '注射區感染'],
     notes: '眼下皮膚薄，易現丁達爾效應（藍光）同水腫。色素型黑眼圈填充無效，要用激光處理。' + HA_NOTE,
-    internalNote: '品牌系列已確認。淚溝一般用最軟嘅款（Belotero Balance / Soft 級數）—— 確認下實際入邊隻。',
+    internalNote: '品牌系列已確認。淚溝要最軟嘅款，即係 Belotero Balance 或者 Restylane Refyne 呢個級數（Juvederm 系列偏親水，眼下較易水腫）—— 確認下實際入邊隻。',
   },
   {
     id: 'ha-chin-jaw',
@@ -396,7 +396,7 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     regulation: DOCTOR_ONLY,
     contraindications: ['懷孕/哺乳', '注射區感染', '嚴重咬合問題（應先見牙科 / 正頜）'],
     notes: HA_NOTE,
-    internalNote: '品牌系列已確認。下巴／下顎線要最高支撐力（Juvederm Volux 級數）—— 確認下實際入邊隻。',
+    internalNote: '品牌系列已確認。下巴／下顎線要最高支撐力，即係 Juvederm Volux 或者 Restylane Defyne / Lyft 呢個級數 —— 確認下實際入邊隻。',
   },
   {
     id: 'ha-temple',
@@ -420,7 +420,7 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     regulation: DOCTOR_ONLY,
     contraindications: ['懷孕/哺乳', '注射區感染'],
     notes: '顳部血管豐富，屬高風險注射區。' + HA_NOTE,
-    internalNote: '品牌系列已確認（Juvederm / Belotero）。',
+    internalNote: '品牌系列已確認（Juvederm / Restylane / Belotero）。',
   },
   {
     id: 'ha-lip',
