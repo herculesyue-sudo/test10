@@ -68,6 +68,7 @@ export const CLINIC_TREATMENTS: Treatment[] = [
       { key: 'pores', efficacy: 4 },
       { key: 'oiliness', efficacy: 3 },
       { key: 'acne_active', efficacy: 3 },
+      { key: 'acne_scar', efficacy: 3 },
     ],
     sessions: '4–6 次',
     interval: '每次相隔 2–4 星期',
@@ -79,7 +80,10 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     risk: 'medium',
     regulation: DOCTOR_ONLY,
     contraindications: ['懷孕', '近期曬傷', '正服食光敏感藥物', '活躍疱疹'],
-    notes: '黃褐斑須用低能量多次數，能量過高會反黑，亞洲膚色尤其要小心。',
+    notes: '黃褐斑須用低能量多次數，能量過高會反黑，亞洲膚色尤其要小心。凹凸洞 / 痘疤方面，激光係基礎，實際會按疤痕類型配合其他療程一齊做，面診時醫生會度身安排。',
+    internalNote:
+      '凹凸洞 / 痘疤已確認由荷里活激光為主、配合其他療程處理，療效設 3（有效但唔係單一療程解決）。'
+      + '如果診所另外有微針 / 分段式激光 / subcision，應該各自開一個條目 —— 嗰啲對凹凸洞係更強嘅選項，而且客人會直接 search 呢啲名。',
   },
 
   // ══════════════════ 射頻緊緻 ══════════════════
@@ -205,6 +209,7 @@ export const CLINIC_TREATMENTS: Treatment[] = [
       { key: 'texture', efficacy: 4 },
       { key: 'acne_active', efficacy: 3 },
       { key: 'dehydration', efficacy: 3 },
+      { key: 'acne_scar', efficacy: 2 },
     ],
     sessions: '3–5 次',
     interval: '每次相隔 2–4 星期',
@@ -315,7 +320,7 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     risk: 'medium',
     regulation: DOCTOR_ONLY,
     contraindications: ['懷孕/哺乳', '神經肌肉疾病', '注射部位感染'],
-    internalNote: '品牌已確認。但「診所有冇做微滴肉毒」仲未答 —— 如果冇做就要刪除呢個條目，否則個工具會推薦一個你唔提供嘅療程。',
+    internalNote: '已確認診所有做。',
   },
 
   // ══════════════════ 透明質酸填充 ══════════════════
@@ -441,7 +446,7 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     regulation: DOCTOR_ONLY,
     contraindications: ['活躍唇皰疹', '懷孕/哺乳', '注射區感染'],
     notes: '有唇皰疹病史者宜術前預防性服抗病毒藥。',
-    internalNote: '品牌系列已確認。但「診所有冇做豐唇」仲未答 —— 冇做就要刪除呢個條目。',
+    internalNote: '已確認診所有做。',
   },
 
   // ══════════════════ 美白 ══════════════════

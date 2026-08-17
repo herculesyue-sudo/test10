@@ -81,6 +81,16 @@ console.log('\n── 資料完整性 ──');
   check('引擎只認診所目錄（唔會推薦競爭對手療程）', ALL_TREATMENTS.every((t) => clinicIds.has(t.id)));
   const noContra = ALL_TREATMENTS.filter((t) => t.contraindications.length === 0);
   check('所有療程都有列禁忌', noContra.length === 0, noContra.map((t) => t.id).join(', '));
+
+  // 覆蓋率而家係 33/33。改目錄嗰陣好易靜靜雞跌返落去 —— AI 會照樣指出
+  // 個問題，但一個建議都出唔到，客人就會攞住呢個結果去第二間。
+  const covered = new Set(ALL_TREATMENTS.flatMap((t) => t.indications.map((i) => i.key)));
+  const uncovered = (Object.keys(FINDING_LABELS) as FindingKey[]).filter((k) => !covered.has(k));
+  check(
+    `AI 偵測得到嘅 ${Object.keys(FINDING_LABELS).length} 種特徵全部有療程覆蓋`,
+    uncovered.length === 0,
+    uncovered.map((k) => FINDING_LABELS[k]).join('、'),
+  );
 }
 
 console.log('\n── 個案 A：34 歲，色斑 + 暗瘡印為主 ──');
