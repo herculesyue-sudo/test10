@@ -42,6 +42,7 @@ import { postProcess, usabilityVerdict } from '../src/lib/postprocess';
 import type { Analysis } from '../src/lib/schema';
 import { analysePixels, THRESHOLDS } from '../src/lib/photo-check';
 import { allowedOrigins, frameAncestors, isAllowedOrigin } from '../src/lib/embed-config';
+import { checkStaff, isStaffPath } from '../src/lib/staff-auth';
 
 let failures = 0;
 function check(name: string, cond: boolean, detail = '') {
@@ -368,6 +369,48 @@ console.log('\n── AI 輸出後處理（prompt 求，code 保證）──');
   check('正常相片 → 可用', usabilityVerdict(base({ findings: [fnd('pores', 40, 0.8)] })).ok === true);
   const mk = usabilityVerdict(base({ imageQuality: { usable: false, lighting: 'good', issues: [], makeupDetected: true } }));
   check('化妝會出現喺重影建議入面', mk.retakeHints.some((h) => h.includes('素顏')));
+}
+
+console.log('\n── 職員頁面保護 ──');
+{
+  const env = { s: process.env.STAFF_TOKEN, d: process.env.DEMO_MODE };
+  const set = (staff?: string, demo?: string) => {
+    if (staff === undefined) delete process.env.STAFF_TOKEN;
+    else process.env.STAFF_TOKEN = staff;
+    if (demo === undefined) delete process.env.DEMO_MODE;
+    else process.env.DEMO_MODE = demo;
+  };
+
+  check('/pro 要保護', isStaffPath('/pro'));
+  check('/share 要保護', isStaffPath('/share'));
+  check('/embed/setup 要保護', isStaffPath('/embed/setup'));
+  check('客人版 / 唔可以被鎖', !isStaffPath('/'));
+  check('嵌入版 /embed 唔可以被鎖', !isStaffPath('/embed'));
+  // /embed 同 /embed/setup 只差幾個字，前綴比對寫錯就會鎖死客人入口
+  check('/embed 唔會俾 /embed/setup 嘅規則誤中', !isStaffPath('/embed'));
+
+  // 未設密碼 + 正式環境 → 一定要拒絕。唔可以出現「以為有保護但其實冇」。
+  set(undefined, undefined);
+  const unset = checkStaff(null, undefined);
+  check('未設密碼＋正式環境 → 拒絕', unset.action === 'deny', JSON.stringify(unset));
+  check('拒絕原因講到係未設定', unset.action === 'deny' && unset.reason === 'no-token-configured');
+
+  // 未設密碼 + 測試模式 → 放行，方便試
+  set(undefined, '1');
+  check('未設密碼＋測試模式 → 放行', checkStaff(null, undefined).action === 'allow');
+
+  set('s3cret', undefined);
+  check('冇密碼 → 拒絕', checkStaff(null, undefined).action === 'deny');
+  check('錯密碼 → 拒絕', checkStaff('wrong', undefined).action === 'deny');
+  const ok = checkStaff('s3cret', undefined);
+  check('啱密碼 → 種 cookie', ok.action === 'set-cookie');
+  check('有啱 cookie → 直接放行', checkStaff(null, 's3cret').action === 'allow');
+  check('錯 cookie → 拒絕', checkStaff(null, 'stale').action === 'deny');
+  // 空字串唔可以當「設咗密碼」，否則 STAFF_TOKEN= 會變成人人入得
+  set('   ', undefined);
+  check('空白密碼當未設定（唔可以人人入得）', checkStaff('   ', undefined).action === 'deny');
+
+  set(env.s, env.d);
 }
 
 console.log('\n── 官網嵌入允許清單（成本安全）──');

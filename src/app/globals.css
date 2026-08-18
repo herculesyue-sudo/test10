@@ -252,3 +252,42 @@ button.ghost {
 @media (max-width: 400px) {
   .goals, .row { grid-template-columns: 1fr; }
 }
+
+/* ══════════════ 海報（/share）══════════════ */
+.poster-sheet {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px 22px;
+  text-align: center;
+  background: var(--surface-2);
+}
+.poster-clinic { font-size: 0.9rem; letter-spacing: 0.16em; color: var(--accent); margin-bottom: 14px; }
+.poster-title { font-size: 2rem; font-weight: 700; line-height: 1.25; margin-bottom: 20px; }
+.poster-qr { width: 100%; max-width: 230px; height: auto; display: block; margin: 0 auto 18px; }
+.poster-steps { font-size: 1rem; line-height: 1.7; margin-bottom: 14px; }
+.poster-url { font-size: 0.78rem; color: var(--text-dim); word-break: break-all; margin-bottom: 16px; }
+.poster-fine { font-size: 0.68rem; color: var(--text-dim); line-height: 1.5; }
+
+/* 印嘅時候只留海報本身：診所要嘅係一張貼得出去嘅嘢，
+   唔係一版連住說明同複製掣嘅網頁截圖。 */
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff; color: #000; }
+  .wrap { max-width: none; padding: 0; }
+  .card.poster { border: 0; padding: 0; margin: 0; background: #fff; box-shadow: none; }
+  .poster-sheet {
+    border: 0;
+    background: #fff;
+    padding: 0;
+    /* 用足一版 A4，QR 先夠大俾人隔幾步掃到 */
+    min-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .poster-clinic { color: #000; }
+  .poster-title { font-size: 3.2rem; }
+  .poster-qr { max-width: 62%; }
+  .poster-steps { font-size: 1.35rem; }
+  .poster-url, .poster-fine { color: #444; }
+}
