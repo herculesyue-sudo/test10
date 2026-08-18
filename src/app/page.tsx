@@ -1,7 +1,5 @@
-'use client';
-
 /**
- * MVP：俾客人用嘅最短路徑。
+ * MVP：俾客人用嘅最短路徑（獨立頁面版）。
  *
  * 一版過，唔分步驟：影相 → 揀想改善 → 撳一下 → 出結果 → 預約。
  *
@@ -9,166 +7,15 @@
  * 分階段方案、逐項療程詳情。每加一格輸入就跌一批客人；MVP 嘅目標
  * 唔係做到最準，而係搵出「客人肯唔肯影相同肯唔肯㩒預約」。
  *
- * 固定行 budget 模式（約 HK$0.05 一次）—— 免費體驗版燒唔起貴模型。
- * 測試模式（DEMO_MODE=1）之下唔使影相、唔使 API key、零成本。
+ * 流程本體喺 ConsultFlow —— 同 /embed（嵌入診所官網嗰個）共用同一份。
  */
 
-import { useEffect, useState } from 'react';
-import PhotoCapture, { type Shot } from '@/components/PhotoCapture';
-import MvpResult, { type ConsultResponse } from '@/components/MvpResult';
-import { useDemoMode, DemoBanner, DemoCasePicker } from '@/components/DemoMode';
-import Consent from '@/components/Consent';
-import { GOALS, type GoalKey } from '@/lib/treatments/types';
-import { trackStep, resetTracking } from '@/lib/track-client';
-
-const ONE_SHOT: Shot[] = [{ angle: '正面', label: '正面自拍', required: true }];
+import ConsultFlow from '@/components/ConsultFlow';
 
 export default function Page() {
-  const demo = useDemoMode();
-  const isDemo = demo?.demo === true;
-
-  const [shots, setShots] = useState<Shot[]>(ONE_SHOT);
-  const [goals, setGoals] = useState<GoalKey[]>([]);
-  const [demoCaseId, setDemoCaseId] = useState<string | undefined>();
-  const [consented, setConsented] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [data, setData] = useState<ConsultResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => trackStep('page_view'), []);
-  useEffect(() => {
-    if (shots[0]?.data) trackStep('photo_added');
-  }, [shots]);
-  useEffect(() => {
-    if (goals.length > 0) trackStep('goals_selected');
-  }, [goals]);
-  useEffect(() => {
-    if (consented) trackStep('consented');
-  }, [consented]);
-
-  const hasPhoto = Boolean(shots[0]?.data);
-  // 測試模式唔需要相片 —— 冇相都要試得到，否則測試版本身就有門檻
-  // 測試模式冇真實相片，唔需要同意；正式模式一定要先同意先可以傳相
-  const ready = (isDemo || (hasPhoto && consented)) && goals.length > 0;
-
-  function toggle(g: GoalKey) {
-    setGoals((p) => (p.includes(g) ? p.filter((x) => x !== g) : [...p, g]));
-  }
-
-  async function submit() {
-    setError(null);
-    setBusy(true);
-    trackStep('analyze_started');
-    try {
-      const res = await fetch('/api/consult', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          images: hasPhoto
-            ? [{ data: shots[0].data, mediaType: shots[0].mediaType, angle: '正面' }]
-            : [],
-          goals,
-          tier: 'budget',
-          demoCaseId,
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? '分析失敗');
-      trackStep('analyze_succeeded');
-      setData(json);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch (e) {
-      trackStep('analyze_failed');
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  function reset() {
-    resetTracking();
-    setShots(ONE_SHOT);
-    setGoals([]);
-    setConsented(false);
-    setData(null);
-    setError(null);
-    window.scrollTo({ top: 0 });
-  }
-
-  if (data) {
-    return (
-      <div className="wrap">
-        <header className="site">
-          <h1>你嘅分析結果</h1>
-          <p>{process.env.NEXT_PUBLIC_CLINIC_NAME || 'AI 視像面診'}</p>
-        </header>
-        {data.meta.demo && <DemoBanner caseLabel={data.meta.demoCaseLabel} />}
-        <MvpResult data={data} goals={goals} onReset={reset} />
-      </div>
-    );
-  }
-
   return (
     <div className="wrap">
-      <header className="site">
-        <h1>AI 免費面部分析</h1>
-        <p>自拍一張相，30 秒睇到適合你嘅療程方向</p>
-      </header>
-
-      {isDemo && <DemoBanner />}
-      {error && <div className="alert danger">{error}</div>}
-
-      <div className="card">
-        <h2>1. 影張正面自拍{isDemo && <span style={{ fontWeight: 400, fontSize: '0.8rem', color: 'var(--text-dim)' }}>（測試模式可以跳過）</span>}</h2>
-        <p className="sub">素顏、自然光、對正鏡頭、唔好笑。相片只用嚟即時分析，唔會儲存。</p>
-        <div style={{ maxWidth: 200, margin: '0 auto' }}>
-          <PhotoCapture shots={shots} onChange={setShots} />
-        </div>
-      </div>
-
-      <div className="card">
-        <h2>2. 你最想改善邊方面？</h2>
-        <p className="sub">可以揀多過一項。</p>
-        <div className="goals">
-          {GOALS.map((g) => (
-            <button
-              key={g.key}
-              type="button"
-              className={`goal${goals.includes(g.key) ? ' on' : ''}`}
-              onClick={() => toggle(g.key)}
-            >
-              <b>{g.label}</b>
-              <span>{g.desc}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {isDemo && demo && (
-        <DemoCasePicker cases={demo.cases} value={demoCaseId} onChange={setDemoCaseId} />
-      )}
-
-      {!isDemo && <Consent checked={consented} onChange={setConsented} />}
-
-      <button className="primary" disabled={!ready || busy} onClick={submit}>
-        {busy
-          ? isDemo
-            ? '產生示範結果…'
-            : '分析緊…（約 30 秒）'
-          : ready
-            ? isDemo
-              ? '睇示範結果'
-              : '免費分析'
-            : !isDemo && !hasPhoto
-              ? '請先影相'
-              : goals.length === 0
-                ? '請揀最少一項'
-                : '請先同意相片處理說明'}
-      </button>
-
-      <p style={{ fontSize: '0.74rem', color: 'var(--text-dim)', textAlign: 'center', marginTop: 14 }}>
-        分析結果屬初步參考，並非醫學診斷，唔可以取代註冊醫生嘅面診。
-      </p>
+      <ConsultFlow />
     </div>
   );
 }

@@ -41,6 +41,7 @@ import { trackStep, resetTracking } from '../src/lib/track-client';
 import { postProcess, usabilityVerdict } from '../src/lib/postprocess';
 import type { Analysis } from '../src/lib/schema';
 import { analysePixels, THRESHOLDS } from '../src/lib/photo-check';
+import { allowedOrigins, frameAncestors, isAllowedOrigin } from '../src/lib/embed-config';
 
 let failures = 0;
 function check(name: string, cond: boolean, detail = '') {
@@ -367,6 +368,38 @@ console.log('\n── AI 輸出後處理（prompt 求，code 保證）──');
   check('正常相片 → 可用', usabilityVerdict(base({ findings: [fnd('pores', 40, 0.8)] })).ok === true);
   const mk = usabilityVerdict(base({ imageQuality: { usable: false, lighting: 'good', issues: [], makeupDetected: true } }));
   check('化妝會出現喺重影建議入面', mk.retakeHints.some((h) => h.includes('素顏')));
+}
+
+console.log('\n── 官網嵌入允許清單（成本安全）──');
+{
+  const set = (v?: string) => {
+    if (v === undefined) delete process.env.EMBED_ALLOWED_ORIGINS;
+    else process.env.EMBED_ALLOWED_ORIGINS = v;
+  };
+  const original = process.env.EMBED_ALLOWED_ORIGINS;
+
+  // 未設定 → 一定要 fail closed。容許全世界嵌入即係任何人都可以攞你嘅
+  // API 額度做佢哋生意，而你唯一嘅線索係月尾張帳單。
+  set(undefined);
+  check('未設定時只准同源（fail closed）', frameAncestors() === "'self'", frameAncestors());
+  check('未設定時任何外部網域都唔准', !isAllowedOrigin('https://www.drtimeless.com'));
+
+  set('https://www.drtimeless.com,https://drtimeless.com');
+  check('設咗之後 CSP 列齊', frameAncestors() === "'self' https://www.drtimeless.com https://drtimeless.com", frameAncestors());
+  check('清單內嘅網域放行', isAllowedOrigin('https://www.drtimeless.com'));
+  check('清單外嘅網域擋住', !isAllowedOrigin('https://copycat-clinic.com'));
+  // www 同冇 www 係兩個 origin，要分別列 —— 呢個係最常見嘅設定錯誤
+  check('冇 www 版本要獨立列先放行', isAllowedOrigin('https://drtimeless.com'));
+  // http 同 https 亦係兩個 origin，唔可以自動當同一個
+  check('http 版本唔會自動當 https', !isAllowedOrigin('http://www.drtimeless.com'));
+
+  set(' https://a.com , https://b.com ,, ');
+  check('清單容忍空格同多餘逗號', allowedOrigins().length === 2, JSON.stringify(allowedOrigins()));
+  set('https://a.com/');
+  check('尾隨斜線唔會令比對失敗', isAllowedOrigin('https://a.com'));
+  check('空 origin 一定唔放行', !isAllowedOrigin(null) && !isAllowedOrigin(''));
+
+  set(original);
 }
 
 console.log('\n── 相片質素預檢（上傳前，慳 API 錢）──');

@@ -452,3 +452,69 @@ export const PRICING_ENABLED = ALL_TREATMENTS.some(
 - 未做用戶帳戶、療程紀錄、前後對比 —— 需要嘅話要另外加資料庫同私隱處理
 - 速率限制同漏斗統計都係**記憶體**實作：重啟清零，serverless 多 instance 唔會加埋一齊。兩者都留咗介面（`RateLimitStore` / `FunnelStore`），要準確就換 Redis / 資料庫
 - `/pro` 而家係公開路徑，冇密碼保護
+
+---
+
+## 放上官網（drtimeless.com）
+
+部署之後開 `/embed/setup`，嗰版會用**實際部署緊嘅網址**產生程式碼，仲會即場
+檢查允許清單設咗未 —— 唔使記網址、唔使猜設定。
+
+要貼落官網嘅係兩行：
+
+```html
+<div id="drt-consult"></div>
+<script src="https://你嘅網址/embed.js" async></script>
+```
+
+WordPress、Wix、Squarespace、Webflow、自建網站都用得 —— 任何俾你插 HTML
+嘅地方都可以。個 `div` 一定要喺 `script` **之前**。
+
+### 一個一定要做嘅設定
+
+```
+EMBED_ALLOWED_ORIGINS=https://www.drtimeless.com,https://drtimeless.com
+```
+
+**唔設就冇外部網站嵌入得到**（fail closed）。呢個係成本安全設定，唔係樣式設定：
+容許全世界嵌入即係任何人 —— 包括同行 —— 都可以將你個工具擺上佢個網站，用你嘅
+API 額度做佢哋生意，而你唯一嘅線索係月尾張帳單。
+
+> www 同冇 www 係兩個唔同 origin，`http` 同 `https` 亦係。要邊個掂到就列邊個。
+
+### 點解用 iframe 而唔係直接注入 JS
+
+- **API key 留喺伺服器。**直接喺官網行 JS 就要喺瀏覽器度攞得到 key，等於公開。
+- **兩邊 CSS 唔會打交。**官網嘅 style 唔會整亂個 widget，反之亦然 —— 呢個係
+  嵌入式 widget 最常見嘅壞法。
+- **官網唔會變成處理個人資料嘅系統。**客人張相由 widget 直接送去分析，唔會經
+  官網個 server，所以官網本身唔需要為咗呢個工具而處理 PDPO 責任。
+
+### 實作細節
+
+| | |
+|---|---|
+| `/embed` | 嵌入版頁面：冇標題、背景透明、主動報高度 |
+| `public/embed.js` | 診所貼嘅腳本。由自己個 `src` 推算 widget 網址 —— 診所唔使喺兩個地方填網址 |
+| `src/middleware.ts` | 設 `frame-ancestors`。**刻意唔放喺 `next.config`** |
+| `src/lib/embed-config.ts` | 允許清單解析，fail closed |
+
+**點解 CSP 喺 middleware 而唔喺 `next.config`**：`next.config` 嘅 `headers()`
+喺 **build** 嗰陣 evaluate，個值烘死喺 routes-manifest 入面。即係喺 Vercel 加咗
+環境變數但冇重新部署 → 環境變數睇落設咗、`/api/embed-status` 都話設咗、但個
+widget 就係死都唔出。middleware 每次請求先 evaluate，改完即刻生效，亦保證同
+`/api/embed-status` 睇到嘅係同一份設定。
+
+### 高度會自動調校
+
+iframe 最常見嘅失敗唔係功能壞，係**高度**：父頁面畀個固定高度，報告一長就
+出現 iframe 入面再有 scrollbar，手機上兩層 scroll 打交，幾乎冇得用。
+`/embed` 用 `ResizeObserver` 主動報高度上去，`embed.js` 跟住改。出報告之後
+仲會叫父頁面捲返上去（iframe 入面自己 `scrollTo` 只會捲 iframe，客人會望住
+一份由中間開始嘅報告，以為壞咗）。
+
+### 建議擺喺官網邊個位置
+
+「療程」頁同「關於我們」之間。客人啱啱睇完你哋做咩、未決定信唔信，呢個時候
+俾佢一個免費、即時、唔使留電話嘅嘢試 —— 係最自然嘅下一步，亦係漏斗數字
+（`/api/track`）最應該量嗰一步。

@@ -47,6 +47,11 @@ html, body {
 
 .wrap { max-width: 620px; margin: 0 auto; padding: 0 16px 96px; }
 
+/* 嵌入版：背景透明跟父頁面，底部留白細好多（父頁面自己有 footer），
+   而且唔可以有自己嘅 scroll —— 高度靠 postMessage 同步上去。 */
+.wrap.embed { padding: 0 12px 24px; }
+body:has(.wrap.embed) { background: transparent; overflow: hidden; }
+
 header.site {
   padding: 28px 0 20px;
   text-align: center;
