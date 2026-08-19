@@ -44,6 +44,7 @@ import { analysePixels, THRESHOLDS } from '../src/lib/photo-check';
 import { allowedOrigins, frameAncestors, isAllowedOrigin } from '../src/lib/embed-config';
 import { checkStaff, isStaffPath } from '../src/lib/staff-auth';
 import { classifyHost, resolvePublicUrl } from '../src/lib/public-url';
+import { lanAddresses, lanUrl } from '../src/lib/lan-address';
 
 let failures = 0;
 function check(name: string, cond: boolean, detail = '') {
@@ -424,6 +425,35 @@ console.log('\n── QR 對外網址（掃到但去唔到 = 最貴嘅錯）─�
   check('SITE_URL 設咗做 localhost → 一樣唔可以印', resolvePublicUrl(H({}), 'x').printable === false);
 
   set(orig);
+}
+
+console.log('\n── 區域網位址（喺本機用手機試）──');
+{
+  const addrs = lanAddresses();
+  console.log(`  搵到 ${addrs.length} 個：${addrs.join(', ') || '（冇 —— 可能喺容器入面行）'}`);
+
+  check('唔會回 localhost / 127.x（掃咗等於冇）', !addrs.some((a) => /^127\./.test(a)));
+  check('全部係 IPv4 格式', addrs.every((a) => /^\d+\.\d+\.\d+\.\d+$/.test(a)));
+  // 只可以收真正嘅私有網段。雲端內部位址、TEST-NET(192.0.2.x)、CGNAT
+  // 全部都唔係「同一個 Wi-Fi 掃得到」—— 收咗就係再整多一個死 QR。
+  check(
+    '只收 10 / 172.16-31 / 192.168 三個私有網段',
+    addrs.every((a) => /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(a)),
+    addrs.join(', '),
+  );
+
+  const u = lanUrl('3000');
+  if (addrs.length) {
+    check('砌到區域網網址', u === `http://${addrs[0]}:3000`, String(u));
+    check(
+      '區域網位址唔會被當成可印海報',
+      resolvePublicUrl(new Headers({ host: `${addrs[0]}:3000` }), 'x').printable === false,
+    );
+    check('冇 port 時唔會多咗個冒號', lanUrl('') === `http://${addrs[0]}`, String(lanUrl('')));
+  } else {
+    // 攞唔到就要老實回 null，唔可以亂猜個 IP 出嚟俾人掃
+    check('攞唔到位址時回 null（唔會亂猜）', u === null);
+  }
 }
 
 console.log('\n── 職員頁面保護 ──');

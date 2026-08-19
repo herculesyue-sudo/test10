@@ -59,6 +59,9 @@ interface SiteInfo {
   printable: boolean;
   warning?: string;
   target: string;
+  /** 喺本機行嗰陣先有：同一個 Wi-Fi 嘅手機掃得到嘅位址 */
+  lanUrl: string | null;
+  lanTarget: string | null;
 }
 
 export default function SharePage() {
@@ -89,20 +92,54 @@ export default function SharePage() {
         <p>唔使改官網，三個方法即刻用得</p>
       </header>
 
-      {/* 個 QR 指住一個手機去唔到嘅網址，係最貴嘅錯 —— 你可能已經印咗
-          一百張先發現。所以寧願喺呢度嘈，都唔好俾佢靜靜雞印出去。 */}
+      {/* 喺本機行嘅時候，唔好淨係話「唔得」就算 —— 直接俾一個而家掃得到
+          嘅測試 QR。用手機試個流程係部署之前最應該做嘅一件事，而部署咗
+          先發現問題係最貴嘅次序。 */}
       {site && !printable && (
-        <div className="alert danger no-print">
-          <b>⚠️ 而家唔可以印海報</b>
-          <p style={{ margin: '6px 0 0', fontSize: '0.86rem' }}>{site.warning}</p>
-          <p style={{ margin: '8px 0 0', fontSize: '0.86rem' }}>
-            個 QR 而家指住：<code>{site.target || '（算唔到）'}</code>
+        <div className="card no-print">
+          <h2>⚠️ 而家未可以印海報</h2>
+          <p className="sub">{site.warning}</p>
+          <p style={{ fontSize: '0.85rem', margin: '0 0 14px' }}>
+            正式海報個 QR 會指住：<code>{site.target || '（算唔到）'}</code>
           </p>
-          {site.reachability === 'local' && (
-            <p style={{ margin: '8px 0 0', fontSize: '0.86rem' }}>
-              想喺本機用手機試：<code>npm run dev -- -H 0.0.0.0</code>，再用同一個 Wi-Fi
-              嘅手機開 <code>http://&lt;你部電腦 IP&gt;:3000/share</code>。
-              （iOS 要 HTTPS 先開到相機，所以正式測試最好直接部署 —— 見 DEPLOY.md）
+
+          {site.lanUrl ? (
+            <>
+              <div
+                style={{
+                  borderTop: '1px solid var(--border)',
+                  paddingTop: 14,
+                  display: 'flex',
+                  gap: 16,
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/api/qr?path=/&target=lan"
+                  alt="測試用 QR"
+                  style={{ width: 150, height: 150, flexShrink: 0, background: '#fff', borderRadius: 8, padding: 6 }}
+                />
+                <div style={{ flex: 1, minWidth: 200 }}>
+                  <b style={{ fontSize: '0.92rem' }}>👉 而家想用手機試？掃呢個</b>
+                  <p style={{ fontSize: '0.83rem', color: 'var(--text-dim)', margin: '6px 0' }}>
+                    手機要駁住<b>同一個 Wi-Fi</b>。呢個位址出咗你間屋 / 診所就冇效，
+                    所以淨係用嚟試，唔可以印。
+                  </p>
+                  <code style={{ fontSize: '0.8rem', wordBreak: 'break-all' }}>{site.lanTarget}</code>
+                </div>
+              </div>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-dim)', margin: '12px 0 0' }}>
+                掃唔到嘅話，多數係 dev server 淨係聽 localhost。用{' '}
+                <code>npm run dev -- -H 0.0.0.0</code> 重新開就得。
+                影相冇問題 —— 呢個工具用系統相機（file input），唔需要 HTTPS。
+              </p>
+            </>
+          ) : (
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)', margin: 0 }}>
+              搵唔到區域網位址（可能喺容器 / VM 入面行）。要用手機試就要部署 ——
+              見 <code>DEPLOY.md</code>。
             </p>
           )}
         </div>

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import QRCode from 'qrcode';
 import { resolvePublicUrl } from '@/lib/public-url';
+import { lanUrl } from '@/lib/lan-address';
 
 export const runtime = 'nodejs';
 
@@ -11,11 +12,12 @@ export const runtime = 'nodejs';
  *
  * 一個收咩就編碼咩嘅 QR endpoint，等於免費借咗你個網域俾人做釣魚 QR ——
  * 人哋派街招，個 QR 由 drtimeless.com 出，指去佢個假網站，出事嘅係你。
- * 所以呢度只接受一個**路徑**，網域由 resolvePublicUrl 決定，
+ * 所以呢度只接受一個**路徑**同一個 `target` 列舉值，網域一律由伺服器決定，
  * 呼叫方冇辦法指去外部網站。
  *
- * `?info=1` 回 JSON（網址、去唔去得到、可唔可以印），俾 /share 顯示警告。
- * 冇呢個嘅話，一個指住 localhost 嘅 QR 會睇落完全正常。
+ * target=site（預設）── 對外網址，印海報用
+ * target=lan          ── 區域網位址，喺本機開發時用手機試用
+ * info=1              ── 回 JSON（網址、去唔去得到、可唔可以印）
  */
 const SAFE_PATH = /^\/[A-Za-z0-9/_-]*$/;
 
@@ -28,15 +30,32 @@ export async function GET(req: Request) {
 
   const site = resolvePublicUrl(req.headers, url.host);
 
+  // 由 Host 攞返個 port，令區域網位址帶返正確嘅 :3000
+  const hostHeader = req.headers.get('x-forwarded-host') ?? req.headers.get('host') ?? url.host;
+  const port = /:(\d+)$/.exec(hostHeader)?.[1] ?? '';
+  const lan = site.reachability === 'local' ? lanUrl(port) : null;
+
   if (url.searchParams.get('info') === '1') {
-    return NextResponse.json({ ...site, target: site.url ? site.url + path : '' });
+    return NextResponse.json({
+      ...site,
+      target: site.url ? site.url + path : '',
+      // 只喺本機情況先俾區域網位址 —— 部署咗就唔應該再引導人用內部 IP
+      lanUrl: lan,
+      lanTarget: lan ? lan + path : null,
+    });
   }
 
-  if (!site.url) {
-    return NextResponse.json({ error: site.warning ?? '算唔到對外網址' }, { status: 500 });
+  const wantLan = url.searchParams.get('target') === 'lan';
+  const base = wantLan ? lan : site.url;
+
+  if (!base) {
+    return NextResponse.json(
+      { error: wantLan ? '搵唔到區域網位址' : (site.warning ?? '算唔到對外網址') },
+      { status: wantLan ? 404 : 500 },
+    );
   }
 
-  const svg = await QRCode.toString(site.url + path, {
+  const svg = await QRCode.toString(base + path, {
     type: 'svg',
     // M 級容錯：印出嚟俾人掂污糟咗、貼紙翹起都仲掃得到，
     // 但又唔會好似 H 級咁令圖案太密、細張時難掃。
