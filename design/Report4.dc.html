@@ -1,0 +1,123 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: oklch(0.42 0.062 165); text-decoration: none; }
+    a:hover { color: oklch(0.34 0.070 165); }
+    .serif { font-family: "Noto Serif TC", "Songti TC", "MingLiU", "SimSun", serif; }
+    .mono { font-family: "IBM Plex Mono", "SFMono-Regular", "Menlo", monospace; }
+  </style>
+</helmet>
+<div style="width: 794px; height: 1123px; box-sizing: border-box; background: oklch(0.985 0.004 85); color: oklch(0.24 0.01 65); font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif; display: flex; flex-direction: column; overflow: hidden;">
+
+  <div style="height: 7px; background: {{accent}}; flex-shrink: 0;"></div>
+
+  <div style="padding: 34px 62px 30px 62px; display: flex; flex-direction: column; gap: 20px; flex-grow: 1;">
+
+    <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid oklch(0.87 0.008 75); padding-bottom: 12px;">
+      <div style="font-size: 14px; letter-spacing: 0.14em; color: oklch(0.46 0.012 65);">代謝健康管理服務 · 月度報告</div>
+      <div class="mono" style="font-size: 14px; color: oklch(0.46 0.012 65);">MHM-2026-0043 · 2026 年 8 月</div>
+    </div>
+
+    <div class="serif" style="font-size: 21px; font-weight: 600; border-bottom: 2px solid oklch(0.24 0.01 65); padding-bottom: 8px;">第 4 頁 · 事件記錄</div>
+
+    <div style="background: oklch(0.96 0.014 45); border-left: 3px solid oklch(0.42 0.062 45); padding: 14px 18px; font-size: 15px; line-height: 1.7; color: oklch(0.30 0.020 45);">
+      我方就以下事件<strong>未作任何評估、判斷或建議</strong>，僅記錄病人自述、即時促其聯絡貴診所，並於當日通報。
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 18px;">
+      <sc-for list="{{events}}" as="e" hint-placeholder-count="2">
+        <div style="border: 1px solid oklch(0.87 0.008 75);">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; background: oklch(0.975 0.005 80); padding: 11px 18px; border-bottom: 1px solid oklch(0.87 0.008 75);">
+            <div class="mono" style="font-size: 16px; font-weight: 500;">{{e.time}}</div>
+            <div style="font-size: 14px; letter-spacing: 0.1em; color: oklch(0.42 0.062 45); font-weight: 700;">{{e.severity}}</div>
+          </div>
+          <sc-for list="{{e.rows}}" as="r" hint-placeholder-count="5">
+            <div style="display: grid; grid-template-columns: 150px 1fr; border-bottom: 1px solid oklch(0.93 0.006 75);">
+              <div style="padding: 11px 18px; font-size: 15px; color: oklch(0.46 0.012 65); background: oklch(0.978 0.004 80);">{{r.k}}</div>
+              <div style="padding: 11px 18px; font-size: 16px; line-height: 1.6;">{{r.v}}</div>
+            </div>
+          </sc-for>
+          <div style="display: grid; grid-template-columns: 150px 1fr;">
+            <div style="padding: 11px 18px; font-size: 15px; color: oklch(0.46 0.012 65); background: oklch(0.978 0.004 80);">已通報貴診所</div>
+            <div style="padding: 11px 18px; font-size: 16px; display: flex; gap: 10px; align-items: center;">
+              <span style="color: {{accent}};"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.4l3.3 3.3L13 4.8"></path></svg></span>
+              <span class="mono" style="font-size: 15px;">{{e.notified}}</span>
+            </div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="border: 1px solid oklch(0.87 0.008 75); padding: 16px 18px; display: flex; flex-direction: column; gap: 9px;">
+      <div style="font-size: 15px; font-weight: 700; letter-spacing: 0.14em; color: oklch(0.42 0.062 45);">我方的處理流程</div>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 2px;">
+        <sc-for list="{{flow}}" as="f" hint-placeholder-count="4">
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <div class="mono" style="font-size: 14px; color: oklch(0.42 0.062 45);">{{f.n}}</div>
+            <div style="font-size: 15px; line-height: 1.55;">{{f.text}}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="flex-grow: 1;"></div>
+
+    <div style="border-top: 1px solid oklch(0.87 0.008 75); padding-top: 12px; display: flex; justify-content: space-between; align-items: baseline;">
+      <div style="font-size: 13px; color: oklch(0.60 0.010 65);">事件記錄依內部 SOP 保存，可供貴診所隨時查閱。</div>
+      <div class="mono" style="font-size: 14px; color: oklch(0.46 0.012 65);">4 / 5</div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"accent":{"editor":"color","default":"#1d6355","options":["#1d6355","#2f5d7c","#6b4423","#3d4a5c"],"section":"外觀"}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      accent: this.props.accent ?? '#1d6355',
+      events: [
+        {
+          time: '2026-08-16　約 15:40',
+          severity: '輕微 · 已緩解',
+          notified: '2026-08-16 16:15 · WhatsApp',
+          rows: [
+            { k: '病人自述', v: '「手震、出咗身汗、有啲頭暈」' },
+            { k: '持續時間', v: '病人稱進食糖果後約 15 分鐘緩解' },
+            { k: '我方處理', v: '15:52 接獲訊息，即時建議聯絡貴診所；16:10 病人確認已致電診所' },
+            { k: '我方有否評估', v: '沒有。未作任何判斷或建議。' },
+          ],
+        },
+        {
+          time: '2026-08-27　約 16:20',
+          severity: '輕微 · 已緩解',
+          notified: '2026-08-27 16:35 · WhatsApp',
+          rows: [
+            { k: '病人自述', v: '「similar，冇上次咁犀利」' },
+            { k: '持續時間', v: '病人稱短時間內自行緩解' },
+            { k: '我方處理', v: '同上流程；另建議病人於覆診時向醫師提出' },
+            { k: '我方有否評估', v: '沒有。未作任何判斷或建議。' },
+          ],
+        },
+      ],
+      flow: [
+        { n: '01', text: '接獲病人訊息' },
+        { n: '02', text: '即時建議聯絡貴診所' },
+        { n: '03', text: '同日書面通報貴診所' },
+        { n: '04', text: '記錄存檔並跟進結案' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

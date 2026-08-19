@@ -58,3 +58,20 @@
 ```bash
 python3 compliance/check.py proposals/*.md --market hk
 ```
+
+## 印刷稿
+
+`design/` 內是 6 塊 A4 畫板的原始檔（一頁提案 ×1、月度報告樣本 ×5），
+以 Claude Design 畫布發布，可視覺微調並匯出 PNG / PDF。
+
+| 檔案 | 內容 |
+|---|---|
+| `design/Main.dc.html` | 一頁提案 A4 |
+| `design/Report1–5.dc.html` | 月度報告樣本 5 頁 |
+| `design/canvas.json` | 畫板版面、分頁、便條 |
+| `design/合規簽核.md` | **最終稿掃描結果與逐條保留理由** |
+
+改動流程：改 `.dc.html` → 重新 seed → 重新發布同一條連結。
+
+**付印前**：抽出可見文案跑一次 `--no-suppress`，
+並按 `design/合規簽核.md` 逐條確認，簽名存檔。

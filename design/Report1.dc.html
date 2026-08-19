@@ -1,0 +1,128 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: oklch(0.42 0.062 165); text-decoration: none; }
+    a:hover { color: oklch(0.34 0.070 165); }
+    .serif { font-family: "Noto Serif TC", "Songti TC", "MingLiU", "SimSun", serif; }
+    .mono { font-family: "IBM Plex Mono", "SFMono-Regular", "Menlo", monospace; }
+  </style>
+</helmet>
+<div style="width: 794px; height: 1123px; box-sizing: border-box; background: oklch(0.985 0.004 85); color: oklch(0.24 0.01 65); font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif; display: flex; flex-direction: column; overflow: hidden;">
+
+  <div style="height: 7px; background: {{accent}}; flex-shrink: 0;"></div>
+
+  <div style="padding: 38px 62px 30px 62px; display: flex; flex-direction: column; gap: 22px; flex-grow: 1;">
+
+    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <div style="font-size: 15px; font-weight: 700; letter-spacing: 0.16em;">［ 公司名稱 ］</div>
+        <div class="serif" style="font-size: 27px; font-weight: 600;">代謝健康管理服務 · 月度報告</div>
+      </div>
+      <div style="border: 1px solid oklch(0.42 0.062 45); color: oklch(0.42 0.062 45); padding: 5px 12px; font-size: 13px; letter-spacing: 0.16em; font-weight: 700;">樣本 SAMPLE</div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; border-top: 1px solid oklch(0.87 0.008 75); border-bottom: 1px solid oklch(0.87 0.008 75); padding: 14px 0;">
+      <sc-for list="{{meta}}" as="m" hint-placeholder-count="4">
+        <div style="display: flex; flex-direction: column; gap: 5px;">
+          <div style="font-size: 13px; letter-spacing: 0.1em; color: oklch(0.60 0.010 65);">{{m.k}}</div>
+          <div class="mono" style="font-size: 16px; font-weight: 500;">{{m.v}}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="background: oklch(0.96 0.014 45); border-left: 3px solid oklch(0.42 0.062 45); padding: 14px 18px;">
+      <div style="font-size: 15px; line-height: 1.7; color: oklch(0.30 0.020 45);">本報告呈現病人自述之飲食與生活記錄，以及監測數據。<br><strong>本報告不構成診斷、不作臨床結論、不涉及任何藥物或劑量事宜。</strong>一切臨床判斷屬主診執業者之範圍。</div>
+    </div>
+
+    <div class="serif" style="font-size: 21px; font-weight: 600; border-bottom: 2px solid oklch(0.24 0.01 65); padding-bottom: 8px;">第 1 頁 · 一分鐘摘要</div>
+
+    <div style="display: flex; flex-direction: column; gap: 11px;">
+      <div style="font-size: 15px; font-weight: 700; letter-spacing: 0.14em; color: {{accent}};">本月參與情況</div>
+      <div style="border: 1px solid oklch(0.87 0.008 75);">
+        <sc-for list="{{participation}}" as="p" hint-placeholder-count="5">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid oklch(0.93 0.006 75);">
+            <div style="padding: 10px 16px; font-size: 16px;">{{p.k}}</div>
+            <div style="padding: 10px 16px; font-size: 16px; display: flex; gap: 14px; align-items: baseline;">
+              <span class="mono" style="font-weight: 500;">{{p.v}}</span>
+              <span style="font-size: 14px; color: oklch(0.60 0.010 65);">{{p.note}}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 11px;">
+      <div style="font-size: 15px; font-weight: 700; letter-spacing: 0.14em; color: {{accent}};">需要你留意的三點</div>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <sc-for list="{{notes}}" as="n" hint-placeholder-count="3">
+          <div style="display: flex; gap: 14px; align-items: flex-start; border: 1px solid oklch(0.87 0.008 75); padding: 12px 16px;">
+            <div class="mono" style="font-size: 15px; color: {{accent}}; flex-shrink: 0; padding-top: 2px;">{{n.n}}</div>
+            <div style="font-size: 16px; line-height: 1.65;">{{n.text}}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 11px;">
+      <div style="font-size: 15px; font-weight: 700; letter-spacing: 0.14em; color: {{accent}};">病人自述的主觀狀態（原話）</div>
+      <div style="display: flex; flex-direction: column; gap: 8px; padding-left: 4px;">
+        <sc-for list="{{quotes}}" as="q" hint-placeholder-count="3">
+          <div class="serif" style="font-size: 17px; line-height: 1.7; color: oklch(0.34 0.012 65); border-left: 2px solid oklch(0.87 0.008 75); padding-left: 14px;">「{{q}}」</div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="flex-grow: 1;"></div>
+
+    <div style="border-top: 1px solid oklch(0.87 0.008 75); padding-top: 12px; display: flex; justify-content: space-between; align-items: baseline;">
+      <div style="font-size: 13px; color: oklch(0.60 0.010 65);">本報告只供指定診所及其執業者參閱，依《個人資料（私隱）條例》處理，不得轉發第三方。</div>
+      <div class="mono" style="font-size: 14px; color: oklch(0.46 0.012 65);">1 / 5</div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"accent":{"editor":"color","default":"#1d6355","options":["#1d6355","#2f5d7c","#6b4423","#3d4a5c"],"section":"外觀"}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      accent: this.props.accent ?? '#1d6355',
+      meta: [
+        { k: '病人編號', v: 'MHM-2026-0043' },
+        { k: '報告月份', v: '2026 年 8 月' },
+        { k: '服務方案', v: 'B（含 CGM）' },
+        { k: '報告日期', v: '2026-09-02' },
+      ],
+      participation: [
+        { k: '營養師諮詢', v: '1 / 1 次', note: '已完成 2026-08-12' },
+        { k: '飲食記錄提交', v: '24 / 30 日', note: '上月 18 日' },
+        { k: 'CGM 佩戴日數', v: '28 / 30 日', note: '' },
+        { k: 'WhatsApp 提問', v: '7 次', note: '' },
+        { k: '上月行動計劃達成', v: '2 / 3 項', note: '' },
+      ],
+      notes: [
+        { n: '01', text: '病人自述本月有 2 次在下午感到「手震、出汗」，我方已即時建議其聯絡貴診所。詳見第 4 頁事件記錄。' },
+        { n: '02', text: '外食比例由上月 78% 降至 61%，主要變化在晚餐。' },
+        { n: '03', text: '病人主動提出想知道「應酬飲酒點算」，已列入下月主題。' },
+      ],
+      quotes: [
+        '呢個月精神好啲，返工冇咁攰。',
+        '最難係應酬，唔知點揀。',
+        '戴住個機好方便，見到啲數郁我就會諗多陣。',
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

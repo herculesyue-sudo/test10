@@ -1,0 +1,129 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: oklch(0.42 0.062 165); text-decoration: none; }
+    a:hover { color: oklch(0.34 0.070 165); }
+    .serif { font-family: "Noto Serif TC", "Songti TC", "MingLiU", "SimSun", serif; }
+    .mono { font-family: "IBM Plex Mono", "SFMono-Regular", "Menlo", monospace; }
+  </style>
+</helmet>
+<div style="width: 794px; height: 1123px; box-sizing: border-box; background: oklch(0.985 0.004 85); color: oklch(0.24 0.01 65); font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif; display: flex; flex-direction: column; overflow: hidden;">
+
+  <div style="height: 7px; background: {{accent}}; flex-shrink: 0;"></div>
+
+  <div style="padding: 34px 62px 30px 62px; display: flex; flex-direction: column; gap: 20px; flex-grow: 1;">
+
+    <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid oklch(0.87 0.008 75); padding-bottom: 12px;">
+      <div style="font-size: 14px; letter-spacing: 0.14em; color: oklch(0.46 0.012 65);">代謝健康管理服務 · 月度報告</div>
+      <div class="mono" style="font-size: 14px; color: oklch(0.46 0.012 65);">MHM-2026-0043 · 2026 年 8 月</div>
+    </div>
+
+    <div class="serif" style="font-size: 21px; font-weight: 600; border-bottom: 2px solid oklch(0.24 0.01 65); padding-bottom: 8px;">第 3 頁 · CGM 數據呈現</div>
+
+    <div style="display: flex; gap: 26px; align-items: baseline; font-size: 15px; color: oklch(0.46 0.012 65);">
+      <span>佩戴期間：<span class="mono">2026-08-03 至 2026-08-30（28 日）</span></span>
+      <span>數據完整度：<span class="mono">94%</span></span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 11px;">
+      <div style="font-size: 15px; font-weight: 700; letter-spacing: 0.14em; color: {{accent}};">本月數值摘要</div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid oklch(0.87 0.008 75);">
+        <sc-for list="{{stats}}" as="s" hint-placeholder-count="6">
+          <div style="padding: 14px 18px; border-right: 1px solid oklch(0.93 0.006 75); border-bottom: 1px solid oklch(0.93 0.006 75); display: flex; flex-direction: column; gap: 5px;">
+            <div style="font-size: 14px; color: oklch(0.60 0.010 65); line-height: 1.4;">{{s.k}}</div>
+            <div class="mono" style="font-size: 21px; font-weight: 500;">{{s.v}}</div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="font-size: 14px; color: oklch(0.60 0.010 65); line-height: 1.65;">本頁只呈現本報告月份之數據，不作跨月比較、不作趨勢結論。數值之臨床意義由主診執業者判斷。</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 11px;">
+      <div style="font-size: 15px; font-weight: 700; letter-spacing: 0.14em; color: {{accent}};">代表性單日曲線（2026-08-14）</div>
+      <div style="border: 1px solid oklch(0.87 0.008 75); padding: 16px 18px 12px 18px;">
+        <svg width="638" height="176" viewBox="0 0 638 176" fill="none" style="display: block;">
+          <rect x="42" y="58" width="590" height="62" fill="oklch(0.95 0.018 165)"></rect>
+          <line x1="42" y1="10" x2="632" y2="10" stroke="oklch(0.93 0.006 75)" stroke-width="1"></line>
+          <line x1="42" y1="58" x2="632" y2="58" stroke="oklch(0.87 0.008 75)" stroke-width="1"></line>
+          <line x1="42" y1="120" x2="632" y2="120" stroke="oklch(0.87 0.008 75)" stroke-width="1"></line>
+          <line x1="42" y1="152" x2="632" y2="152" stroke="oklch(0.80 0.008 75)" stroke-width="1"></line>
+          <text x="8" y="14" font-size="11" fill="oklch(0.60 0.010 65)" font-family="monospace">14</text>
+          <text x="8" y="62" font-size="11" fill="oklch(0.60 0.010 65)" font-family="monospace">10</text>
+          <text x="12" y="124" font-size="11" fill="oklch(0.60 0.010 65)" font-family="monospace">4</text>
+          <text x="12" y="156" font-size="11" fill="oklch(0.60 0.010 65)" font-family="monospace">2</text>
+          <path d="M42 104 L88 108 L134 101 L168 72 L196 62 L226 84 L268 96 L300 92 L332 66 L360 57 L392 79 L432 94 L468 90 L500 68 L532 60 L566 82 L600 97 L632 100"
+                stroke="{{accent}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"></path>
+          <text x="42" y="170" font-size="11" fill="oklch(0.60 0.010 65)" font-family="monospace">00:00</text>
+          <text x="190" y="170" font-size="11" fill="oklch(0.60 0.010 65)" font-family="monospace">06:00</text>
+          <text x="340" y="170" font-size="11" fill="oklch(0.60 0.010 65)" font-family="monospace">12:00</text>
+          <text x="490" y="170" font-size="11" fill="oklch(0.60 0.010 65)" font-family="monospace">18:00</text>
+          <text x="592" y="170" font-size="11" fill="oklch(0.60 0.010 65)" font-family="monospace">24:00</text>
+        </svg>
+        <div style="font-size: 14px; color: oklch(0.60 0.010 65); margin-top: 6px;">縱軸單位 mmol/L。完整 28 日每日曲線及週趨勢圖另附。</div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 11px;">
+      <div style="font-size: 15px; font-weight: 700; letter-spacing: 0.14em; color: {{accent}};">飲食—數據對應（僅並列呈現）</div>
+      <div style="border: 1px solid oklch(0.87 0.008 75);">
+        <div style="display: grid; grid-template-columns: 1fr 2fr 1.2fr; background: oklch(0.95 0.018 165); border-bottom: 1px solid oklch(0.87 0.008 75);">
+          <div style="padding: 10px 16px; font-size: 15px; font-weight: 700;">日期 / 餐次</div>
+          <div style="padding: 10px 16px; font-size: 15px; font-weight: 700;">該餐病人記錄</div>
+          <div style="padding: 10px 16px; font-size: 15px; font-weight: 700;">對應曲線</div>
+        </div>
+        <sc-for list="{{pairs}}" as="p" hint-placeholder-count="4">
+          <div style="display: grid; grid-template-columns: 1fr 2fr 1.2fr; border-bottom: 1px solid oklch(0.93 0.006 75);">
+            <div class="mono" style="padding: 10px 16px; font-size: 15px;">{{p.date}}</div>
+            <div style="padding: 10px 16px; font-size: 16px;">{{p.meal}}</div>
+            <div class="mono" style="padding: 10px 16px; font-size: 15px; color: oklch(0.46 0.012 65);">{{p.ref}}</div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="background: oklch(0.96 0.014 45); border-left: 3px solid oklch(0.42 0.062 45); padding: 12px 16px; font-size: 15px; line-height: 1.7; color: oklch(0.30 0.020 45);">上表僅將病人自述記錄與同時段數據並列呈現，<strong>不代表任何因果關係，亦不構成臨床解讀。</strong></div>
+    </div>
+
+    <div style="flex-grow: 1;"></div>
+
+    <div style="border-top: 1px solid oklch(0.87 0.008 75); padding-top: 12px; display: flex; justify-content: space-between; align-items: baseline;">
+      <div style="font-size: 13px; color: oklch(0.60 0.010 65);">本頁只呈現數據，不作臨床解讀。</div>
+      <div class="mono" style="font-size: 14px; color: oklch(0.46 0.012 65);">3 / 5</div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"accent":{"editor":"color","default":"#1d6355","options":["#1d6355","#2f5d7c","#6b4423","#3d4a5c"],"section":"外觀"}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      accent: this.props.accent ?? '#1d6355',
+      stats: [
+        { k: '平均值', v: '6.8 mmol/L' },
+        { k: '標準差（波動幅度）', v: '1.9' },
+        { k: '目標範圍內時間比率', v: '74%' },
+        { k: '高於目標範圍比率', v: '23%' },
+        { k: '低於目標範圍比率', v: '3%' },
+        { k: '夜間（00–06）平均', v: '5.9 mmol/L' },
+      ],
+      pairs: [
+        { date: '08-07 午', meal: '兩餸飯，先飯後餸', ref: '見附圖 P.7' },
+        { date: '08-14 午', meal: '兩餸飯，先餸後飯', ref: '見附圖 P.14' },
+        { date: '08-21 晚', meal: '火鍋', ref: '見附圖 P.21' },
+        { date: '08-25 晚', meal: '家常小菜', ref: '見附圖 P.25' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

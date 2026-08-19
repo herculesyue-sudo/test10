@@ -1,0 +1,156 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: oklch(0.42 0.062 165); text-decoration: none; }
+    a:hover { color: oklch(0.34 0.070 165); }
+    .serif { font-family: "Noto Serif TC", "Songti TC", "MingLiU", "SimSun", serif; }
+    .mono { font-family: "IBM Plex Mono", "SFMono-Regular", "Menlo", monospace; }
+  </style>
+</helmet>
+<div style="width: 794px; height: 1123px; box-sizing: border-box; background: oklch(0.985 0.004 85); color: oklch(0.24 0.01 65); font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif; display: flex; flex-direction: column; overflow: hidden;">
+
+  <div style="height: 7px; background: {{accent}}; flex-shrink: 0;"></div>
+
+  <div style="padding: 34px 62px 30px 62px; display: flex; flex-direction: column; gap: 20px; flex-grow: 1;">
+
+    <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid oklch(0.87 0.008 75); padding-bottom: 12px;">
+      <div style="font-size: 14px; letter-spacing: 0.14em; color: oklch(0.46 0.012 65);">代謝健康管理服務 · 月度報告</div>
+      <div class="mono" style="font-size: 14px; color: oklch(0.46 0.012 65);">MHM-2026-0043 · 2026 年 8 月</div>
+    </div>
+
+    <div class="serif" style="font-size: 21px; font-weight: 600; border-bottom: 2px solid oklch(0.24 0.01 65); padding-bottom: 8px;">第 2 頁 · 飲食與生活記錄</div>
+
+    <div style="display: flex; flex-direction: column; gap: 11px;">
+      <div style="font-size: 15px; font-weight: 700; letter-spacing: 0.14em; color: {{accent}};">記錄完整度</div>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 34px;">
+        <sc-for list="{{weeks}}" as="w" hint-placeholder-count="4">
+          <div style="display: flex; gap: 14px; align-items: center;">
+            <div style="font-size: 16px; width: 62px; flex-shrink: 0;">{{w.label}}</div>
+            <div style="flex-grow: 1; height: 9px; background: oklch(0.91 0.006 75); position: relative;">
+              <div style="position: absolute; left: 0; top: 0; bottom: 0; width: {{w.pct}}; background: {{accent}};"></div>
+            </div>
+            <div class="mono" style="font-size: 15px; width: 52px; text-align: right; flex-shrink: 0;">{{w.val}}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 11px;">
+      <div style="font-size: 15px; font-weight: 700; letter-spacing: 0.14em; color: {{accent}};">進食模式</div>
+      <div style="border: 1px solid oklch(0.87 0.008 75);">
+        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1.2fr; background: oklch(0.95 0.018 165); border-bottom: 1px solid oklch(0.87 0.008 75);">
+          <div style="padding: 10px 16px; font-size: 15px; font-weight: 700;">項目</div>
+          <div style="padding: 10px 16px; font-size: 15px; font-weight: 700;">本月</div>
+          <div style="padding: 10px 16px; font-size: 15px; font-weight: 700;">上月</div>
+          <div style="padding: 10px 16px; font-size: 15px; font-weight: 700;">變化</div>
+        </div>
+        <sc-for list="{{habits}}" as="h" hint-placeholder-count="5">
+          <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1.2fr; border-bottom: 1px solid oklch(0.93 0.006 75);">
+            <div style="padding: 10px 16px; font-size: 16px;">{{h.k}}</div>
+            <div class="mono" style="padding: 10px 16px; font-size: 16px; font-weight: 500;">{{h.now}}</div>
+            <div class="mono" style="padding: 10px 16px; font-size: 16px; color: oklch(0.60 0.010 65);">{{h.prev}}</div>
+            <div class="mono" style="padding: 10px 16px; font-size: 15px; color: {{accent}};">{{h.delta}}</div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="font-size: 14px; color: oklch(0.60 0.010 65); line-height: 1.6;">以上為病人自行記錄之行為數據，用以反映依從性，並非臨床指標。</div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1.1fr 1fr; gap: 30px;">
+      <div style="display: flex; flex-direction: column; gap: 11px;">
+        <div style="font-size: 15px; font-weight: 700; letter-spacing: 0.14em; color: {{accent}};">最常出現的五種正餐</div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <sc-for list="{{meals}}" as="m" hint-placeholder-count="5">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px dotted oklch(0.85 0.008 75); padding-bottom: 6px;">
+              <span style="font-size: 16px;">{{m.name}}</span>
+              <span class="mono" style="font-size: 15px; color: oklch(0.46 0.012 65);">{{m.n}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 11px;">
+        <div style="font-size: 15px; font-weight: 700; letter-spacing: 0.14em; color: {{accent}};">本月三項調整</div>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <sc-for list="{{actions}}" as="a" hint-placeholder-count="3">
+            <div style="display: flex; gap: 11px; align-items: flex-start;">
+              <span style="color: {{a.color}}; flex-shrink: 0; margin-top: 3px;">
+                <sc-if value="{{a.done}}" hint-placeholder-val="{{true}}">
+                  <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.4l3.3 3.3L13 4.8"></path></svg>
+                </sc-if>
+                <sc-if value="{{a.partial}}" hint-placeholder-val="{{false}}">
+                  <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M3.5 8h9"></path></svg>
+                </sc-if>
+              </span>
+              <div style="display: flex; flex-direction: column; gap: 2px;">
+                <span style="font-size: 16px; line-height: 1.5;">{{a.text}}</span>
+                <span style="font-size: 14px; color: oklch(0.60 0.010 65);">{{a.status}}</span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <div style="background: oklch(0.975 0.005 80); border: 1px solid oklch(0.90 0.006 75); padding: 14px 18px;">
+      <div style="font-size: 14px; letter-spacing: 0.1em; color: oklch(0.60 0.010 65); margin-bottom: 6px;">病人自述執行困難</div>
+      <div class="serif" style="font-size: 17px; line-height: 1.7; color: oklch(0.34 0.012 65);">「散步嗰項，返到屋企成十點，真係唔想郁。」</div>
+      <div style="font-size: 15px; color: oklch(0.46 0.012 65); margin-top: 8px;">→ 下月調整為：午飯後步行 10 分鐘（可行性較高）</div>
+    </div>
+
+    <div style="flex-grow: 1;"></div>
+
+    <div style="border-top: 1px solid oklch(0.87 0.008 75); padding-top: 12px; display: flex; justify-content: space-between; align-items: baseline;">
+      <div style="font-size: 13px; color: oklch(0.60 0.010 65);">以上為病人自述記錄，不構成診斷或臨床建議。</div>
+      <div class="mono" style="font-size: 14px; color: oklch(0.46 0.012 65);">2 / 5</div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"accent":{"editor":"color","default":"#1d6355","options":["#1d6355","#2f5d7c","#6b4423","#3d4a5c"],"section":"外觀"}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      accent: this.props.accent ?? '#1d6355',
+      weeks: [
+        { label: '第 1 週', val: '6 / 7 日', pct: '86%' },
+        { label: '第 2 週', val: '7 / 7 日', pct: '100%' },
+        { label: '第 3 週', val: '5 / 7 日', pct: '71%' },
+        { label: '第 4 週', val: '6 / 7 日', pct: '86%' },
+      ],
+      habits: [
+        { k: '外食比例', now: '61%', prev: '78%', delta: '↓ 17 點' },
+        { k: '每日進食時段跨度', now: '13.5 h', prev: '15 h', delta: '↓ 1.5 h' },
+        { k: '有食早餐日數', now: '22 / 24', prev: '14 / 18', delta: '↑' },
+        { k: '宵夜日數', now: '5 / 24', prev: '11 / 18', delta: '↓' },
+        { k: '含糖飲品（次 / 週）', now: '3', prev: '7', delta: '↓ 4' },
+      ],
+      meals: [
+        { name: '茶餐廳常餐（早）', n: '8 次' },
+        { name: '兩餸飯（午）', n: '7 次' },
+        { name: '家常小菜連飯（晚）', n: '6 次' },
+        { name: '米線 / 河粉（午）', n: '5 次' },
+        { name: '火鍋 / 打邊爐（晚）', n: '2 次' },
+      ],
+      actions: [
+        { text: '常餐轉走飛邊多菜，通粉轉走油', status: '已做到', done: true, partial: false, color: '#1d6355' },
+        { text: '兩餸飯先食餸後食飯', status: '已做到', done: true, partial: false, color: '#1d6355' },
+        { text: '晚飯後散步 15 分鐘', status: '部分達成（3 / 7 日）', done: false, partial: true, color: '#8a5a2b' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

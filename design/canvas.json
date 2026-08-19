@@ -1,0 +1,42 @@
+{
+  "pages": [
+    { "id": "page-1", "name": "一頁提案" },
+    { "id": "page-2", "name": "月度報告（樣本）" }
+  ],
+  "artboards": [
+    { "file": "Main.dc.html", "title": "一頁提案 A4", "page": "page-1", "x": 0, "y": 0, "w": 794, "h": 1123, "print": "fixed" },
+
+    { "file": "Report1.dc.html", "title": "報告 P1 · 一分鐘摘要", "page": "page-2", "x": 0, "y": 0, "w": 794, "h": 1123, "print": "fixed" },
+    { "file": "Report2.dc.html", "title": "報告 P2 · 飲食與生活記錄", "page": "page-2", "x": 874, "y": 0, "w": 794, "h": 1123, "print": "fixed" },
+    { "file": "Report3.dc.html", "title": "報告 P3 · CGM 數據", "page": "page-2", "x": 1748, "y": 0, "w": 794, "h": 1123, "print": "fixed" },
+    { "file": "Report4.dc.html", "title": "報告 P4 · 事件記錄", "page": "page-2", "x": 2622, "y": 0, "w": 794, "h": 1123, "print": "fixed" },
+    { "file": "Report5.dc.html", "title": "報告 P5 · 下月計劃", "page": "page-2", "x": 3496, "y": 0, "w": 794, "h": 1123, "print": "fixed" }
+  ],
+  "annotations": [
+    {
+      "id": "fill-placeholders",
+      "page": "page-1",
+      "x": 874,
+      "y": 40,
+      "w": 300,
+      "text": "要填返嘅位：\n· ［ 公司名稱 ］\n· 底部三格聯絡資料\n\n印刷前：把最終文字抽出成 txt，跑\ncompliance/check.py --no-suppress\n零 BLOCK 先落單。"
+    },
+    {
+      "id": "which-pages",
+      "page": "page-2",
+      "x": 0,
+      "y": -190,
+      "w": 340,
+      "text": "見面時揭 P1 同 P4 俾對方睇——呢兩頁決定成交。\n\nP1 = 佢覆診即刻用得着嘅嘢\nP4 = 證明你知道自己嘅界線喺邊"
+    },
+    {
+      "id": "sample-data",
+      "page": "page-2",
+      "x": 1748,
+      "y": -190,
+      "w": 340,
+      "text": "CGM 一頁刻意只呈現本月數據，冇「上月 vs 本月」嘅改善對照——避免整份報告變成療效展示。\n跨月比較只留返俾行為數據（P2 依從性）。"
+    }
+  ],
+  "launch": { "view": "canvas", "page": "page-1" }
+}

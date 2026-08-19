@@ -1,0 +1,121 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: oklch(0.42 0.062 165); text-decoration: none; }
+    a:hover { color: oklch(0.34 0.070 165); }
+    .serif { font-family: "Noto Serif TC", "Songti TC", "MingLiU", "SimSun", serif; }
+    .mono { font-family: "IBM Plex Mono", "SFMono-Regular", "Menlo", monospace; }
+  </style>
+</helmet>
+<div style="width: 794px; height: 1123px; box-sizing: border-box; background: oklch(0.985 0.004 85); color: oklch(0.24 0.01 65); font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif; display: flex; flex-direction: column; overflow: hidden;">
+
+  <div style="height: 7px; background: {{accent}}; flex-shrink: 0;"></div>
+
+  <div style="padding: 34px 62px 30px 62px; display: flex; flex-direction: column; gap: 20px; flex-grow: 1;">
+
+    <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid oklch(0.87 0.008 75); padding-bottom: 12px;">
+      <div style="font-size: 14px; letter-spacing: 0.14em; color: oklch(0.46 0.012 65);">代謝健康管理服務 · 月度報告</div>
+      <div class="mono" style="font-size: 14px; color: oklch(0.46 0.012 65);">MHM-2026-0043 · 2026 年 8 月</div>
+    </div>
+
+    <div class="serif" style="font-size: 21px; font-weight: 600; border-bottom: 2px solid oklch(0.24 0.01 65); padding-bottom: 8px;">第 5 頁 · 下月計劃</div>
+
+    <div style="display: flex; flex-direction: column; gap: 11px;">
+      <div style="font-size: 15px; font-weight: 700; letter-spacing: 0.14em; color: {{accent}};">下月三項行動（與病人共同訂立）</div>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <sc-for list="{{plans}}" as="p" hint-placeholder-count="3">
+          <div style="display: flex; gap: 14px; align-items: flex-start; border: 1px solid oklch(0.87 0.008 75); padding: 13px 18px;">
+            <div class="mono" style="font-size: 15px; color: {{accent}}; flex-shrink: 0; padding-top: 2px;">{{p.n}}</div>
+            <div style="display: flex; flex-direction: column; gap: 3px;">
+              <div style="font-size: 16px; line-height: 1.6;">{{p.text}}</div>
+              <div style="font-size: 14px; color: oklch(0.60 0.010 65);">{{p.why}}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 11px;">
+      <div style="font-size: 15px; font-weight: 700; letter-spacing: 0.14em; color: {{accent}};">排期</div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid oklch(0.87 0.008 75);">
+        <sc-for list="{{sched}}" as="s" hint-placeholder-count="3">
+          <div style="padding: 14px 18px; border-right: 1px solid oklch(0.93 0.006 75); display: flex; flex-direction: column; gap: 5px;">
+            <div style="font-size: 14px; color: oklch(0.60 0.010 65);">{{s.k}}</div>
+            <div class="mono" style="font-size: 17px; font-weight: 500;">{{s.v}}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 11px;">
+      <div style="font-size: 15px; font-weight: 700; letter-spacing: 0.14em; color: oklch(0.42 0.062 45);">給貴診所的提問（如方便於覆診時處理）</div>
+      <div style="display: flex; flex-direction: column; gap: 9px;">
+        <sc-for list="{{questions}}" as="q" hint-placeholder-count="3">
+          <div style="display: flex; gap: 11px; align-items: flex-start;">
+            <span style="color: oklch(0.42 0.062 45); flex-shrink: 0; margin-top: 6px;"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l6 5-6 5"></path></svg></span>
+            <span style="font-size: 16px; line-height: 1.65;">{{q}}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="font-size: 14px; color: oklch(0.60 0.010 65); line-height: 1.65;">以上屬臨床範圍，我方已向病人說明由貴診所處理，並未作任何回應。</div>
+    </div>
+
+    <div style="border-top: 2px solid oklch(0.24 0.01 65); padding-top: 18px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 34px;">
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div style="font-size: 13px; letter-spacing: 0.12em; color: oklch(0.60 0.010 65);">報告編製 · 香港註冊營養師</div>
+        <div style="border-bottom: 1px dotted oklch(0.78 0.010 75); height: 24px;"></div>
+        <div style="font-size: 14px; color: oklch(0.60 0.010 65);">註冊編號 ____________</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div style="font-size: 13px; letter-spacing: 0.12em; color: oklch(0.60 0.010 65);">覆核 · 日期</div>
+        <div style="border-bottom: 1px dotted oklch(0.78 0.010 75); height: 24px;"></div>
+        <div style="font-size: 14px; color: oklch(0.60 0.010 65);">查詢 ____________</div>
+      </div>
+    </div>
+
+    <div style="flex-grow: 1;"></div>
+
+    <div style="border-top: 1px solid oklch(0.87 0.008 75); padding-top: 12px; display: flex; justify-content: space-between; align-items: baseline;">
+      <div style="font-size: 13px; color: oklch(0.60 0.010 65);">本報告不構成診斷、不作臨床結論、不涉及任何藥物或劑量事宜。</div>
+      <div class="mono" style="font-size: 14px; color: oklch(0.46 0.012 65);">5 / 5</div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"accent":{"editor":"color","default":"#1d6355","options":["#1d6355","#2f5d7c","#6b4423","#3d4a5c"],"section":"外觀"}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      accent: this.props.accent ?? '#1d6355',
+      plans: [
+        { n: '01', text: '應酬場合的點餐選擇', why: '病人主動提出' },
+        { n: '02', text: '午飯後步行 10 分鐘', why: '取代原「晚飯後 15 分鐘」，提高可行性' },
+        { n: '03', text: '維持外食比例在 60% 以下', why: '延續本月已達成的改變' },
+      ],
+      sched: [
+        { k: '營養師諮詢', v: '2026-09-09' },
+        { k: '下次 CGM 更換', v: '2026-09-05' },
+        { k: '下份報告', v: '2026-10-02' },
+      ],
+      questions: [
+        '病人多次問及「運動應該幾時做」，屬臨床範圍，我方未作回應。',
+        '病人查詢應酬飲酒事宜，我方僅就食物選擇部分提供建議。',
+        '病人提及第 4 頁兩宗事件，已請其於覆診時主動向醫師說明。',
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

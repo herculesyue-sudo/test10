@@ -1,0 +1,164 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: oklch(0.42 0.062 165); text-decoration: none; }
+    a:hover { color: oklch(0.34 0.070 165); }
+    .serif { font-family: "Noto Serif TC", "Songti TC", "MingLiU", "SimSun", serif; }
+    .mono { font-family: "IBM Plex Mono", "SFMono-Regular", "Menlo", monospace; }
+    .fill { border-bottom: 1px dotted oklch(0.78 0.010 75); }
+  </style>
+</helmet>
+<div style="width: 794px; height: 1123px; box-sizing: border-box; background: oklch(0.985 0.004 85); color: oklch(0.24 0.01 65); font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif; display: flex; flex-direction: column; overflow: hidden;">
+
+  <div style="height: 7px; background: {{accent}}; flex-shrink: 0;"></div>
+
+  <div style="padding: 42px 62px 44px 62px; display: flex; flex-direction: column; gap: 26px; flex-grow: 1;">
+
+    <div style="display: flex; justify-content: space-between; align-items: baseline;">
+      <div style="font-size: 16px; font-weight: 700; letter-spacing: 0.16em; color: oklch(0.24 0.01 65);">［ 公司名稱 ］</div>
+      <div style="font-size: 15px; letter-spacing: 0.14em; color: oklch(0.46 0.012 65);">代謝健康管理服務 · 診所合作方案</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 14px;">
+      <h1 class="serif" style="margin: 0; font-size: 46px; font-weight: 600; line-height: 1.24; letter-spacing: 0.01em;">我們不賣產品<br>給你的病人</h1>
+      <p style="margin: 0; font-size: 17px; line-height: 1.72; color: oklch(0.36 0.012 65); max-width: 600px;">你診所現有的產品銷售，毛利全數保持不變。<br>我們一分不抽、不設分成、不接觸產品交易。</p>
+    </div>
+
+    <div style="height: 1px; background: oklch(0.87 0.008 75);"></div>
+
+    <div style="display: flex; flex-direction: column; gap: 14px;">
+      <div style="font-size: 15px; font-weight: 700; letter-spacing: 0.14em; color: {{accent}};">我們補上你沒時間做的部分</div>
+      <div style="display: flex; flex-direction: column; gap: 11px;">
+        <sc-for list="{{services}}" as="s" hint-placeholder-count="5">
+          <div style="display: flex; gap: 16px; align-items: baseline;">
+            <div class="mono" style="font-size: 15px; color: {{accent}}; width: 20px; flex-shrink: 0;">{{s.n}}</div>
+            <div style="font-size: 17px; font-weight: 500; width: 178px; flex-shrink: 0;">{{s.title}}</div>
+            <div style="font-size: 16px; color: oklch(0.46 0.012 65); line-height: 1.6;">{{s.desc}}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      <div style="font-size: 15px; font-weight: 700; letter-spacing: 0.14em; color: {{accent}};">你多賺多少</div>
+      <div style="border: 1px solid oklch(0.87 0.008 75);">
+        <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: oklch(0.95 0.018 165); border-bottom: 1px solid oklch(0.87 0.008 75);">
+          <div style="padding: 11px 16px; font-size: 15px; font-weight: 700;">方案</div>
+          <div style="padding: 11px 16px; font-size: 15px; font-weight: 700;">我們向你收</div>
+          <div style="padding: 11px 16px; font-size: 15px; font-weight: 700;">你的建議收費</div>
+          <div style="padding: 11px 16px; font-size: 15px; font-weight: 700;">你每位病人賺</div>
+        </div>
+        <sc-for list="{{plans}}" as="p" hint-placeholder-count="2">
+          <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-bottom: 1px solid oklch(0.93 0.006 75);">
+            <div style="padding: 13px 16px; font-size: 17px; font-weight: 500;">{{p.name}}</div>
+            <div class="mono" style="padding: 13px 16px; font-size: 17px;">{{p.cost}}</div>
+            <div class="mono" style="padding: 13px 16px; font-size: 17px; color: oklch(0.46 0.012 65);">{{p.retail}}</div>
+            <div class="mono" style="padding: 13px 16px; font-size: 17px; font-weight: 500; color: {{accent}};">{{p.margin}}</div>
+          </div>
+        </sc-for>
+        <div style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: baseline; background: oklch(0.975 0.005 80);">
+          <div style="font-size: 16px; color: oklch(0.36 0.012 65);">＋ 產品毛利照舊，全數歸你</div>
+          <div style="font-size: 16px; font-weight: 700;">8 位病人 ≈ 每月多 <span class="mono">$4,800–6,400</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 34px;">
+
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div style="font-size: 15px; font-weight: 700; letter-spacing: 0.14em; color: {{accent}};">試點條件 · 零風險</div>
+        <div style="display: flex; flex-direction: column; gap: 9px;">
+          <sc-for list="{{pilot}}" as="t" hint-placeholder-count="5">
+            <div style="display: flex; gap: 10px; align-items: flex-start;">
+              <span style="color: {{accent}}; flex-shrink: 0; margin-top: 4px;"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.4l3.3 3.3L13 4.8"></path></svg></span>
+              <span style="font-size: 16px; line-height: 1.55;">{{t}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div style="font-size: 15px; font-weight: 700; letter-spacing: 0.14em; color: oklch(0.42 0.062 45);">我們的界線 · 寫入協議</div>
+        <div style="display: flex; flex-direction: column; gap: 9px;">
+          <sc-for list="{{bounds}}" as="b" hint-placeholder-count="5">
+            <div style="display: flex; gap: 10px; align-items: flex-start;">
+              <sc-if value="{{b.no}}" hint-placeholder-val="{{true}}">
+                <span style="color: oklch(0.42 0.062 45); flex-shrink: 0; margin-top: 4px;"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4.2 4.2l7.6 7.6M11.8 4.2l-7.6 7.6"></path></svg></span>
+              </sc-if>
+              <sc-if value="{{b.yes}}" hint-placeholder-val="{{false}}">
+                <span style="color: {{accent}}; flex-shrink: 0; margin-top: 4px;"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.4l3.3 3.3L13 4.8"></path></svg></span>
+              </sc-if>
+              <span style="font-size: 16px; line-height: 1.55;">{{b.text}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+    </div>
+
+    <div style="flex-grow: 1;"></div>
+
+    <div style="border-top: 2px solid oklch(0.24 0.01 65); padding-top: 18px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 26px;">
+      <div style="display: flex; flex-direction: column; gap: 7px;">
+        <div style="font-size: 13px; letter-spacing: 0.12em; color: oklch(0.60 0.010 65);">姓名 / 職銜</div>
+        <div class="fill" style="height: 22px;"></div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 7px;">
+        <div style="font-size: 13px; letter-spacing: 0.12em; color: oklch(0.60 0.010 65);">電話 / WHATSAPP</div>
+        <div class="fill" style="height: 22px;"></div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 7px;">
+        <div style="font-size: 13px; letter-spacing: 0.12em; color: oklch(0.60 0.010 65);">電郵 / 網址</div>
+        <div class="fill" style="height: 22px;"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"accent":{"editor":"color","default":"#1d6355","options":["#1d6355","#2f5d7c","#6b4423","#3d4a5c"],"section":"外觀"}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      accent: this.props.accent ?? '#1d6355',
+      services: [
+        { n: '01', title: '香港註冊營養師', desc: '一對一飲食管理，註冊編號可查名冊' },
+        { n: '02', title: 'CGM 動態血糖監測', desc: '硬件、佩戴指導、數據整理' },
+        { n: '03', title: '覆診之間的跟進', desc: '病人有沒有跟住做，我們負責' },
+        { n: '04', title: '每月書面報告', desc: '直接送回你的診所，覆診時有資料在手' },
+        { n: '05', title: '不良事件記錄', desc: '任何異常即時通報你，並書面記錄' },
+      ],
+      plans: [
+        { name: '基礎', cost: '$900 / 月', retail: '$1,500 / 月', margin: '$600 / 月' },
+        { name: '含 CGM', cost: '$1,600 / 月', retail: '$2,400 / 月', margin: '$800 / 月' },
+      ],
+      pilot: [
+        '首 3 位病人，2 個月，完全免費',
+        '不收簽約費、不設最低人數',
+        '按人頭計費，沒有病人就沒有支出',
+        '隨時可以停止，不設違約金',
+        '報告格式按你要求調整',
+      ],
+      bounds: [
+        { no: true,  yes: false, text: '不會就任何藥物或胰島素劑量提供意見' },
+        { no: true,  yes: false, text: '不就產品功效作任何聲稱' },
+        { no: true,  yes: false, text: '不會直接向你的病人推銷任何產品' },
+        { no: false, yes: true,  text: '持有專業彌償保險，保單可供查閱' },
+        { no: false, yes: true,  text: '一型糖尿病、有併發症等個案，一律交回你判斷' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>
