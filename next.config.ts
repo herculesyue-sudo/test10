@@ -4,6 +4,15 @@ const nextConfig = {
   // 相片以 base64 經 API route 傳送，唔存落 server
   experimental: { serverActions: { bodySizeLimit: '12mb' } },
 
+  /**
+   * `npm run tunnel` 之下，個 app 係經一條 *.trycloudflare.com 網址開嘅，
+   * 對 Next 嚟講屬跨來源。唔列明就會擋住 dev 嘅資源同 HMR —— 表面症狀
+   * 係「打得開但成版嘢冇樣式 / 撳極都冇反應」，好難估到係呢個原因。
+   *
+   * 只影響 `next dev`，正式 build 冇呢樣嘢。
+   */
+  allowedDevOrigins: ['*.trycloudflare.com', '*.loca.lt', '*.ngrok-free.app', '192.168.0.0/16'],
+
   async headers() {
     // ⚠️ 呢度只擺**同環境變數無關**嘅 header。
     //

@@ -5,7 +5,10 @@
 用手機瀏覽器就用得，唔使裝 app。**唔使改官網** —— 印張 QR 海報擺喺接待處
 就用得（見 [DEPLOY.md](./DEPLOY.md) 同 `/share`）。
 
-> **想即刻上線？** 睇 **[DEPLOY.md](./DEPLOY.md)** —— 由開 API key 到客人掃到
+> **想即刻用手機試？** `npm run tunnel` —— 一句指令開一條公開 https 網址，
+> 手機用 4G 都開得到，唔使部署、唔使搞 Wi-Fi。
+>
+> **想正式上線？** 睇 **[DEPLOY.md](./DEPLOY.md)** —— 由開 API key 到客人掃到
 > 個 QR，大約 15 分鐘。
 
 ## 兩個版本
@@ -77,8 +80,14 @@ NEXT_PUBLIC_WHATSAPP=85212345678     # 國際格式，唔要 + 號
 `.env` 改咗但唔重 build 係唔會生效。冇填號碼嘅話，預約按鈕會變成一個提示你去填嘅警告框
 （唔會出死連結）。
 
-手機測試：`npm run dev -- -H 0.0.0.0`，再用同一個 Wi-Fi 嘅手機開 `http://<電腦IP>:3000`。
-（iOS Safari 要 HTTPS 先可以用相機，用 `npx localtunnel --port 3000` 或者 Vercel 部署最方便。）
+**手機測試：`npm run tunnel`** —— 一句指令開一條公開 https 網址，手機用 4G 都開得到。
+
+用區域網（`npm run dev -- -H 0.0.0.0` + `http://<電腦IP>:3000`）都得，但實際好多嘢
+會擋住：電腦防火牆、路由器嘅「用戶端隔離」、手機連咗 4G 唔係 Wi-Fi、公司網絡分 VLAN。
+隧道繞過晒，所以做預設建議。
+
+> 影相**唔需要 HTTPS**：呢個工具用 `<input type="file" capture="user">`，即係叫作業
+> 系統個相機 app，唔係 `getUserMedia`，所以唔需要 secure context。
 
 ```bash
 npm run check:catalogue  # 睇療程目錄仲欠咩價錢 / 內容 / 覆蓋
