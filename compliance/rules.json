@@ -1,0 +1,144 @@
+{
+  "version": "1.0",
+  "note": "違規用語規則庫。severity: block = 不得發布；warn = 需人工判斷。markets: hk=香港, cn=中國內地, us=美國, all=全部。落地前須由執業律師覆核。",
+  "rules": [
+    {
+      "id": "HK-231-DISEASE",
+      "markets": ["hk", "cn", "us"],
+      "severity": "block",
+      "pattern": "糖尿病|糖尿|血糖高|高血糖|三高|消渴症|糖尿前期|prediabet|diabet",
+      "reason": "香港《不良廣告（醫藥）條例》(Cap.231) 附表1涵蓋糖尿病；內地《廣告法》第17條禁止非醫療廣告涉及疾病治療功能",
+      "suggestion": "改為描述生活場景或一般營養概念，例如「飲食記錄」「外食選擇」「代謝健康」；疾病本身只可在純科普內容中出現，且該篇不得同時出現產品",
+      "context_exempt": ["科普", "教育", "一般健康資訊"]
+    },
+    {
+      "id": "TREAT-CLAIM",
+      "markets": ["hk", "cn", "us"],
+      "severity": "block",
+      "pattern": "治療|治癒|根治|療效|醫治|治好|痊癒|逆轉|標本兼治|對抗疾病|防治",
+      "reason": "疾病治療聲稱。Cap.231；內地《廣告法》第17條；美國 FDA 疾病聲稱",
+      "suggestion": "刪除。食品身份的產品不可作任何治療聲稱，無替代寫法"
+    },
+    {
+      "id": "GLUCOSE-CLAIM",
+      "markets": ["hk", "cn", "us"],
+      "severity": "block",
+      "pattern": "降糖|降血糖|控糖|調節血糖|穩定血糖|平穩血糖|血糖下降|降低血糖|hba1c|糖化血紅蛋白|糖化血色素",
+      "reason": "Cap.231 附表4對口服產品的功效聲稱設限；內地《廣告法》第17條",
+      "suggestion": "刪除。若屬教學內容（如解釋 HbA1c 是什麼），需與產品完全分離，並加註「一般健康資訊，不構成醫療建議」"
+    },
+    {
+      "id": "DRUG-REDUCTION",
+      "markets": ["hk", "cn", "us"],
+      "severity": "block",
+      "pattern": "減藥|停藥|減針|停針|減少用藥|減少劑量|減胰島素|擺脫藥物|不用再食藥|唔使食藥|藥物依賴",
+      "reason": "誘導調整處方藥，最高危聲稱；可致低血糖或酮症酸中毒；非醫護人員給予此建議可能觸及無牌行醫",
+      "suggestion": "刪除。統一改為：「任何藥物調整必須由你的主診醫生決定」"
+    },
+    {
+      "id": "ORGAN-REPAIR",
+      "markets": ["hk", "cn", "us"],
+      "severity": "block",
+      "pattern": "修復胰腺|修復胰臟|修復胰島|β細胞|beta細胞|重啟胰島素|胰島素分泌|修復器官|再生細胞|胰島素阻抗改善|改善胰島素抵抗",
+      "reason": "器官／生理機能治療聲稱；對一型糖尿病而言亦不成立",
+      "suggestion": "刪除"
+    },
+    {
+      "id": "EFFICACY-GUARANTEE",
+      "markets": ["hk", "cn", "us"],
+      "severity": "block",
+      "pattern": "100%|百分百|保證|包好|一定有效|有效率|治癒率|無效退款|立即見效|快速見效|X天見效|[0-9]+天見效",
+      "reason": "《商品說明條例》(Cap.362) 虛假商品說明（刑事）；內地《廣告法》第16條禁止功效斷言或保證",
+      "suggestion": "刪除所有效果保證與數字。可講服務條款（例如退款政策），但不可保證健康結果"
+    },
+    {
+      "id": "CLINICAL-CLAIM",
+      "markets": ["hk", "cn", "us"],
+      "severity": "block",
+      "pattern": "臨床驗證|臨床試驗|臨床證實|臨床有效|臨床監測顯示|醫學證實|科學證實|實驗證明|專利技術",
+      "reason": "無註冊試驗編號或已發表文獻支持即屬虛假商品說明；美國 FTC 要求 competent and reliable scientific evidence",
+      "suggestion": "刪除。除非你手上有可公開查證的試驗註冊編號或同儕審閱文獻，並準備好應付查證"
+    },
+    {
+      "id": "FAKE-APPROVAL",
+      "markets": ["hk", "cn", "us"],
+      "severity": "block",
+      "pattern": "保健級|認証批號|認證批號|國家認證|政府認可|衛生署認可|衞生署認可|藍帽子|GMP認證產品|金獎|特級供應品|授權認証",
+      "reason": "香港無「保健品註冊」制度；暗示政府認證即虛假商品說明。真正編號為 HK-xxxxx（藥劑製品）或 HKC-xxxxx（中成藥）",
+      "suggestion": "刪除。只可陳述真實且可查證的資格"
+    },
+    {
+      "id": "PATIENT-TESTIMONIAL",
+      "markets": ["hk", "cn", "us"],
+      "severity": "block",
+      "pattern": "患者見證|真實案例|真實記錄|使用者見證|服用後|食完之後|個案分享|前後對比|使用前|使用後|CGM圖表|血糖圖表|[0-9.]+\\s*mmol",
+      "reason": "內地《廣告法》第18條禁止利用患者名義或形象作推薦證明；香港 Cap.231；美國 FTC testimonial 規則",
+      "suggestion": "客戶分享只可談生活層面改變（如「識得點餐」「返工精神好啲」），不得出現任何血糖數值、用藥量、檢測圖表"
+    },
+    {
+      "id": "DETOX-CLAIM",
+      "markets": ["hk", "cn", "us"],
+      "severity": "warn",
+      "pattern": "排毒|清毒素|解毒|毒素|淨化血液|清除自由基|疏通經脈|活血化瘀|微循環",
+      "reason": "偽科學或中醫術語；在食品廣告中可構成誤導；若屬中醫術語則觸發中成藥定義",
+      "suggestion": "一般食品文案避免使用。若確為註冊中醫師在專業內容中使用中醫概念，需明確標示為中醫理論介紹，且不指向任何產品"
+    },
+    {
+      "id": "NO-SIDE-EFFECT",
+      "markets": ["hk", "cn", "us"],
+      "severity": "block",
+      "pattern": "無副作用|冇副作用|沒有副作用|絕對安全|完全安全|老少咸宜|人人適用|無禁忌",
+      "reason": "安全性斷言；內地《廣告法》第16條明文禁止；任何入口物質都可能有交互作用",
+      "suggestion": "改為：「任何補充品都可能與藥物產生交互作用，請告知你的主診醫生」"
+    },
+    {
+      "id": "SEXUAL-FUNCTION",
+      "markets": ["hk", "cn"],
+      "severity": "block",
+      "pattern": "壯陽|性功能|性能力|males?\\s*enhancement|房事",
+      "reason": "Cap.231 對此類聲稱設有嚴格限制",
+      "suggestion": "刪除"
+    },
+    {
+      "id": "OTHER-DISEASE",
+      "markets": ["hk", "cn", "us"],
+      "severity": "block",
+      "pattern": "高血壓|降血壓|血脂|降膽固醇|腎衰竭|併發症|尿道炎|視力下降|中風|心血管疾病|癌|腫瘤",
+      "reason": "Cap.231 附表1涵蓋多項疾病；內地《廣告法》第17條",
+      "suggestion": "刪除或移至純科普內容（該篇不得出現產品）"
+    },
+    {
+      "id": "OFF-PLATFORM-DIVERT",
+      "markets": ["cn"],
+      "severity": "block",
+      "pattern": "私我|私信我|加微信|加V|扣1|留言扣|滴滴我|dd我|想了解的私|聯繫方式見|微信號|wx號",
+      "reason": "小紅書等內地平台明令禁止站外導流，違者限流至永久封號",
+      "suggestion": "改為引導至平台內合規落地頁或官網（如平台允許），或純粹不設 CTA"
+    },
+    {
+      "id": "CN-SHIPPING",
+      "markets": ["hk", "cn"],
+      "severity": "block",
+      "pattern": "寄回國內|寄大陸|寄内地|寄內地|代購|帶關|拆單|水客|包清關|保證到貨|走私",
+      "reason": "未經批准進口藥品／保健品入境內地違反《藥品管理法》第124條及《刑法》第142條之一；規避海關監管構成走私",
+      "suggestion": "刪除。客服統一回覆：「呢個產品冇內地嘅進口批文，我哋唔會寄入內地」"
+    },
+    {
+      "id": "MISSING-DISCLAIMER",
+      "markets": ["hk", "us"],
+      "severity": "warn",
+      "pattern": "營養師|中醫師|健康建議|飲食建議",
+      "satisfied_by": "不構成醫療建議|not intended to diagnose",
+      "reason": "專業內容須附免責聲明",
+      "suggestion": "文末加註：「本內容為一般健康資訊，不構成醫療建議，個別情況請諮詢您的醫生。」"
+    },
+    {
+      "id": "US-STRUCTURE-FUNCTION",
+      "markets": ["us"],
+      "severity": "warn",
+      "pattern": "supports?|helps? maintain|promotes?",
+      "reason": "美國結構／功能聲稱須附 FDA disclaimer，且須有證據支持",
+      "suggestion": "附加：\"This statement has not been evaluated by the Food and Drug Administration. This product is not intended to diagnose, treat, cure, or prevent any disease.\""
+    }
+  ]
+}
