@@ -5,6 +5,9 @@
 用手機瀏覽器就用得，唔使裝 app。**唔使改官網** —— 印張 QR 海報擺喺接待處
 就用得（見 [DEPLOY.md](./DEPLOY.md) 同 `/share`）。
 
+> **想放上 drtimeless.com？** 睇 **[WEBSITE.md](./WEBSITE.md)** —— 三步，
+> 連新頁面嘅文字同免責聲明都寫好咗，可以直接抄。
+>
 > **QR 掃唔到？** 行 `npm run doctor` —— 會一次過查晒問題喺邊，出一份可以
 > 直接複製俾人睇嘅報告。
 >

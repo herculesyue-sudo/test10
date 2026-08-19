@@ -11,7 +11,16 @@ export { CLINIC_POLICY, CLINIC_OTHER_SERVICES } from './clinic';
  * `reference/` 入面有 36 個市場通用療程做複製模板，**刻意冇 import** ——
  * 推薦一個診所做唔到嘅療程，等於用自己個工具幫客人搵競爭對手。
  */
-export const ALL_TREATMENTS: Treatment[] = CLINIC_TREATMENTS;
+/**
+ * 引擎只認非草稿條目。
+ *
+ * 資料未齊嘅療程唔應該出現喺客人面前 —— 客人見到「次數：由醫生評估後
+ * 決定、見效：由醫生評估後決定」會覺得你哋自己都唔清楚，而佢係啱嘅。
+ */
+export const ALL_TREATMENTS: Treatment[] = CLINIC_TREATMENTS.filter((t) => !t.draft);
+
+/** 包含草稿嘅完整目錄，淨係俾 check:catalogue 用。 */
+export const CATALOGUE_INCLUDING_DRAFTS: Treatment[] = CLINIC_TREATMENTS;
 
 export const TREATMENT_BY_ID = new Map(ALL_TREATMENTS.map((t) => [t.id, t]));
 

@@ -472,7 +472,12 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     risk: 'medium',
     regulation: '如屬注射式，涉及處方藥物，須由註冊醫生評估及施行',
     contraindications: ['懷孕/哺乳', '肝腎功能異常（需醫生評估）'],
-    internalNote: '資料最不完整：機制、次數、間隔、見效、維持、規管全部未填。請優先補齊，或者由目錄刪除。',
+    draft: true,
+    internalNote:
+      '⚠️ 標咗 draft，唔會推薦俾客人。兩個未答嘅問題：(1) 呢個係打針定搽？'
+      + '而家當咗 injectable，如果係外用就要改 category，否則會誤中懷孕過濾同顯示錯類型。'
+      + '(2) 次數 / 間隔 / 見效 / 維持四樣而家寫「由醫生評估後決定」，客人會覺得診所自己都唔清楚。'
+      + '答完呢兩條、填返實際內容，再刪走 draft 就會出街。',
   },
 ];
 

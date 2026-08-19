@@ -22,7 +22,12 @@ console.log(`\n${'═'.repeat(62)}`);
 console.log(`  ${CLINIC_POLICY.name} 療程目錄檢查`);
 console.log(`${'═'.repeat(62)}\n`);
 
-console.log(`療程總數：${CLINIC_TREATMENTS.length}`);
+const DRAFTS = CLINIC_TREATMENTS.filter((t) => t.draft);
+console.log(`療程總數：${CLINIC_TREATMENTS.length}（${CLINIC_TREATMENTS.length - DRAFTS.length} 個會推薦俾客人，${DRAFTS.length} 個係草稿）`);
+if (DRAFTS.length) {
+  // 草稿唔會出現喺客人報告，但要一直提住 —— 唔提就會永遠留喺度
+  console.log(`  📝 草稿（資料齊咗、刪走 draft 就會出街）：${DRAFTS.map((t) => t.name).join('、')}`);
+}
 console.log(`其他服務：${CLINIC_OTHER_SERVICES.length}（唔入配對引擎）\n`);
 
 // ── 1. 價錢 ──

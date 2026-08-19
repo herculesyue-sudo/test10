@@ -226,4 +226,13 @@ export interface Treatment {
   notes?: string;
   /** 內部備註：只會喺 check:catalogue 出現，永遠唔會顯示俾客人。 */
   internalNote?: string;
+  /**
+   * 草稿：資料未齊或者未確認，**唔會推薦俾客人**。
+   *
+   * 呢個係一個保險掣。刪走條目會流失已經整理好嘅資料，但留喺目錄
+   * 又會令一個未確認嘅療程出現喺客人報告度 —— 兩樣都唔想。
+   * 標 draft 就兩樣都避到：資料留低，但配對引擎當佢唔存在。
+   * `npm run check:catalogue` 會一直提你有幾多個未出街。
+   */
+  draft?: boolean;
 }
