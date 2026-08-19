@@ -43,6 +43,7 @@ import type { Analysis } from '../src/lib/schema';
 import { analysePixels, THRESHOLDS } from '../src/lib/photo-check';
 import { allowedOrigins, frameAncestors, isAllowedOrigin } from '../src/lib/embed-config';
 import { checkStaff, isStaffPath } from '../src/lib/staff-auth';
+import { classifyHost, resolvePublicUrl } from '../src/lib/public-url';
 
 let failures = 0;
 function check(name: string, cond: boolean, detail = '') {
@@ -369,6 +370,60 @@ console.log('\n── AI 輸出後處理（prompt 求，code 保證）──');
   check('正常相片 → 可用', usabilityVerdict(base({ findings: [fnd('pores', 40, 0.8)] })).ok === true);
   const mk = usabilityVerdict(base({ imageQuality: { usable: false, lighting: 'good', issues: [], makeupDetected: true } }));
   check('化妝會出現喺重影建議入面', mk.retakeHints.some((h) => h.includes('素顏')));
+}
+
+console.log('\n── QR 對外網址（掃到但去唔到 = 最貴嘅錯）──');
+{
+  const orig = process.env.NEXT_PUBLIC_SITE_URL;
+  const set = (v?: string) => {
+    if (v === undefined) delete process.env.NEXT_PUBLIC_SITE_URL;
+    else process.env.NEXT_PUBLIC_SITE_URL = v;
+  };
+  const H = (h: Record<string, string>) => new Headers(h);
+
+  check('localhost 判定為本機', classifyHost('localhost') === 'local');
+  check('127.0.0.1 判定為本機', classifyHost('127.0.0.1') === 'local');
+  check('::1 判定為本機', classifyHost('::1') === 'local');
+  check('192.168.x 判定為區域網', classifyHost('192.168.1.42') === 'lan');
+  check('10.x 判定為區域網', classifyHost('10.0.0.5') === 'lan');
+  check('172.16–31 判定為區域網', classifyHost('172.20.1.1') === 'lan');
+  // 172.32 唔屬私有網段，唔可以誤判 —— 誤判會令一個正常網址印唔到海報
+  check('172.32 唔係私有網段', classifyHost('172.32.1.1') === 'public');
+  check('正常網域係公開', classifyHost('drtimeless.com') === 'public');
+
+  set(undefined);
+  const local = resolvePublicUrl(H({ host: 'localhost:3000' }), 'localhost:3000');
+  check('本機開 → 唔可以印', local.printable === false);
+  check('本機開 → 有解釋點解', Boolean(local.warning?.includes('localhost')));
+
+  const lan = resolvePublicUrl(H({ host: '192.168.1.42:3000' }), 'x');
+  check('區域網 → 唔可以印（出咗診所 Wi-Fi 就死）', lan.printable === false);
+
+  const prod = resolvePublicUrl(H({ 'x-forwarded-host': 'app.vercel.app', 'x-forwarded-proto': 'https' }), 'x');
+  check('正式網域 → 印得', prod.printable === true);
+  check('正式網域 → 用返 https', prod.url === 'https://app.vercel.app', prod.url);
+  // proxy 後面一定要睇 x-forwarded-host，否則會攞到內部位址
+  const proxied = resolvePublicUrl(H({ host: '10.0.0.7:3000', 'x-forwarded-host': 'real.com', 'x-forwarded-proto': 'https' }), 'x');
+  check('proxy 後面用 x-forwarded-host', proxied.url === 'https://real.com', proxied.url);
+
+  set('https://www.drtimeless.com');
+  const env = resolvePublicUrl(H({ host: 'localhost:3000' }), 'x');
+  check('設咗 SITE_URL 就唔理 Host（preview 網址唔會污染海報）', env.url === 'https://www.drtimeless.com', env.url);
+  check('設咗 SITE_URL → 印得', env.printable === true);
+
+  set('https://www.drtimeless.com/');
+  check('尾隨斜線唔會變成 //', resolvePublicUrl(H({}), 'x').url === 'https://www.drtimeless.com');
+
+  // 設錯格式唔可以靜靜雞當冇設 —— 否則會 fallback 去 localhost 然後印咗
+  set('www.drtimeless.com');
+  const bad = resolvePublicUrl(H({ host: 'localhost:3000' }), 'x');
+  check('SITE_URL 漏咗 https:// → 唔可以印', bad.printable === false);
+  check('SITE_URL 格式錯 → 講明錯咩', Boolean(bad.warning?.includes('https://')));
+
+  set('http://localhost:3000');
+  check('SITE_URL 設咗做 localhost → 一樣唔可以印', resolvePublicUrl(H({}), 'x').printable === false);
+
+  set(orig);
 }
 
 console.log('\n── 職員頁面保護 ──');

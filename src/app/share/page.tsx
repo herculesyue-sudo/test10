@@ -52,12 +52,31 @@ function CopyBox({ label, text, hint }: { label: string; text: string; hint?: st
   );
 }
 
+interface SiteInfo {
+  url: string;
+  source: 'env' | 'host';
+  reachability: 'public' | 'lan' | 'local';
+  printable: boolean;
+  warning?: string;
+  target: string;
+}
+
 export default function SharePage() {
-  const [origin, setOrigin] = useState('');
-  useEffect(() => setOrigin(window.location.origin), []);
+  const [site, setSite] = useState<SiteInfo | null>(null);
+
+  // 個網址一定要問返伺服器，唔可以用 window.location.origin —— 兩者可以唔同
+  // （例如設咗 NEXT_PUBLIC_SITE_URL，或者經 proxy 開），而 QR 用嘅係伺服器
+  // 嗰個。攞錯咗就會出現「頁面寫住 A，但個 QR 其實指住 B」。
+  useEffect(() => {
+    fetch('/api/qr?path=/&info=1')
+      .then((r) => r.json())
+      .then(setSite)
+      .catch(() => {});
+  }, []);
 
   const clinic = process.env.NEXT_PUBLIC_CLINIC_NAME || 'Dr Timeless';
-  const link = origin || '（載入中…）';
+  const link = site?.url || '（載入中…）';
+  const printable = site?.printable === true;
 
   const waText = `想知自己塊面適合咩療程？\n\n${clinic} 出咗個免費 AI 面部分析：自拍一張相，30 秒睇到針對你嘅療程方向。唔使留電話、唔使登記。\n\n${link}\n\n（結果屬初步參考，正式評估仍需醫生面診）`;
 
@@ -69,6 +88,25 @@ export default function SharePage() {
         <h1>派俾客人</h1>
         <p>唔使改官網，三個方法即刻用得</p>
       </header>
+
+      {/* 個 QR 指住一個手機去唔到嘅網址，係最貴嘅錯 —— 你可能已經印咗
+          一百張先發現。所以寧願喺呢度嘈，都唔好俾佢靜靜雞印出去。 */}
+      {site && !printable && (
+        <div className="alert danger no-print">
+          <b>⚠️ 而家唔可以印海報</b>
+          <p style={{ margin: '6px 0 0', fontSize: '0.86rem' }}>{site.warning}</p>
+          <p style={{ margin: '8px 0 0', fontSize: '0.86rem' }}>
+            個 QR 而家指住：<code>{site.target || '（算唔到）'}</code>
+          </p>
+          {site.reachability === 'local' && (
+            <p style={{ margin: '8px 0 0', fontSize: '0.86rem' }}>
+              想喺本機用手機試：<code>npm run dev -- -H 0.0.0.0</code>，再用同一個 Wi-Fi
+              嘅手機開 <code>http://&lt;你部電腦 IP&gt;:3000/share</code>。
+              （iOS 要 HTTPS 先開到相機，所以正式測試最好直接部署 —— 見 DEPLOY.md）
+            </p>
+          )}
+        </div>
+      )}
 
       {/* ── 印海報 ── */}
       <div className="card poster">
@@ -98,11 +136,18 @@ export default function SharePage() {
           </div>
         </div>
 
-        <button className="primary no-print" onClick={() => window.print()} style={{ marginTop: 14 }}>
-          🖨 列印海報
+        <button
+          className="primary no-print"
+          onClick={() => window.print()}
+          disabled={!printable}
+          style={{ marginTop: 14 }}
+        >
+          {printable ? '🖨 列印海報' : '⚠️ 個網址而家掃唔到，唔可以印'}
         </button>
         <p className="sub no-print" style={{ marginBottom: 0, marginTop: 8 }}>
-          A4 直度、彩色或黑白都掃得到。QR 用 SVG，放到幾大都唔會矇。
+          {printable
+            ? 'A4 直度、彩色或黑白都掃得到。QR 用 SVG，放到幾大都唔會矇。'
+            : '放上網並設定 NEXT_PUBLIC_SITE_URL 之後，呢個掣就會開返。'}
         </p>
       </div>
 
@@ -127,8 +172,9 @@ export default function SharePage() {
         <h2>擺之前檢查</h2>
         <ul style={{ fontSize: '0.86rem', lineHeight: 1.8, paddingLeft: 18, margin: 0 }}>
           <li>
-            用手機掃一次上面個 QR，行完成個流程 —— 影相、出報告、撳預約掣，
-            確認 WhatsApp 真係開到你哋個號碼
+            <b>用手機掃一次上面個 QR</b>，確認真係開到 —— 呢個係最容易出錯嘅一步。
+            開到之後行完成個流程：影相、出報告、撳預約掣，確認 WhatsApp
+            真係開到你哋個號碼
           </li>
           <li>
             確認網址係 <code>https://</code> —— 唔係嘅話手機唔會俾開鏡頭，客人影唔到相
