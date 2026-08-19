@@ -1,0 +1,940 @@
+<title>香港醫美營運手冊</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+HK:wght@400;500;600&family=Noto+Sans+HK:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+  :root {
+    --paper:      #F5F7F7;
+    --surface:    #FFFFFF;
+    --surface-2:  #EDF1F1;
+    --ink:        #121A1C;
+    --ink-2:      #465559;
+    --ink-3:      #78888C;
+    --rule:       #DCE3E4;
+    --rule-firm:  #C3CFD1;
+    --accent:     #0A6B72;
+    --accent-ink: #08565C;
+    --accent-wash:#E0EFEF;
+    --good:       #2E6F4E;
+    --warn:       #8F6410;
+    --crit:       #A4322A;
+    --good-wash:  #E4F0E9;
+    --warn-wash:  #F6EEDC;
+    --crit-wash:  #F6E5E3;
+
+    --f-display: "Noto Serif HK", Georgia, "Times New Roman", serif;
+    --f-body:    "Noto Sans HK", -apple-system, "PingFang HK", "Microsoft JhengHei", sans-serif;
+    --f-mono:    "IBM Plex Mono", "Noto Sans HK", ui-monospace, Menlo, monospace;
+
+    --shell: 78rem;
+    --measure: 38em;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:      #0D1214;
+      --surface:    #151D1F;
+      --surface-2:  #1C2528;
+      --ink:        #E7EDEE;
+      --ink-2:      #A2B1B5;
+      --ink-3:      #7A898D;
+      --rule:       #263134;
+      --rule-firm:  #384649;
+      --accent:     #56C3C7;
+      --accent-ink: #8AD8DA;
+      --accent-wash:#102E31;
+      --good:       #6FC392;
+      --warn:       #D6A742;
+      --crit:       #E1877B;
+      --good-wash:  #11291D;
+      --warn-wash:  #2B2314;
+      --crit-wash:  #2C1917;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper:      #0D1214;
+    --surface:    #151D1F;
+    --surface-2:  #1C2528;
+    --ink:        #E7EDEE;
+    --ink-2:      #A2B1B5;
+    --ink-3:      #7A898D;
+    --rule:       #263134;
+    --rule-firm:  #384649;
+    --accent:     #56C3C7;
+    --accent-ink: #8AD8DA;
+    --accent-wash:#102E31;
+    --good:       #6FC392;
+    --warn:       #D6A742;
+    --crit:       #E1877B;
+    --good-wash:  #11291D;
+    --warn-wash:  #2B2314;
+    --crit-wash:  #2C1917;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--f-body);
+    font-size: 16.5px;
+    line-height: 1.85;
+    letter-spacing: 0.012em;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .shell {
+    max-width: var(--shell);
+    margin: 0 auto;
+    padding: 0 clamp(1.1rem, 4vw, 3.5rem);
+  }
+
+  .prose { max-width: var(--measure); }
+
+  p { margin: 0 0 1.05em; color: var(--ink-2); }
+  strong { color: var(--ink); font-weight: 700; }
+  a { color: var(--accent-ink); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  a:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px;
+  }
+
+  /* ---------- masthead ---------- */
+
+  .masthead {
+    border-bottom: 1px solid var(--rule-firm);
+    padding: clamp(3rem, 8vw, 6rem) 0 2.6rem;
+  }
+  .kicker {
+    font-family: var(--f-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    color: var(--accent-ink);
+    margin: 0 0 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.1rem;
+    line-height: 1.6;
+  }
+  .kicker span { color: var(--ink-3); }
+
+  h1 {
+    font-family: var(--f-display);
+    font-weight: 600;
+    font-size: clamp(2.1rem, 5.4vw, 3.9rem);
+    line-height: 1.25;
+    letter-spacing: -0.005em;
+    margin: 0 0 1.2rem;
+    text-wrap: balance;
+    max-width: 15em;
+  }
+  h1 em { font-style: normal; color: var(--accent-ink); }
+
+  .standfirst {
+    font-size: clamp(1.02rem, 2vw, 1.18rem);
+    line-height: 1.85;
+    color: var(--ink-2);
+    max-width: 34em;
+    margin: 0 0 2.4rem;
+  }
+
+  .byline {
+    font-family: var(--f-mono);
+    font-size: 0.74rem;
+    color: var(--ink-3);
+    line-height: 2;
+    border-top: 1px solid var(--rule);
+    padding-top: 1.1rem;
+    max-width: 40em;
+  }
+
+  /* ---------- sections ---------- */
+
+  section { padding: clamp(3rem, 7vw, 5.2rem) 0 0; }
+
+  .sec-head {
+    display: grid;
+    grid-template-columns: 8.5rem 1fr;
+    gap: 0 1.5rem;
+    align-items: start;
+    border-top: 1px solid var(--rule);
+    padding-top: 1.4rem;
+    margin-bottom: 2.2rem;
+  }
+  .sec-head .tag {
+    font-family: var(--f-mono);
+    font-size: 0.71rem;
+    letter-spacing: 0.11em;
+    color: var(--ink-3);
+    padding-top: 0.7rem;
+    line-height: 1.6;
+  }
+  h2 {
+    font-family: var(--f-display);
+    font-weight: 600;
+    font-size: clamp(1.6rem, 3.3vw, 2.25rem);
+    line-height: 1.35;
+    letter-spacing: -0.005em;
+    margin: 0;
+    text-wrap: balance;
+    max-width: 18em;
+  }
+  .sec-head .dek {
+    grid-column: 2;
+    margin: 0.85rem 0 0;
+    max-width: 36em;
+    color: var(--ink-2);
+  }
+
+  @media (max-width: 640px) {
+    .sec-head { grid-template-columns: 1fr; }
+    .sec-head .tag { padding-top: 0; margin-bottom: 0.7rem; }
+    .sec-head .dek { grid-column: 1; }
+  }
+
+  h3 {
+    font-family: var(--f-body);
+    font-weight: 700;
+    font-size: 1.08rem;
+    color: var(--ink);
+    margin: 2.4rem 0 0.7rem;
+  }
+  h4 {
+    font-family: var(--f-mono);
+    font-weight: 600;
+    font-size: 0.74rem;
+    letter-spacing: 0.11em;
+    color: var(--ink-3);
+    margin: 0 0 0.9rem;
+  }
+
+  ul, ol { margin: 0 0 1.1em; padding-left: 1.2rem; color: var(--ink-2); }
+  li { margin-bottom: 0.5em; }
+  li::marker { color: var(--ink-3); }
+
+  /* ---------- verdict strip ---------- */
+
+  .verdicts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    margin: 2.6rem 0 0;
+  }
+  .verdict { background: var(--surface); padding: 1.5rem 1.4rem; }
+  .verdict .num {
+    font-family: var(--f-mono);
+    font-size: 1.85rem;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    color: var(--accent-ink);
+    font-variant-numeric: tabular-nums;
+    display: block;
+    line-height: 1.1;
+  }
+  .verdict .lab {
+    font-family: var(--f-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    color: var(--ink-3);
+    margin: 0.6rem 0 0.55rem;
+    line-height: 1.6;
+  }
+  .verdict p { margin: 0; font-size: 0.88rem; line-height: 1.75; }
+
+  /* ---------- callouts ---------- */
+
+  .note {
+    border-left: 3px solid var(--rule-firm);
+    background: var(--surface);
+    padding: 1.2rem 1.35rem;
+    margin: 1.8rem 0;
+    font-size: 0.93rem;
+  }
+  .note p:last-child { margin-bottom: 0; }
+  .note.flag { border-left-color: var(--warn); background: var(--warn-wash); }
+  .note.hard { border-left-color: var(--crit); background: var(--crit-wash); }
+  .note.win  { border-left-color: var(--good); background: var(--good-wash); }
+  .note h4 { color: var(--ink-2); }
+
+  /* ---------- tables ---------- */
+
+  .tblwrap {
+    overflow-x: auto;
+    margin: 1.6rem 0 2rem;
+    border: 1px solid var(--rule);
+    background: var(--surface);
+  }
+  table { border-collapse: collapse; width: 100%; min-width: 44rem; font-size: 0.87rem; }
+  thead th {
+    text-align: left;
+    font-family: var(--f-mono);
+    font-weight: 500;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    color: var(--ink-3);
+    padding: 0.9rem 1rem;
+    border-bottom: 1px solid var(--rule-firm);
+    white-space: nowrap;
+    vertical-align: bottom;
+  }
+  tbody td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--rule);
+    color: var(--ink-2);
+    vertical-align: top;
+    line-height: 1.75;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody td:first-child { color: var(--ink); font-weight: 500; }
+  .num-col { font-family: var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  .pill {
+    display: inline-block;
+    font-family: var(--f-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.05em;
+    padding: 0.18rem 0.5rem;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+  .p-good { background: var(--good-wash); color: var(--good); }
+  .p-warn { background: var(--warn-wash); color: var(--warn); }
+  .p-crit { background: var(--crit-wash); color: var(--crit); }
+  .p-flat { background: var(--surface-2); color: var(--ink-3); }
+
+  /* ---------- card grids ---------- */
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    margin: 1.8rem 0 2rem;
+  }
+  .card { background: var(--surface); padding: 1.4rem 1.3rem; }
+  .card h5 {
+    font-family: var(--f-body);
+    font-size: 0.98rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem;
+    color: var(--ink);
+  }
+  .card p { font-size: 0.88rem; line-height: 1.75; margin: 0; }
+  .card .stat {
+    font-family: var(--f-mono);
+    font-size: 0.73rem;
+    color: var(--accent-ink);
+    letter-spacing: 0.03em;
+    display: block;
+    margin-top: 0.75rem;
+  }
+
+  /* ---------- sequenced plan ---------- */
+
+  .phases { display: grid; gap: 1px; background: var(--rule); border: 1px solid var(--rule); margin: 1.8rem 0 2rem; }
+  .phase {
+    background: var(--surface);
+    display: grid;
+    grid-template-columns: 9rem 1fr;
+    gap: 0 1.5rem;
+    padding: 1.5rem 1.4rem;
+  }
+  .phase .when {
+    font-family: var(--f-mono);
+    font-size: 0.73rem;
+    letter-spacing: 0.06em;
+    color: var(--accent-ink);
+    line-height: 1.7;
+  }
+  .phase .when b { display: block; font-size: 1.5rem; font-weight: 500; letter-spacing: -0.02em; color: var(--ink); margin-bottom: 0.2rem; }
+  .phase h5 { font-size: 1rem; font-weight: 700; margin: 0 0 0.5rem; color: var(--ink); }
+  .phase ul { margin: 0; font-size: 0.89rem; }
+  @media (max-width: 640px) {
+    .phase { grid-template-columns: 1fr; }
+    .phase .when { margin-bottom: 0.8rem; }
+    .phase .when b { display: inline; margin-right: 0.5rem; }
+  }
+
+  /* ---------- math block ---------- */
+
+  .math {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    padding: 1.5rem;
+    margin: 1.8rem 0 2rem;
+    font-size: 0.85rem;
+    line-height: 2;
+  }
+  .math .row { display: flex; justify-content: space-between; gap: 1.5rem; border-bottom: 1px dotted var(--rule); padding: 0.15rem 0; }
+  .math .row:last-child { border-bottom: none; }
+  .math .row.total { border-top: 1px solid var(--rule-firm); border-bottom: none; margin-top: 0.5rem; padding-top: 0.65rem; }
+  .math .row.total .k, .math .row.total .v { color: var(--ink); font-weight: 700; }
+  .math .k { color: var(--ink-2); }
+  .math .v { color: var(--ink); font-family: var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .math .v.hi { color: var(--accent-ink); }
+
+  /* ---------- sources ---------- */
+
+  .srcs { columns: 2; column-gap: 2.5rem; font-size: 0.83rem; }
+  .srcs li { break-inside: avoid; margin-bottom: 0.8em; color: var(--ink-3); line-height: 1.7; }
+  @media (max-width: 700px) { .srcs { columns: 1; } }
+
+  footer {
+    margin-top: clamp(3rem, 7vw, 5rem);
+    border-top: 1px solid var(--rule-firm);
+    padding: 2rem 0 4rem;
+    font-family: var(--f-mono);
+    font-size: 0.73rem;
+    color: var(--ink-3);
+    line-height: 2;
+  }
+</style>
+
+<div class="shell">
+
+  <header class="masthead">
+    <p class="kicker">香港 · 醫學美容 <span>市場分析 + 營運手冊</span> <span>2026年8月</span></p>
+    <h1>個個都喺度買曝光。真正贏嘅人，係買<em>第二次覆診</em>。</h1>
+    <p class="standfirst">數據話畀我哋知香港醫美行業嘅營銷成效係點，以及一間單店診所喺現時嘅法規框框入面，究竟應該點樣落實策略同營運。</p>
+    <p class="byline">
+      為獨立醫美診所東主而寫 · 2026年8月19日整理<br>
+      資料來源：消費者委員會、衞生署、立法會、私營醫療機構規管辦公室、DataReportal、港交所披露文件，以及公開嘅廣告及診所業界基準。標示 <span style="color:var(--warn)">推算</span> 嘅數字係模型估算，唔係實測數據，詳見文末〈數據可信度〉。
+    </p>
+  </header>
+
+  <!-- ============ BLUF ============ -->
+  <section>
+    <div class="sec-head">
+      <div class="tag">重點結論</div>
+      <h2>決定未來十二個月嘅五件事</h2>
+      <p class="dek">如果你淨係得時間睇一段，就睇呢度。後面全部都係佐證同執行細節。</p>
+    </div>
+
+    <div class="verdicts">
+      <div class="verdict">
+        <span class="num">−30.7%</span>
+        <p class="lab">全港最大上市醫美集團 FY25 EBITDA</p>
+        <p>醫思健康（2138.HK）喺 41.4 億港元收入之下，EBITDA 跌咗 30.7%，公司自己歸咎於<strong>高毛利、非必要性醫美服務需求疲弱</strong>。規模同廣告預算都保唔到佢。而家靠劈價填位，係一場輸硬嘅遊戲。</p>
+      </div>
+      <div class="verdict">
+        <span class="num">+248%</span>
+        <p class="lab">2025年消委會醫療服務投訴</p>
+        <p>1,845 宗，其中 1,299 宗嚟自單一集團結業。消費者對預繳套票嘅信任，已經係整個行業嘅樽頸。邊間診所可以令客人「買得放心」，就係真正、而且守得住嘅優勢。</p>
+      </div>
+      <div class="verdict">
+        <span class="num">7 日</span>
+        <p class="lab">擬立法冷靜期，諮詢即將截止</p>
+        <p>政府 2026年6月29日展開諮詢：美容及健身預繳合約設 7 個曆日冷靜期、14 個曆日退款期、合約上限兩年。趁而家未落實，先重整你套票嘅收入結構，唔好等佢通過先郁。</p>
+      </div>
+      <div class="verdict">
+        <span class="num">8–12 倍</span>
+        <p class="lab">回頭客終身價值 vs 第一單交易</p>
+        <p>留住一個客大約使 US$35–85，但獲取一個新客要 US$247–1,435。對單店診所嚟講，回報最高嘅營銷開支，幾乎一定係花喺已經有你電話嘅人身上。</p>
+      </div>
+      <div class="verdict">
+        <span class="num">第231章</span>
+        <p class="lab">最多診所靜靜雞踩界嘅廣告法例</p>
+        <p>《不良廣告（醫藥）條例》加埋醫委會守則，令「免費試做」、「五折」、療程前後對比相、客人見證式廣告全部有法律風險——而且醫生就算只係僱員一樣要孭。你嘅渠道組合要圍住呢啲限制去砌，唔係硬闖。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section>
+    <div class="sec-head">
+      <div class="tag">第一部分 / 市場</div>
+      <h2>需求冇消失，只係轉咗場，同埋難成交咗</h2>
+      <p class="dek">三股力量同時擠壓緊香港市場嘅中間層：北上流失、信心衝擊，以及一個而家要有理由先肯落單嘅消費者。</p>
+    </div>
+
+    <div class="prose">
+      <h3>需求嘅實況</h3>
+      <p>香港本地消費其實冇崩——2025年香港居民境內消費約 <strong>1.989 萬億港元</strong>，只係比 2018 年低約 1%；2026年第一季更加<em>略高於</em> 2018 年同期。問題唔係個荷包細咗，而係非必要開支去咗邊，同埋而家要幾多說服功夫先埋到單。</p>
+      <p>喺醫美範疇，組合已經明顯轉向<strong>非侵入性療程，佔市場超過七成</strong>，同時出現兩種會改變你營銷方式嘅消費行為：一批更後生嘅預防性客群（20–30歲，低劑量肉毒、早期膠原保養），以及一種抗拒「做到好假」、追求「似返自己但靚啲」嘅取向。呢兩樣都獎勵識得講「克制」嘅診所；兩樣都唔會獎勵成日大聲嗌自己部機幾勁嘅診所。</p>
+
+      <h3>北上流失係結構性，唔係一時</h3>
+      <p>2024年香港居民北上超過 <strong>9,500 萬人次，按年升約 80%</strong>——即係平均每人一年北上約 13 次。2025年跨境往來約 2.79 億人次，再升約 10%。醫療同醫美服務已經係呢個消費籃嘅一部分：深圳做熱瑪吉，視乎機構級數大概 RMB 6,500–45,000，而香港係 HK$15,000–35,000。</p>
+      <p>呢個價錢比較你贏唔到，亦都唔應該再試。深圳結構上畀唔到香港病人嘅，係<strong>就近問責</strong>：同一個星期覆診處理併發症、一位有名有姓、覆到你電話嘅香港註冊醫生、一間受第633章規管嘅持牌處所，以及唔使過關就追究到嘅途徑。呢個先係你嘅產品故事。</p>
+    </div>
+
+    <h3>信心衝擊——同埋點解呢個係你嘅機會</h3>
+    <div class="tblwrap">
+      <table>
+        <thead>
+          <tr><th>事件 / 指標</th><th>規模</th><th>對消費行為嘅影響</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>2025年醫療服務投訴</td>
+            <td class="num-col">1,845 宗 <span class="pill p-crit">按年 +248%</span></td>
+            <td>喺消委會投訴榜排第五。其中 1,299 宗單單源自仁滙醫務集團結業。</td>
+          </tr>
+          <tr>
+            <td>2025年美容服務投訴</td>
+            <td class="num-col">約 1,443 宗 <span class="pill p-good">按年 −51%</span></td>
+            <td>回落緊，但基數本身好高，仍然排第六——主要係硬銷同合約糾紛。</td>
+          </tr>
+          <tr>
+            <td>仁滙醫務結業後續</td>
+            <td class="num-col">2,000+ 宗</td>
+            <td>警方、海關、消委會合共接獲；涉及預繳金額超過 1,000 萬港元。</td>
+          </tr>
+          <tr>
+            <td>2024年9月大型美容健身連鎖結業</td>
+            <td class="num-col">2,800+ 宗投訴</td>
+            <td>合約總值超過 1.4 億港元。就係呢單嘢，令冷靜期立法由「將來會做」變成而家嘅正式諮詢。</td>
+          </tr>
+          <tr>
+            <td>2021–24年私營醫療收費爭議</td>
+            <td class="num-col">45.5%</td>
+            <td>私院及日間醫療中心投訴之中，關於價錢或收費（唔係療效）嘅比例。收費唔透明本身就係投訴製造機。</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note win">
+      <h4>要當呢啲係定位機會，唔係壞消息</h4>
+      <p>每一次大集團出事，都會將一部分市場轉移畀<em>結構上</em>睇落更加安全嘅營運者。細診所可以提供連鎖做唔到嘅嘢：單次收費或短療程、每次都見到同一位有名有姓嘅醫生、公開價目、冇抽佣嘅銷售員。喺 2026 年，呢啲唔係退而求其次——係目前最強嘅差異化，而且啱啱好係免費嘅。</p>
+    </div>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section>
+    <div class="sec-head">
+      <div class="tag">第二部分 / 限制</div>
+      <h2>你嘅營銷必須裝得入嘅法律框框</h2>
+      <p class="dek">網上大部分香港醫美營銷建議，其實係照抄美國 med-spa 嗰套，喺香港係違法嘅。落錢之前，先搞清楚呢一節。</p>
+    </div>
+
+    <div class="tblwrap">
+      <table>
+        <thead>
+          <tr><th style="width:22%">法規 / 守則</th><th style="width:38%">限制乜嘢</th><th>實際營銷後果</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>《不良廣告（醫藥）條例》<br><span style="font-weight:400;color:var(--ink-3)">第231章（1953年訂立，2005年修訂）</span></td>
+            <td>第3條禁止就指明疾病及附表2所列目的賣廣告，當中包括<strong>矯正畸形及外科整容手術</strong>。違反屬刑事罪行。</td>
+            <td>你唔可以向公眾賣廣告宣傳外科整容效果。非手術儀器及針劑療程雖然空間闊啲，但一樣受監察。任何承諾身體外觀轉變嘅宣傳，落廣告前搵律師睇。</td>
+          </tr>
+          <tr>
+            <td>醫務委員會《專業守則》<br><span style="font-weight:400;color:var(--ink-3)">醫委會</span></td>
+            <td>醫生唔可以向非其病人嘅人士作業務宣傳。印刷廣告只限報章、雜誌、學報及期刊，有篇幅限制，唔可以同美容院廣告一齊刊登，亦唔可以披露年資或重大手術經驗。</td>
+            <td>市場代理成日 pitch 你嘅嘢，大部分都做唔到：付費「十大醫美排名」軟文、美容雜誌美容版嘅收費專訪、以醫生做主角嘅品牌廣告。</td>
+          </tr>
+          <tr>
+            <td>醫委會資訊發布規則<br><span style="font-weight:400;color:var(--ink-3)">社交媒體及互聯網</span></td>
+            <td>內容必須準確、有根據、經客觀確認、以持平方式表達。不得誇大、不得與其他醫生比較或聲稱優勝、<strong>不得以招徠病人或生意為目的</strong>、不得造成不切實際期望、不得為醫療健康產品作商業宣傳。</td>
+            <td>教育性內容可以，說服式推銷唔可以。「HIFU 點運作、邊啲人唔啱做」冇問題；「即刻預約、名額有限、保證見效」唔得。</td>
+          </tr>
+          <tr>
+            <td>僱員責任先例</td>
+            <td>醫委會裁定醫生有責任確保僱主嘅宣傳品符合守則——打工唔係擋箭牌。醫美集團用折扣及免費試做落廣告，被視為代醫生「拉生意」。</td>
+            <td>如果你係診所嘅醫生東主，代理寫嘅每一句廣告文案都係你嘅專業風險。文案必須你本人親自過目批准。</td>
+          </tr>
+          <tr>
+            <td>《私營醫療機構條例》<br><span style="font-weight:400;color:var(--ink-3)">第633章——診所制度2025年10月13日生效</span></td>
+            <td>診所發牌及小型執業診所豁免。小型執業診所必須全由註冊醫生／牙醫營運，最多 5 名合夥人或董事；須委任醫務行政人員、設病人安全事件通報機制、遵守《實務守則》。2018年11月30日前已營運嘅診所，過渡申請期為 2025年10月13日至 2026年4月13日。</td>
+            <td>持牌／獲豁免身分而家係一項<strong>可以攞出嚟講嘅信任資產</strong>。放上網站同同意書。呢個係少數既真實又合規嘅可信度聲明。</td>
+          </tr>
+          <tr>
+            <td>擬議預繳冷靜期制度<br><span style="font-weight:400;color:var(--ink-3)">《商品說明條例》——2026年6月29日起諮詢</span></td>
+            <td>建議：美容及健身預繳合約設 <strong>7 個曆日法定冷靜期、14 個曆日退款期、合約期上限兩年</strong>。業界爭議集中喺 HK$15,000 呢條分界線。</td>
+            <td>你嘅現金流要當佢會通過嚟做預算。靠訂金賣嘅多年期套票會變成負債；短療程同用幾多畀幾多會變成低風險常態。</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note hard">
+      <h4>衞生署劃嘅嗰條線</h4>
+      <p>自2013年工作小組之後，涉及<strong>注射、以機械或化學方法在皮膚表皮層以下進行剝脫、高壓氧氣治療、漂牙</strong>嘅程序，只可以由註冊醫生或註冊牙醫施行。營銷上將「美容服務」同「醫療程序」溝埋一齊講，會同時惹來衞生署同醫委會嘅麻煩。服務頁面要明確講清楚邊樣係邊樣——而且咁樣本身轉化率仲高，因為一個緊張嘅初次客人，佢想搞清楚嘅正正就係呢個分別。</p>
+    </div>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section>
+    <div class="sec-head">
+      <div class="tag">第三部分 / 成效</div>
+      <h2>逐個渠道睇，究竟邊個真係有用</h2>
+      <p class="dek">下面嘅基準數字，混合咗香港本地媒體成本同國際醫美診所轉化數據，因為香港本地嘅診所轉化數據冇公開發表。香港嗰部分可信；診所轉化嗰部分只作參考方向。</p>
+    </div>
+
+    <div class="prose">
+      <h3>你嘅受眾，用數字講</h3>
+      <p>截至2025年10月，香港有 <strong>624 萬個社交媒體帳戶身分</strong>，佔人口 84.4%。平台觸及率方面，YouTube 同 WhatsApp 約 74.7%，Facebook 約 73.5%，Instagram 緊隨其後，Threads 有 155 萬（21%）。小紅書香港活躍用戶已經超過 <strong>200 萬</strong>，超過七成係女性，集中喺 25–34 歲——啱啱好就係醫美嘅消費核心。</p>
+      <p>最重要嘅結構性事實：<strong>WhatsApp 覆蓋咗全港四分三人。</strong>喺呢個市場，佢唔係客服渠道，佢係預約渠道、跟進渠道同留客渠道。大部分診所喺呢度做得太少，喺 Instagram 做得太多。</p>
+    </div>
+
+    <div class="tblwrap">
+      <table>
+        <thead>
+          <tr><th style="width:19%">渠道</th><th style="width:21%">香港成本基準</th><th style="width:12%">評價</th><th>原因</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Google 搜尋（高意圖）</td>
+            <td class="num-col">競爭關鍵字每次點擊 HK$8–15；醫美關鍵字國際平均 US$5.70，「botox near me」US$12–28</td>
+            <td><span class="pill p-good">核心</span></td>
+            <td>唯一一個「對方已經決定要買」嘅渠道。投得要窄：療程＋地區（「皮秒 銅鑼灣」）、競爭對手品牌詞、加「醫生」修飾嘅詞。唔好同連鎖鬥闊詞，你嘅預算輸硬。</td>
+          </tr>
+          <tr>
+            <td>Google 商家檔案 + 本地 SEO</td>
+            <td class="num-col">媒體成本約 HK$0</td>
+            <td><span class="pill p-good">核心</span></td>
+            <td>單店診所擁有嘅最高回報資產。「醫美＋地區」嘅地圖排名，細診所係贏得到嘅，全國性關鍵字就唔得。評價就係排名同轉化嘅燃料。</td>
+          </tr>
+          <tr>
+            <td>WhatsApp Business（配 CRM）</td>
+            <td class="num-col">工具每月約 HK$0–800</td>
+            <td><span class="pill p-good">核心</span></td>
+            <td>全港 74.7% 觸及率。回覆速度係整條漏斗入面槓桿最大嘅變數。喺呢度做覆診提醒，每個預約嘅成本贏晒所有付費渠道。</td>
+          </tr>
+          <tr>
+            <td>小紅書自然內容 + KOC</td>
+            <td class="num-col">入門每月 HK$5,000–10,000；KOL+KOC+廣告每月 HK$20,000–50,000</td>
+            <td><span class="pill p-good">要建立</span></td>
+            <td>香港女性搵診所之前，就係喺呢度做功課。同時覆蓋本地人同內地訪客。佢獎勵真實、詳細、唔靚仔嘅內容——啱啱好就係醫委會守則容許嘅內容。</td>
+          </tr>
+          <tr>
+            <td>Instagram / Facebook 付費廣告</td>
+            <td class="num-col">每千次曝光 HK$60–100；每次點擊 HK$4–8</td>
+            <td><span class="pill p-warn">選擇性</span></td>
+            <td>曝光平，但意圖弱，而且真係有效嘅創意（前後對比、優惠、客人見證）啱啱好就係違反守則嗰啲。只用嚟重定向網站訪客，同埋推教育性影片。</td>
+          </tr>
+          <tr>
+            <td>團購 / 優惠平台</td>
+            <td class="num-col">讓出 20–40% 毛利</td>
+            <td><span class="pill p-crit">避免</span></td>
+            <td>引入一批留客率近乎零嘅「搵平嘢」客，訓練咗個市場等你劈價，而且啲促銷手法同招徠病人嘅規定好擦邊。就係呢個陷阱搞散咗成個行業嘅經濟結構。</td>
+          </tr>
+          <tr>
+            <td>付費「醫美排名」軟文</td>
+            <td class="num-col">每個位置 HK$5,000–30,000</td>
+            <td><span class="pill p-crit">避免</span></td>
+            <td>畀錢就上榜，買家早就識得打折扣去睇，而且比較同聲稱優勝對醫生係明文禁止。就算撇開守則，性價比一樣差。</td>
+          </tr>
+          <tr>
+            <td>現有客人轉介</td>
+            <td class="num-col">一句多謝嘅成本</td>
+            <td><span class="pill p-good">核心</span></td>
+            <td>喺所有醫美數據入面轉化率最高嘅來源。注意：現金回贈式轉介計劃好接近招徠，回饋要用臨床價值（例如免費覆診評估），唔好用佣金。</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>你真正要管嘅單位經濟</h3>
+    <div class="prose">
+      <p>公開嘅診所基準係國際數據，但個形狀成立。獲取一個新客嘅成本喺 <strong>US$247–1,435</strong> 之間，做得稱職嘅營運者平均約 US$205–300，做得最好嗰一成低至 US$46——<strong>平均同最佳之間差 4.5 倍</strong>，而呢個差距幾乎全部嚟自跟進紀律，唔係買廣告嘅技術。相比之下，留住一個客只係 <strong>US$35–85</strong>。</p>
+      <p>留客率：行業平均約 <strong>30%</strong>；表現最好嘅診所做到 <strong>60–70%</strong>；有系統嘅忠誠計劃可以將一間普通診所推到約 45%。強嘅診所，新客會喺 <strong>6 至 12 個月內預約 3 至 4 次</strong>，而回頭客嘅消費比新客高 <strong>67%</strong>。回頭客嘅終身價值係第一單交易嘅 8 至 12 倍。</p>
+    </div>
+
+    <h4 style="margin-top:2rem">模型示範——一間香港單店診所，每月 <span style="color:var(--warn)">（示意）</span></h4>
+    <div class="math">
+      <div class="row"><span class="k">營銷開支（媒體 + 工具 + 內容）</span><span class="v">HK$ 40,000</span></div>
+      <div class="row"><span class="k">產生查詢（所有渠道）</span><span class="v">100</span></div>
+      <div class="row"><span class="k">→ 成功約到諮詢 @ 35%</span><span class="v">35</span></div>
+      <div class="row"><span class="k">→ 準時到診 @ 80%</span><span class="v">28</span></div>
+      <div class="row"><span class="k">→ 轉化為首次療程 @ 50%</span><span class="v">14</span></div>
+      <div class="row"><span class="k">每獲取一位客人嘅成本</span><span class="v hi">HK$ 2,857</span></div>
+      <div class="row"><span class="k">首次療程平均金額</span><span class="v">HK$ 3,800</span></div>
+      <div class="row"><span class="k">首 12 個月到診次數（留低嘅一批）</span><span class="v">3.2</span></div>
+      <div class="row"><span class="k">留客率 45% 下嘅 12 個月人均價值</span><span class="v">HK$ 9,900</span></div>
+      <div class="row total"><span class="k">12 個月 終身價值 : 獲客成本</span><span class="v hi">3.5 : 1</span></div>
+    </div>
+    <div class="prose">
+      <p>而家淨係改一個輸入值。開支唔變，將<strong>查詢轉諮詢率由 35% 拉到 50%</strong>——單靠 WhatsApp 幾分鐘內回覆而唔係幾個鐘後回覆就做到——每獲取一位客人嘅成本跌到大約 HK$2,000，比率變成大約 <strong>5:1</strong>。再將留客率由 45% 推到 60%，比率就過咗 6:1。</p>
+      <p>呢個就係成份研究最核心嘅發現。<strong>喺呢個市場，回應速度同覆診紀律嘅價值，高過你實際上有能力再加落去嘅任何廣告預算。</strong>連鎖要買曝光，因為佢哋要填好多張床。你唔使。</p>
+    </div>
+  </section>
+
+  <!-- ============ PART 4 ============ -->
+  <section>
+    <div class="sec-head">
+      <div class="tag">第四部分 / 策略</div>
+      <h2>單店診所應該行嘅策略</h2>
+      <p class="dek">四個決定，順住做。每一個都會收窄下一個。跳過前面直接諗渠道，就係大部分細診所營銷失敗嘅原因。</p>
+    </div>
+
+    <h3>決定一 —— 揀一個窄嘅切入點，唔好開餐牌</h3>
+    <div class="prose">
+      <p>連鎖鬥嘅係闊：每部機、每個價位、每個地區。你贏唔到，亦都唔應該畀錢去試。揀<strong>一個臨床切入點</strong>，一個你喺自己地區真係做到最好嘅，然後畀佢帶起其餘所有嘢。喺目前香港市場行得通嘅切入點：</p>
+    </div>
+    <div class="cards">
+      <div class="card">
+        <h5>預防型 / 早期介入（25–34歲）</h5>
+        <p>增長最快嘅行為區隔。低劑量神經調節劑、膚質管理、光老化處理。回頭消費期長、併發症風險低，而且「克制」呢個故事本身就好賣。</p>
+        <span class="stat">人均終身價值最高</span>
+      </div>
+      <div class="card">
+        <h5>40歲後膚質及鬆弛</h5>
+        <p>單價高，但更依賴儀器，亦更容易被攞去同深圳比價。靠醫生時間同跟進贏，唔係靠機器規格。</p>
+        <span class="stat">首次到診金額最高</span>
+      </div>
+      <div class="card">
+        <h5>醫學皮膚科延伸</h5>
+        <p>暗瘡、黃褐斑、玫瑰痤瘡、疤痕。真正屬於醫療，所以以教育形式呈現完全符合廣告守則，靠信任而唔係價錢成交，而且好自然咁引導到醫美療程。</p>
+        <span class="stat">最抵得住劈價競爭</span>
+      </div>
+      <div class="card">
+        <h5>男士醫美</h5>
+        <p>資料明確指出係擴張中嘅區隔，而香港結構性服務不足。關鍵字競爭低、創意路線唔同，而且呢批買家做一次功課之後就會好忠誠。</p>
+        <span class="stat">目前獲客成本最平</span>
+      </div>
+    </div>
+
+    <h3>決定二 —— 將「信任」變成產品，用「價錢」做證明</h3>
+    <div class="prose">
+      <p>綜合第一部分嘅嘢，2026年一間細診所最有價值嘅做法，就係令自己睇落好明顯咁「買得安心」。呢個首先係定價同政策決定，之後先係營銷決定：</p>
+      <ul>
+        <li><strong>公開價目。</strong>私營醫療投訴有 45.5% 係收費爭議，而政府正就價格透明度做諮詢。公開價錢可以轉化緊張嘅資料搜集者，同時預先消除最常見嗰種投訴。</li>
+        <li><strong>賣單次同短療程。</strong>任何預繳療程嘅上限，訂喺一個你願意即刻退返畀人嘅水平。7日冷靜期同兩年上限好可能會落實，市場遲早都會行呢條路——你行先，仲要講出嚟。</li>
+        <li><strong>唔用抽佣銷售員，而且要講明。</strong>硬銷係美容服務投訴嘅頭號成因。「你由頭到尾只會同醫生傾」係一句你嘅競爭對手結構上抄唔到嘅定位。</li>
+        <li><strong>寫明你嘅牌照身分。</strong>第633章診所牌照或小型執業診所豁免、醫生註冊、儀器認證（FDA / CE / KFDA）。屬實、可查證、合規。</li>
+      </ul>
+    </div>
+
+    <div class="note flag">
+      <h4>要正面處理深圳比較，唔好扮睇唔到</h4>
+      <p>你講唔講，客人一樣會自己比價。喺諮詢入面同一版 FAQ 度正面回應：第二個星期出現併發症會點、邊個幫你覆診、儀器維修同針劑來源鏈係點、出事有咩追究途徑。呢個係誠實、法律上安全嘅論點，亦係你真正贏到嗰個論點。</p>
+    </div>
+
+    <h3>決定三 —— 建立一部守則容許嘅內容機器</h3>
+    <div class="prose">
+      <p>醫委會嘅限制通常被當成障礙。其實佢比較似一個篩，將你推向本來就最有效嘅內容：<strong>具體、誠實、唔推銷嘅解釋。</strong></p>
+      <ul>
+        <li><strong>寫「邊啲人唔啱做」嘅內容。</strong>禁忌症、真實時間表、療程解決唔到嘅嘢。呢啲有排名、喺小紅書會被收藏、完全合規，而且會預先篩走唔啱嘅人，令諮詢轉化率更高。</li>
+        <li><strong>公開回答價錢問題。</strong>「皮秒喺香港實際幾錢、咩因素影響價格」係高搜尋量但幾乎冇人老實答嘅題目。攞晒佢。</li>
+        <li><strong>解釋醫療／美容嘅分界。</strong>用衞生署嗰個區分做內容支柱。緊張嘅初次客人，字面上就係喺度搵緊呢樣嘢。</li>
+        <li><strong>完全唔好掂：</strong>當廣告用嘅前後對比相、客人見證、優勝聲稱、限時倒數優惠、免費試做、保證見效。</li>
+      </ul>
+      <p>細診所真係維持得住嘅節奏：<strong>每週 2 篇小紅書、每兩週 1 篇有份量嘅網站文章、每月 1 條短教育影片。</strong>可以跨平台重用，但要逐個平台改寫——小紅書獎勵細節同真誠，Instagram 獎勵視覺清晰。</p>
+    </div>
+
+    <h3>決定四 —— 錢先花喺漏斗底部</h3>
+    <div class="prose">
+      <p>次序好重要。先修好「接得住」同「轉化到」，先好買流量，否則你係畀錢去漏水。順序係：Google 商家檔案同評價流程 → 一個答到價錢同安全問題嘅網站 → WhatsApp 回應系統 → Google 搜尋廣告（窄嘅高意圖詞）→ 小紅書內容 → Meta 重定向。上面嗰樣未行得通，下面嗰樣唔批錢。</p>
+    </div>
+  </section>
+
+  <!-- ============ PART 5 ============ -->
+  <section>
+    <div class="sec-head">
+      <div class="tag">第五部分 / 營運</div>
+      <h2>營銷背後嗰套營運系統</h2>
+      <p class="dek">營銷帶到查詢入嚟。以下八個環節決定佢會唔會變成一個會返轉頭嘅客人——亦都係平均診所同頂尖一成之間嗰 4.5 倍差距真正住嘅地方。</p>
+    </div>
+
+    <div class="tblwrap">
+      <table>
+        <thead>
+          <tr><th style="width:18%">環節</th><th style="width:20%">目標</th><th>點樣執行</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>回應速度</td>
+            <td class="num-col">辦公時間內 &lt; 5 分鐘<br>過夜 &lt; 12 小時</td>
+            <td>WhatsApp Business 自動回覆，問一條篩選問題，同時畀兩個具體時段揀。唔好講「我哋會盡快覆你」。單單呢一項通常令預約率升 10–15 個百分點。</td>
+          </tr>
+          <tr>
+            <td>諮詢流程</td>
+            <td class="num-col">50%+ 轉首次療程</td>
+            <td>固定次序：了解訴求 → 檢查 → 我會做咩、同埋我唔會做咩 → 白紙黑字寫低價錢 → 唔即日迫成交。拎走個 close 反而 close 得多，因為呢個市場嘅抗拒點，本身就係壓迫感。</td>
+          </tr>
+          <tr>
+            <td>甩底控制</td>
+            <td class="num-col">&lt; 12%</td>
+            <td>落單即確認，48小時同3小時前用 WhatsApp 提醒，首次諮詢收一筆可退還嘅細訂金。</td>
+          </tr>
+          <tr>
+            <td>離座前預約下一次</td>
+            <td class="num-col">60%+ 帶住日期走</td>
+            <td>喺客人企起身之前就約好下一次，用臨床角度講（「你嘅覆診係六星期後」）。呢個係現有最大嘅留客槓桿，而且零成本。</td>
+          </tr>
+          <tr>
+            <td>召回系統</td>
+            <td class="num-col">首12個月 3–4 次到診</td>
+            <td>每個療程都有臨床間隔。記落日程，夠鐘先發訊息，唔好夾埋月尾一次過發。一張沉睡嘅客戶名單，就係一筆你已經付咗嘅營銷費用。</td>
+          </tr>
+          <tr>
+            <td>評價引擎</td>
+            <td class="num-col">每月 4 個以上新評價</td>
+            <td>喺覆診、滿意度最高嗰刻當面開口，然後用 WhatsApp 發個連結。千祈唔好用利誘——違反平台政策，而且一睇就知係假。評價同時推動地圖排名同轉化。</td>
+          </tr>
+          <tr>
+            <td>投訴處理</td>
+            <td class="num-col">7日內內部解決</td>
+            <td>要有書面政策、指定負責人，以及一個你唔使上報就批得到嘅退款額度。以行業目前嘅投訴環境嚟講，呢個係有實質回報嘅聲譽保險。</td>
+          </tr>
+          <tr>
+            <td>來源歸因</td>
+            <td class="num-col">100% 查詢有記錄來源</td>
+            <td>預約時加一條問題：「你點樣知道我哋？」一張試算表，每週更新。冇咗佢，下面所有預算決定都係靠估——而呢個正正係大部分細診所會慳嘅功夫。</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <h4>關於人手嘅一點</h4>
+      <p>單店診所喺營銷上第一個要請嘅人，唔係代理公司，而係一個稱職嘅前台／客戶協調員，負責回應速度、離座前預約同召回；再加一個每月幾千蚊嘅自由身內容撰稿人。呢個組合喺呢個規模，表現贏過每月 HK$25,000 嘅代理 retainer，因為樽頸係轉化同留客，唔係創意。</p>
+    </div>
+  </section>
+
+  <!-- ============ PART 6 ============ -->
+  <section>
+    <div class="sec-head">
+      <div class="tag">第六部分 / 執行</div>
+      <h2>90日流程同兩種預算形態</h2>
+      <p class="dek">次序係刻意排嘅：每一期都建基於上一期。唔好三期一齊做。</p>
+    </div>
+
+    <div class="phases">
+      <div class="phase">
+        <div class="when"><b>01</b>第 1–30 日<br>打地基</div>
+        <div>
+          <h5>買流量之前，先整好「接得住」</h5>
+          <ul>
+            <li>Google 商家檔案：資料齊全、類別正確、真實室內相、營業時間、WhatsApp 連結。</li>
+            <li>為你兩個主打療程，出一版價目頁同一版「邊啲人唔啱做」頁。</li>
+            <li>設定 WhatsApp Business：自動回覆、常用回覆、以及標示查詢進度嘅標籤系統。</li>
+            <li>加入「你點樣知道我哋？」欄位，開始做來源歸因表。</li>
+            <li>法律檢視：將所有現有廣告、網頁同社交貼文，對照第231章同醫委會守則逐項檢查，唔過關嘅刪走。</li>
+            <li>確認你嘅第633章牌照／小型執業診所豁免身分有效，並且已展示。</li>
+          </ul>
+        </div>
+      </div>
+      <div class="phase">
+        <div class="when"><b>02</b>第 31–60 日<br>轉化</div>
+        <div>
+          <h5>令現有嘅流量值錢啲</h5>
+          <ul>
+            <li>推行固定諮詢流程；寫成腳本，然後每次都一模一樣咁行。</li>
+            <li>離座前預約下一次變成硬性規定。每星期追個百分比。</li>
+            <li>對現有客戶名單啟動召回系統——呢個係你最快嘅收入，而且零成本。</li>
+            <li>啟動評價引擎：每位覆診客人都開口問，目標每月 4 個以上。</li>
+            <li>開始小紅書，每週 2 篇。教育性、具體、唔使靚仔。</li>
+          </ul>
+        </div>
+      </div>
+      <div class="phase">
+        <div class="when"><b>03</b>第 61–90 日<br>獲客</div>
+        <div>
+          <h5>而家先買流量，而且要窄</h5>
+          <ul>
+            <li>Google 搜尋廣告：只落「療程＋地區」詞，配對類型收緊，落地頁用價目頁。起步每月 HK$8,000–12,000。</li>
+            <li>Meta 只做網站訪客重定向，創意用教育性影片。</li>
+            <li>開始第一批小紅書 KOC 合作——揀有真實本地追隨者嘅微型創作者，並用書面方式講清楚守則限制。</li>
+            <li>檢視來源歸因表：每獲客成本高過 HK$4,000 嘅渠道即刻停；低過 HK$2,000 嘅加倍。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <h3>兩種預算形態</h3>
+    <div class="tblwrap">
+      <table>
+        <thead>
+          <tr><th style="width:32%">項目</th><th style="width:22%">精簡 — 每月 HK$20,000</th><th style="width:22%">增長 — 每月 HK$50,000</th><th>備註</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Google 搜尋廣告</td><td class="num-col">HK$8,000</td><td class="num-col">HK$18,000</td><td>意圖最高。行得通就優先加碼呢度。</td></tr>
+          <tr><td>內容製作</td><td class="num-col">HK$5,000</td><td class="num-col">HK$12,000</td><td>自由身撰稿人 + 基本影片。會累積嘅資產。</td></tr>
+          <tr><td>小紅書 KOC / 廣告</td><td class="num-col">HK$4,000</td><td class="num-col">HK$12,000</td><td>入門級係每月 HK$5,000–10,000；有咗內容庫先加碼。</td></tr>
+          <tr><td>Meta 重定向</td><td class="num-col">HK$2,000</td><td class="num-col">HK$5,000</td><td>只做重定向。唔好喺呢度做冷開發。</td></tr>
+          <tr><td>工具（CRM、WhatsApp、預約）</td><td class="num-col">HK$1,000</td><td class="num-col">HK$3,000</td><td>唔可以慳。留客就係住喺呢度。</td></tr>
+          <tr><td><strong>預期每月新客</strong></td><td class="num-col">7–9 <span class="pill p-flat">推算</span></td><td class="num-col">16–22 <span class="pill p-flat">推算</span></td><td>以優化後獲客成本約 HK$2,300–2,800 計。</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note win">
+      <h4>一句總結</h4>
+      <p>頭兩個月，將心機全部放喺令已經有嘅客人返轉頭、令已經收到嘅查詢成交。之後——先至——買窄嘅高意圖流量，同埋建立一個連鎖集團嘅合規部門永遠唔會批嘅小紅書內容庫。用問責、公開價目同醫生時間去競爭，呢三樣正正係大集團嘅營運模式令佢哋做唔到嘅嘢。</p>
+    </div>
+  </section>
+
+  <!-- ============ PART 7 ============ -->
+  <section>
+    <div class="sec-head">
+      <div class="tag">第七部分 / 量度</div>
+      <h2>每月計分表</h2>
+      <p class="dek">八個數字，每月固定同一日檢視。如果一個營銷決定唔可以用呢張表講得通，就唔好做。</p>
+    </div>
+
+    <div class="tblwrap">
+      <table>
+        <thead>
+          <tr><th style="width:28%">指標</th><th style="width:20%">目標</th><th style="width:18%">警戒線</th><th>超標點做</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>各來源查詢數</td><td class="num-col">100% 有記錄</td><td class="num-col">有任何無記錄</td><td>其他嘢擺埋一邊，先整好預約表格嗰條欄位。</td></tr>
+          <tr><td>首次回應中位時間</td><td class="num-col">&lt; 5 分鐘</td><td class="num-col">&gt; 30 分鐘</td><td>係人手或自動化問題，唔係營銷問題。</td></tr>
+          <tr><td>查詢 → 成功約到諮詢</td><td class="num-col">45–50%</td><td class="num-col">&lt; 30%</td><td>睇回應速度同回覆腳本。</td></tr>
+          <tr><td>諮詢 → 首次療程</td><td class="num-col">50%+</td><td class="num-col">&lt; 35%</td><td>諮詢流程有問題，或者你吸引緊錯嘅查詢。</td></tr>
+          <tr><td>每獲客成本</td><td class="num-col">&lt; HK$2,500</td><td class="num-col">&gt; HK$4,000</td><td>斬走最差嗰個渠道，錢調去最好嗰個。</td></tr>
+          <tr><td>離座前已預約下一次</td><td class="num-col">60%+</td><td class="num-col">&lt; 40%</td><td>現有價值最高嘅修補項。即刻處理。</td></tr>
+          <tr><td>12個月留客率</td><td class="num-col">45%+ → 60%</td><td class="num-col">&lt; 30%</td><td>召回系統根本冇行緊。</td></tr>
+          <tr><td>每月新評價</td><td class="num-col">4 個以上</td><td class="num-col">&lt; 2 個</td><td>要喺覆診當面問，唔好事後靠電郵。</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ APPENDIX ============ -->
+  <section>
+    <div class="sec-head">
+      <div class="tag">附錄</div>
+      <h2>數據可信度</h2>
+    </div>
+    <div class="prose">
+      <p><strong>高可信度</strong>——消委會投訴數字、立法會及衞生署嘅規管立場、第633章生效日期同過渡期、2026年6月冷靜期諮詢嘅參數、醫思健康經審核嘅 FY2025 業績、DataReportal 平台滲透率、跨境人次，以及已公開嘅香港媒體成本區間。</p>
+      <p><strong>只作方向參考</strong>——香港醫美市場規模同增長率。流傳嘅數字（一個來源話 2023 年 HK$15–18 億、年複合增長 5–7%；另一個話「超過 20%」）出自診所同代理嘅網誌，唔係經審核嘅研究，而且互相矛盾。我喺呢份報告入面，刻意冇用任何市場規模數字去支撐論點。診所層面嘅轉化、留客、獲客成本同終身價值基準，係國際 med-spa 數據，只應該當成形狀，唔好當成香港數值——上面嗰個模型明確係模型。</p>
+      <p><strong>有時效性</strong>——預繳冷靜期諮詢由 2026年6月29日開始，為期兩個月，即係大約今個月底截止。如果你想以營運者身分提交意見，個窗口就係而家。第633章針對2018年11月30日前診所嘅過渡申請期已經喺 2026年4月13日截止；如果你未處理牌照問題，當緊急事處理，並且搵律師，唔好靠呢份文件行事。</p>
+      <p><strong>呢份唔係法律意見。</strong>第二部分歸納嘅廣告限制後果嚴重，而且係針對個別醫生執法。落廣告之前，搵香港律師睇你實際嘅宣傳品。</p>
+    </div>
+
+    <h4 style="margin-top:2.5rem">資料來源</h4>
+    <ul class="srcs">
+      <li><a href="https://www.consumer.org.hk/tc/press-release/p-private-healthcare-services-study-report">消費者委員會——私營醫療服務研究及收費透明度建議</a></li>
+      <li><a href="https://www.hk01.com/%E7%A4%BE%E6%9C%83%E6%96%B0%E8%81%9E/60324165/">香港01——2025年消委會投訴榜</a></li>
+      <li><a href="https://www.hk01.com/%E7%A4%BE%E6%9C%83%E6%96%B0%E8%81%9E/60364876/">香港01——擬設7日冷靜期、合約上限兩年，2026年6月29日起諮詢</a></li>
+      <li><a href="https://www.dotdotnews.com/a/202606/29/AP6a422578e4b04b6c5d31d239.html">點新聞——冷靜期諮詢詳情</a></li>
+      <li><a href="https://www.info.gov.hk/gia/general/202505/21/P2025052100418.htm">政府新聞公報——實施診所及小型執業診所規管制度</a></li>
+      <li><a href="https://www.info.gov.hk/gia/general/202510/13/P2025101000314.htm">政府新聞公報——衞生署開始接受診所牌照申請及豁免要求</a></li>
+      <li><a href="https://www.orphf.gov.hk/tc/clinic_licence_small_practice_clinic_exemption">私營醫療機構規管辦公室——診所牌照及小型執業診所豁免</a></li>
+      <li><a href="https://www.drugoffice.gov.hk/eps/do/tc/pharmaceutical_trade/other_useful_information/umao.html">藥物辦公室——《不良廣告（醫藥）條例》（第231章）</a></li>
+      <li><a href="https://www.elegislation.gov.hk/hk/cap231!zh-Hant-HK">電子版香港法例——第231章全文及附表</a></li>
+      <li><a href="https://www.mchk.org.hk/tc_chi/code/index.html">香港醫務委員會——《香港註冊醫生專業守則》</a></li>
+      <li><a href="https://www.dh.gov.hk/tc_chi/useful/useful_medical_beauty/useful_medical_beauty.html">衞生署——區分醫療程序和美容服務</a></li>
+      <li><a href="https://www.dh.gov.hk/tc_chi/useful/useful_medical_beauty/files/Booklet_on_Cosmetic_Procedures.pdf">衞生署——常見美容程序簡介及須知</a></li>
+      <li><a href="https://news.hket.com/article/2058893/">香港經濟日報——醫美廣告提供優惠及免費試做涉違專業守則</a></li>
+      <li><a href="https://www.info.gov.hk/gia/general/202503/06/P2025030600422.htm">醫務衞生局——回應消委會就醫療價格透明度嘅建議</a></li>
+      <li><a href="https://www1.hkexnews.hk/listedco/listconews/sehk/2025/1128/2025112800391.pdf">港交所——醫思健康（2138.HK）披露文件</a></li>
+      <li><a href="https://finance.yahoo.com/quote/2138.HK/financials/">醫思健康 FY2025 損益表</a></li>
+      <li><a href="https://datareportal.com/reports/digital-2026-hong-kong">DataReportal——Digital 2026: Hong Kong</a></li>
+      <li><a href="https://www.silkdrive.com/insights/hong-kong-social-media-statistics">Silkdrive——2026年香港社交媒體使用統計</a></li>
+      <li><a href="https://jmarketing.com.hk/">J Marketing——香港品牌小紅書推廣預算</a></li>
+      <li><a href="https://www.wenweipo.com/a/202608/05/AP6a72c6cee4b0c1e50023a085.html">文匯報／立法會《數據透視》——訪港旅客消費與本地居民消費</a></li>
+      <li><a href="https://zh.wikipedia.org/zh-hant/%E6%B8%AF%E4%BA%BA%E5%8C%97%E4%B8%8A">港人北上人次，2024–2025</a></li>
+      <li><a href="https://holimood.com/blog/shenzhen-medical-tourism-hk-specialist-charter-guide">深圳醫療／醫美旅遊收費及風險指引</a></li>
+      <li><a href="https://blog.beauty-place.com.hk/%E9%A6%99%E6%B8%AF%E9%86%AB%E7%BE%8E%E9%82%8A%E9%96%93%E5%A5%BD-2/">2026年香港療程價格區間</a></li>
+      <li><a href="https://www.prospyrmed.com/blog/post/how-to-benchmark-kpis-for-aesthetic-clinics">Prospyr——醫美診所 KPI 及留客基準</a></li>
+      <li><a href="https://leadresponse.co/blog/med-spa-industry-statistics">LeadResponse——2026年 med spa 行業統計</a></li>
+      <li><a href="https://www.pennock.co/blog/medspa-and-aesthetics-paid-media-benchmarks-google-vs-meta">Pennock——med spa 付費媒體基準：Google vs Meta</a></li>
+      <li><a href="https://digitalmktg.com.hk/guides/the-complete-guide-to-digital-marketing-in-hong-kong">香港數碼營銷成本基準</a></li>
+    </ul>
+  </section>
+
+  <footer>
+    香港醫美營運手冊 · 2026年8月19日整理 · 僅屬研究摘要及商業建議，不構成法律、醫療或財務意見。
+  </footer>
+
+</div>
