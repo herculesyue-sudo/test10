@@ -1,0 +1,946 @@
+<title>HK Medical Aesthetics Playbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+HK:wght@400;500;700&display=swap">
+
+<style>
+  :root {
+    --paper:      #F5F7F7;
+    --surface:    #FFFFFF;
+    --surface-2:  #EDF1F1;
+    --ink:        #121A1C;
+    --ink-2:      #465559;
+    --ink-3:      #78888C;
+    --rule:       #DCE3E4;
+    --rule-firm:  #C3CFD1;
+    --accent:     #0A6B72;
+    --accent-ink: #08565C;
+    --accent-wash:#E0EFEF;
+    --good:       #2E6F4E;
+    --warn:       #8F6410;
+    --crit:       #A4322A;
+    --good-wash:  #E4F0E9;
+    --warn-wash:  #F6EEDC;
+    --crit-wash:  #F6E5E3;
+
+    --f-display: "Newsreader", "Noto Serif HK", Georgia, serif;
+    --f-body:    "IBM Plex Sans", "Noto Sans HK", -apple-system, "Helvetica Neue", sans-serif;
+    --f-mono:    "IBM Plex Mono", "Noto Sans HK", ui-monospace, Menlo, monospace;
+
+    --shell: 78rem;
+    --measure: 68ch;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:      #0D1214;
+      --surface:    #151D1F;
+      --surface-2:  #1C2528;
+      --ink:        #E7EDEE;
+      --ink-2:      #A2B1B5;
+      --ink-3:      #7A898D;
+      --rule:       #263134;
+      --rule-firm:  #384649;
+      --accent:     #56C3C7;
+      --accent-ink: #8AD8DA;
+      --accent-wash:#102E31;
+      --good:       #6FC392;
+      --warn:       #D6A742;
+      --crit:       #E1877B;
+      --good-wash:  #11291D;
+      --warn-wash:  #2B2314;
+      --crit-wash:  #2C1917;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper:      #0D1214;
+    --surface:    #151D1F;
+    --surface-2:  #1C2528;
+    --ink:        #E7EDEE;
+    --ink-2:      #A2B1B5;
+    --ink-3:      #7A898D;
+    --rule:       #263134;
+    --rule-firm:  #384649;
+    --accent:     #56C3C7;
+    --accent-ink: #8AD8DA;
+    --accent-wash:#102E31;
+    --good:       #6FC392;
+    --warn:       #D6A742;
+    --crit:       #E1877B;
+    --good-wash:  #11291D;
+    --warn-wash:  #2B2314;
+    --crit-wash:  #2C1917;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--f-body);
+    font-size: 16.5px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .shell {
+    max-width: var(--shell);
+    margin: 0 auto;
+    padding: 0 clamp(1.1rem, 4vw, 3.5rem);
+  }
+
+  .prose { max-width: var(--measure); }
+
+  p { margin: 0 0 1.05em; color: var(--ink-2); }
+  strong { color: var(--ink); font-weight: 600; }
+  a { color: var(--accent-ink); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px;
+  }
+
+  /* ---------- masthead ---------- */
+
+  .masthead {
+    border-bottom: 1px solid var(--rule-firm);
+    padding: clamp(3rem, 8vw, 6rem) 0 2.6rem;
+  }
+  .kicker {
+    font-family: var(--f-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+    margin: 0 0 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.1rem;
+  }
+  .kicker span { color: var(--ink-3); }
+
+  h1 {
+    font-family: var(--f-display);
+    font-weight: 500;
+    font-size: clamp(2.5rem, 6.4vw, 4.7rem);
+    line-height: 1.02;
+    letter-spacing: -0.025em;
+    margin: 0 0 1.1rem;
+    text-wrap: balance;
+    max-width: 20ch;
+  }
+  h1 em { font-style: italic; color: var(--accent-ink); }
+
+  .standfirst {
+    font-size: clamp(1.05rem, 2vw, 1.24rem);
+    line-height: 1.5;
+    color: var(--ink-2);
+    max-width: 58ch;
+    margin: 0 0 2.4rem;
+  }
+
+  .byline {
+    font-family: var(--f-mono);
+    font-size: 0.74rem;
+    color: var(--ink-3);
+    line-height: 1.75;
+    border-top: 1px solid var(--rule);
+    padding-top: 1.1rem;
+    max-width: 62ch;
+  }
+
+  /* ---------- sections ---------- */
+
+  section { padding: clamp(3rem, 7vw, 5.2rem) 0 0; }
+
+  .sec-head {
+    display: grid;
+    grid-template-columns: 7.5rem 1fr;
+    gap: 0 1.5rem;
+    align-items: start;
+    border-top: 1px solid var(--rule);
+    padding-top: 1.4rem;
+    margin-bottom: 2.2rem;
+  }
+  .sec-head .tag {
+    font-family: var(--f-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    padding-top: 0.55rem;
+  }
+  h2 {
+    font-family: var(--f-display);
+    font-weight: 500;
+    font-size: clamp(1.75rem, 3.6vw, 2.5rem);
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+    margin: 0;
+    text-wrap: balance;
+    max-width: 24ch;
+  }
+  .sec-head .dek {
+    grid-column: 2;
+    margin: 0.85rem 0 0;
+    max-width: 60ch;
+    color: var(--ink-2);
+  }
+
+  @media (max-width: 640px) {
+    .sec-head { grid-template-columns: 1fr; }
+    .sec-head .tag { padding-top: 0; margin-bottom: 0.7rem; }
+    .sec-head .dek { grid-column: 1; }
+  }
+
+  h3 {
+    font-family: var(--f-body);
+    font-weight: 600;
+    font-size: 1.06rem;
+    letter-spacing: -0.005em;
+    color: var(--ink);
+    margin: 2.4rem 0 0.7rem;
+  }
+  h4 {
+    font-family: var(--f-mono);
+    font-weight: 600;
+    font-size: 0.72rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0 0 0.9rem;
+  }
+
+  ul, ol { margin: 0 0 1.1em; padding-left: 1.15rem; color: var(--ink-2); }
+  li { margin-bottom: 0.42em; }
+  li::marker { color: var(--ink-3); }
+
+  /* ---------- verdict strip ---------- */
+
+  .verdicts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    margin: 2.6rem 0 0;
+  }
+  .verdict { background: var(--surface); padding: 1.5rem 1.4rem; }
+  .verdict .num {
+    font-family: var(--f-mono);
+    font-size: 1.85rem;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    color: var(--accent-ink);
+    font-variant-numeric: tabular-nums;
+    display: block;
+    line-height: 1.1;
+  }
+  .verdict .lab {
+    font-family: var(--f-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0.55rem 0 0.5rem;
+  }
+  .verdict p { margin: 0; font-size: 0.87rem; line-height: 1.5; }
+
+  /* ---------- callouts ---------- */
+
+  .note {
+    border-left: 3px solid var(--rule-firm);
+    background: var(--surface);
+    padding: 1.15rem 1.3rem;
+    margin: 1.8rem 0;
+    font-size: 0.92rem;
+  }
+  .note p:last-child { margin-bottom: 0; }
+  .note.flag { border-left-color: var(--warn); background: var(--warn-wash); }
+  .note.hard { border-left-color: var(--crit); background: var(--crit-wash); }
+  .note.win  { border-left-color: var(--good); background: var(--good-wash); }
+  .note h4 { color: var(--ink-2); }
+
+  /* ---------- tables ---------- */
+
+  .tblwrap {
+    overflow-x: auto;
+    margin: 1.6rem 0 2rem;
+    border: 1px solid var(--rule);
+    background: var(--surface);
+  }
+  table { border-collapse: collapse; width: 100%; min-width: 40rem; font-size: 0.87rem; }
+  thead th {
+    text-align: left;
+    font-family: var(--f-mono);
+    font-weight: 500;
+    font-size: 0.67rem;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--rule-firm);
+    white-space: nowrap;
+    vertical-align: bottom;
+  }
+  tbody td {
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid var(--rule);
+    color: var(--ink-2);
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody td:first-child { color: var(--ink); font-weight: 500; }
+  .num-col { font-family: var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  .pill {
+    display: inline-block;
+    font-family: var(--f-mono);
+    font-size: 0.63rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.18rem 0.5rem;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+  .p-good { background: var(--good-wash); color: var(--good); }
+  .p-warn { background: var(--warn-wash); color: var(--warn); }
+  .p-crit { background: var(--crit-wash); color: var(--crit); }
+  .p-flat { background: var(--surface-2); color: var(--ink-3); }
+
+  /* ---------- card grids ---------- */
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    margin: 1.8rem 0 2rem;
+  }
+  .card { background: var(--surface); padding: 1.35rem 1.3rem; }
+  .card h5 {
+    font-family: var(--f-body);
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem;
+    color: var(--ink);
+  }
+  .card p { font-size: 0.87rem; line-height: 1.5; margin: 0; }
+  .card .stat {
+    font-family: var(--f-mono);
+    font-size: 0.72rem;
+    color: var(--accent-ink);
+    letter-spacing: 0.05em;
+    display: block;
+    margin-top: 0.7rem;
+  }
+
+  /* ---------- sequenced plan ---------- */
+
+  .phases { display: grid; gap: 1px; background: var(--rule); border: 1px solid var(--rule); margin: 1.8rem 0 2rem; }
+  .phase {
+    background: var(--surface);
+    display: grid;
+    grid-template-columns: 8.5rem 1fr;
+    gap: 0 1.5rem;
+    padding: 1.5rem 1.4rem;
+  }
+  .phase .when {
+    font-family: var(--f-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+    line-height: 1.5;
+  }
+  .phase .when b { display: block; font-size: 1.5rem; font-weight: 500; letter-spacing: -0.02em; color: var(--ink); margin-bottom: 0.2rem; }
+  .phase h5 { font-size: 1rem; font-weight: 600; margin: 0 0 0.5rem; color: var(--ink); }
+  .phase ul { margin: 0; font-size: 0.88rem; }
+  @media (max-width: 640px) {
+    .phase { grid-template-columns: 1fr; }
+    .phase .when { margin-bottom: 0.8rem; }
+    .phase .when b { display: inline; margin-right: 0.5rem; }
+  }
+
+  /* ---------- math block ---------- */
+
+  .math {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    padding: 1.5rem;
+    margin: 1.8rem 0 2rem;
+    font-family: var(--f-mono);
+    font-size: 0.83rem;
+    line-height: 1.9;
+  }
+  .math .row { display: flex; justify-content: space-between; gap: 1.5rem; border-bottom: 1px dotted var(--rule); padding: 0.1rem 0; }
+  .math .row:last-child { border-bottom: none; }
+  .math .row.total { border-top: 1px solid var(--rule-firm); border-bottom: none; margin-top: 0.5rem; padding-top: 0.6rem; }
+  .math .row.total span { color: var(--ink); font-weight: 600; }
+  .math .k { color: var(--ink-2); }
+  .math .v { color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .math .v.hi { color: var(--accent-ink); }
+
+  /* ---------- sources ---------- */
+
+  .srcs { columns: 2; column-gap: 2.5rem; font-size: 0.82rem; }
+  .srcs li { break-inside: avoid; margin-bottom: 0.7em; color: var(--ink-3); }
+  @media (max-width: 700px) { .srcs { columns: 1; } }
+
+  footer {
+    margin-top: clamp(3rem, 7vw, 5rem);
+    border-top: 1px solid var(--rule-firm);
+    padding: 2rem 0 4rem;
+    font-family: var(--f-mono);
+    font-size: 0.72rem;
+    color: var(--ink-3);
+    line-height: 1.8;
+  }
+
+  hr.thin { border: none; border-top: 1px solid var(--rule); margin: 2.5rem 0; }
+</style>
+
+<div class="shell">
+
+  <header class="masthead">
+    <p class="kicker">Hong Kong · Medical Aesthetics <span>Market read + operating playbook</span> <span>August 2026</span></p>
+    <h1>Everyone is buying reach. The winners are buying <em>the second visit.</em></h1>
+    <p class="standfirst">What the numbers say about marketing performance in Hong Kong's 醫學美容 sector — and the strategy a single-site clinic should actually run, given the regulatory box it has to market inside.</p>
+    <p class="byline">
+      Prepared for an independent HK clinic operator · Compiled 19 Aug 2026<br>
+      Sources: Consumer Council, Department of Health, Legislative Council, ORPHF, DataReportal, HKEX filings, and published ad/clinic benchmarks. Figures marked <span style="color:var(--warn)">est.</span> are modelled, not measured — see the reliability note at the end.
+    </p>
+  </header>
+
+  <!-- ============ BLUF ============ -->
+  <section>
+    <div class="sec-head">
+      <div class="tag">Bottom line</div>
+      <h2>Five things that decide the next 12 months</h2>
+      <p class="dek">If you read nothing else, read these. Everything after this section is the evidence and the execution detail.</p>
+    </div>
+
+    <div class="verdicts">
+      <div class="verdict">
+        <span class="num">−30.7%</span>
+        <p class="lab">EBITDA, HK's largest listed aesthetics group, FY25</p>
+        <p>EC Healthcare (2138.HK) took a 30.7% EBITDA fall on HK$4.14bn revenue, blaming weak demand for <em>higher-margin discretionary aesthetic services</em>. Scale and ad budget did not protect them. Discounting to fill chairs is a losing game right now.</p>
+      </div>
+      <div class="verdict">
+        <span class="num">+248%</span>
+        <p class="lab">Consumer Council medical-service complaints, 2025</p>
+        <p>1,845 complaints, driven by a single group collapse (1,299 of them). Consumer trust in prepaid packages is the sector's binding constraint. A clinic that visibly de-risks purchase has a real, defensible advantage.</p>
+      </div>
+      <div class="verdict">
+        <span class="num">7 days</span>
+        <p class="lab">Proposed statutory cooling-off, consultation closing now</p>
+        <p>Government consultation opened 29 Jun 2026: 7-day cooling-off, 14-day refund, 2-year contract cap on beauty &amp; fitness prepaid contracts. Restructure your package economics before this lands, not after.</p>
+      </div>
+      <div class="verdict">
+        <span class="num">8–12×</span>
+        <p class="lab">Retained-patient LTV vs. first transaction</p>
+        <p>Retention costs roughly US$35–85 per patient against US$247–1,435 to acquire one. For a single-site clinic, the highest-ROI marketing spend is almost always aimed at people who already have your number.</p>
+      </div>
+      <div class="verdict">
+        <span class="num">Cap 231</span>
+        <p class="lab">The advertising law most clinics quietly breach</p>
+        <p>The Undesirable Medical Advertisements Ordinance plus the Medical Council code make "free trial", "50% off", before/after galleries and testimonial-led ads legally hazardous — and the doctor is liable even as an employee. Your channel mix must be built around this, not despite it.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PART 1: MARKET ============ -->
+  <section>
+    <div class="sec-head">
+      <div class="tag">Part 1 / Market</div>
+      <h2>Demand didn't disappear. It moved, and it got harder to close.</h2>
+      <p class="dek">Three forces are compressing the middle of the HK market at once: northbound leakage, a trust shock, and a consumer who now waits for a reason to buy.</p>
+    </div>
+
+    <div class="prose">
+      <h3>The demand picture</h3>
+      <p>Local consumption in Hong Kong is not collapsing — HK residents spent about <strong>HK$1.989 trillion</strong> in-territory in 2025, roughly 1% below 2018, and Q1 2026 came in slightly <em>above</em> the 2018 comparable. The problem is not aggregate wallet size. It is where discretionary spend goes and how much persuasion it now takes.</p>
+      <p>Within aesthetics, the mix has shifted decisively to <strong>non-invasive procedures, now over 70% of the market</strong>, and toward two consumer behaviours that change your marketing: a younger preventive cohort (20–30, low-dose botulinum, early collagen work) and an anti-overdone "look like myself, but better" preference. Both reward a clinic that can talk credibly about restraint. Neither rewards a clinic shouting about a machine.</p>
+
+      <h3>Northbound leakage is structural, not a blip</h3>
+      <p>HK residents made <strong>over 95 million northbound trips in 2024, up ~80% year on year</strong> — about 13 trips per resident. Cross-boundary movement hit roughly 279 million trips in 2025, up ~10% again. Medical and aesthetic services are now part of that basket: a Thermage course in Shenzhen runs roughly RMB 6,500–45,000 depending on provider tier, against HK$15,000–35,000 locally.</p>
+      <p>You will not win that comparison on price, and you should stop trying. What Shenzhen structurally cannot offer a Hong Kong patient is <strong>proximate accountability</strong>: same-week complication review, a named HK-registered doctor who answers, a licensed premises under Cap 633, and recourse that doesn't require a border crossing. That is your product story.</p>
+    </div>
+
+    <h3>The trust shock — and why it is your opening</h3>
+    <div class="tblwrap">
+      <table>
+        <thead>
+          <tr><th>Event / metric</th><th>Scale</th><th>What it did to buyer behaviour</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Medical service complaints, 2025</td>
+            <td class="num-col">1,845 <span class="pill p-crit">+248% YoY</span></td>
+            <td>Ranked #5 on the Consumer Council league table. 1,299 stemmed from the Human Health Medical Group (仁滙醫務) collapse alone.</td>
+          </tr>
+          <tr>
+            <td>Beauty service complaints, 2025</td>
+            <td class="num-col">~1,443 <span class="pill p-good">−51% YoY</span></td>
+            <td>Falling, but off a very high base and still #6 overall — mostly hard-sell and contract disputes.</td>
+          </tr>
+          <tr>
+            <td>仁滙醫務 collapse fallout</td>
+            <td class="num-col">2,000+ reports</td>
+            <td>Police, Customs and Consumer Council combined; over HK$10m in exposed prepayments.</td>
+          </tr>
+          <tr>
+            <td>Sept 2024 beauty/fitness chain closure</td>
+            <td class="num-col">2,800+ complaints</td>
+            <td>Over HK$140m in contract value. This is the case that pushed cooling-off legislation from "someday" to a live consultation.</td>
+          </tr>
+          <tr>
+            <td>Private healthcare fee disputes, 2021–24</td>
+            <td class="num-col">45.5%</td>
+            <td>Share of private hospital / day-centre complaints that were about price or billing, not clinical outcome. Pricing opacity is itself a complaint generator.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note win">
+      <h4>Read this as competitive positioning, not bad news</h4>
+      <p>Every large-group scandal transfers a slice of the market to operators who look <em>structurally</em> safer. A small clinic can credibly offer what a chain cannot: pay-per-treatment or short-course pricing, a named doctor on every visit, published prices, and no commissioned sales staff. In 2026 that is not a compromise — it is the strongest available differentiator, and it happens to be free.</p>
+    </div>
+  </section>
+
+  <!-- ============ PART 2: REGULATION ============ -->
+  <section>
+    <div class="sec-head">
+      <div class="tag">Part 2 / Constraints</div>
+      <h2>The legal box your marketing has to fit inside</h2>
+      <p class="dek">Most HK aesthetics marketing advice you'll find online is imported from US med-spa playbooks and is illegal here. Get this right before you spend a dollar.</p>
+    </div>
+
+    <div class="tblwrap">
+      <table>
+        <thead>
+          <tr><th style="width:22%">Instrument</th><th style="width:38%">What it restricts</th><th>Practical marketing consequence</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Undesirable Medical Advertisements Ordinance<br><span style="font-weight:400;color:var(--ink-3)">Cap 231 (1953, amd. 2005)</span></td>
+            <td>Section 3 bans advertising for specified conditions and for Schedule 2 purposes — which include <strong>correcting deformity and surgical cosmetic operations</strong> (矯正畸形或外科整容手術). Breach is a criminal offence.</td>
+            <td>You cannot advertise surgical cosmetic outcomes to the public. Non-surgical device and injectable work sits in a narrower but still policed lane. Have a solicitor review any campaign that promises a physical transformation.</td>
+          </tr>
+          <tr>
+            <td>Medical Council Code of Professional Conduct<br><span style="font-weight:400;color:var(--ink-3)">MCHK</span></td>
+            <td>A doctor must not promote their practice to non-patients. Print advertising is confined to newspapers, magazines, journals and periodicals, with size limits, no placement alongside beauty-parlour advertising, and no disclosure of seniority or major-surgery experience.</td>
+            <td>Rules out most of what a marketing agency will pitch you: paid "top 10 clinics" listicles, sponsored beauty-magazine advertorials in beauty sections, and doctor-hero brand campaigns.</td>
+          </tr>
+          <tr>
+            <td>MCHK rules on information dissemination<br><span style="font-weight:400;color:var(--ink-3)">Social media &amp; internet</span></td>
+            <td>Content must be accurate, substantiated, objectively verifiable and balanced. No exaggeration, no comparison with or claimed superiority over other doctors, <strong>no soliciting patients or business</strong>, no unrealistic expectations, no commercial promotion of health products.</td>
+            <td>Educational content is permitted; persuasion is not. "How HIFU works and who it doesn't suit" is fine. "Book now, limited slots, results guaranteed" is not.</td>
+          </tr>
+          <tr>
+            <td>Employer liability precedent</td>
+            <td>The Medical Council has held that a doctor is responsible for ensuring their employer's promotional material complies — employment is not a shield. Discount and free-trial advertising by aesthetics groups was found to amount to touting on doctors' behalf.</td>
+            <td>If you are the clinic's doctor-owner, every ad your agency writes is your professional exposure. Approve copy personally.</td>
+          </tr>
+          <tr>
+            <td>Private Healthcare Facilities Ordinance<br><span style="font-weight:400;color:var(--ink-3)">Cap 633 — clinics regime live 13 Oct 2025</span></td>
+            <td>Clinic licensing and small practice clinic (SPC) exemptions. SPCs must be wholly operated by registered doctors/dentists, max 5 partners or directors. Requires a medical administrator, patient safety incident reporting, and Code of Practice compliance. Transitional window for pre-Nov-2018 clinics ran 13 Oct 2025 – 13 Apr 2026.</td>
+            <td>Licensed / exempted status is now a <strong>marketable trust asset</strong>. Put it on your site and your consent forms. It is one of the few credibility claims that is both true and permitted.</td>
+          </tr>
+          <tr>
+            <td>Proposed prepaid cooling-off regime<br><span style="font-weight:400;color:var(--ink-3)">Trade Descriptions Ordinance — consultation from 29 Jun 2026</span></td>
+            <td>Proposed: <strong>7 calendar days statutory cooling-off, 14 calendar days to refund, 2-year cap on contract length</strong> for beauty and fitness prepaid contracts. Industry debate centres on a HK$15,000 threshold.</td>
+            <td>Model your cash flow on the assumption this passes. Long multi-year packages sold on deposit become a liability; short courses and pay-as-you-go become the low-risk default.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note hard">
+      <h4>The line the Department of Health draws</h4>
+      <p>Since the 2013 working group, procedures involving <strong>injection, chemical or mechanical exfoliation below the epidermis, hyperbaric oxygen therapy, and tooth whitening</strong> may only be performed by registered doctors or dentists. Marketing that blurs "beauty service" into "medical procedure" invites both a DH problem and a Medical Council problem. Keep your service pages explicit about which is which — and note that clarity here converts better anyway, because it is exactly the distinction an anxious first-time patient is trying to make.</p>
+    </div>
+  </section>
+
+  <!-- ============ PART 3: CHANNEL PERFORMANCE ============ -->
+  <section>
+    <div class="sec-head">
+      <div class="tag">Part 3 / Performance</div>
+      <h2>What actually performs, channel by channel</h2>
+      <p class="dek">Benchmarks below mix HK-specific media costs with international aesthetics-clinic conversion data, because HK-specific clinic conversion data is not published. Treat the HK figures as reliable and the clinic figures as directional.</p>
+    </div>
+
+    <div class="prose">
+      <h3>The audience, in numbers</h3>
+      <p>Hong Kong had <strong>6.24 million social media identities</strong> as of October 2025 — 84.4% of the population. Platform reach runs YouTube and WhatsApp at ~74.7%, Facebook ~73.5%, with Instagram close behind and Threads at 1.55m (21%). Xiaohongshu (小紅書) has passed <strong>2 million active HK users</strong>, over 70% female and concentrated in the 25–34 bracket — which is, almost exactly, the aesthetics buying cohort.</p>
+      <p>The single most important structural fact: <strong>WhatsApp reaches three-quarters of Hong Kong.</strong> In this market it is not a support channel, it is the booking channel, the follow-up channel and the retention channel. Most clinics under-build it and over-build Instagram.</p>
+    </div>
+
+    <div class="tblwrap">
+      <table>
+        <thead>
+          <tr><th style="width:19%">Channel</th><th style="width:20%">HK cost benchmark</th><th style="width:13%">Verdict</th><th>Why</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Google Search (high-intent)</td>
+            <td class="num-col">HK$8–15 CPC competitive terms; aesthetics keywords globally US$5.70 avg, US$12–28 for "botox near me"</td>
+            <td><span class="pill p-good">Core</span></td>
+            <td>The only channel where the person has already decided to buy. Bid narrow: treatment + district (「皮秒 銅鑼灣」), branded competitor terms, and "醫生" qualifier terms. Do not bid broad category terms against chains — you will lose on budget.</td>
+          </tr>
+          <tr>
+            <td>Google Business Profile + local SEO</td>
+            <td class="num-col">~HK$0 media cost</td>
+            <td><span class="pill p-good">Core</span></td>
+            <td>Highest ROI asset a single-site clinic owns. Map pack placement for "醫美 + district" is winnable by a small operator in a way that national keywords are not. Reviews are the ranking and conversion input.</td>
+          </tr>
+          <tr>
+            <td>WhatsApp Business (+ CRM)</td>
+            <td class="num-col">~HK$0–800/mo tooling</td>
+            <td><span class="pill p-good">Core</span></td>
+            <td>74.7% national reach. Speed-to-reply is the highest-leverage variable in the whole funnel. Rebooking reminders here beat any paid channel on cost per booking.</td>
+          </tr>
+          <tr>
+            <td>Xiaohongshu (小紅書) organic + KOC</td>
+            <td class="num-col">HK$5,000–10,000/mo entry; HK$20,000–50,000/mo for KOL+KOC+ads</td>
+            <td><span class="pill p-good">Build</span></td>
+            <td>Where HK women research treatments before they search for a clinic. Reaches locals and mainland visitors simultaneously. Rewards genuine, detailed, unglamorous content — which is also the content the MCHK code permits.</td>
+          </tr>
+          <tr>
+            <td>Instagram / Facebook paid</td>
+            <td class="num-col">HK$60–100 CPM; HK$4–8 CPC</td>
+            <td><span class="pill p-warn">Selective</span></td>
+            <td>Cheap reach, weak intent, and the creative that performs (before/after, offers, testimonials) is exactly the creative that breaches the code. Use for retargeting site visitors and for reach on educational video only.</td>
+          </tr>
+          <tr>
+            <td>Groupon-style deal platforms</td>
+            <td class="num-col">20–40% margin give-up</td>
+            <td><span class="pill p-crit">Avoid</span></td>
+            <td>Imports deal-seekers with near-zero retention, trains the market to wait for discounts, and the promotional mechanics sit uncomfortably against the touting rules. This is the trap that damaged the sector's economics.</td>
+          </tr>
+          <tr>
+            <td>Paid "top clinic ranking" listicles</td>
+            <td class="num-col">HK$5,000–30,000 per placement</td>
+            <td><span class="pill p-crit">Avoid</span></td>
+            <td>Pay-to-play, invisible to buyers who have learned to discount them, and comparison/superiority claims are squarely prohibited for doctors. Poor value even ignoring the code.</td>
+          </tr>
+          <tr>
+            <td>Referral from existing patients</td>
+            <td class="num-col">Cost of a thank-you</td>
+            <td><span class="pill p-good">Core</span></td>
+            <td>Highest-converting source in every aesthetics dataset. Note: cash-for-referral schemes edge toward touting — reciprocate with clinical value (a complimentary review consult), not commission.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>The unit economics you are actually managing</h3>
+    <div class="prose">
+      <p>Published clinic benchmarks are international, but the shape holds. Patient acquisition costs run <strong>US$247–1,435</strong> per new patient, averaging around US$205–300 for competent operators and as low as US$46 for the top decile — a <strong>4.5× spread between average and best</strong> that comes almost entirely from follow-up discipline, not from ad buying. Retention, by contrast, costs <strong>US$35–85</strong> per patient.</p>
+      <p>Retention rates: the industry average is around <strong>30%</strong>; top-performing clinics hit <strong>60–70%</strong>; a structured loyalty programme moves an average clinic to roughly 45%. Strong clinics see new patients book <strong>3–4 appointments within 6–12 months</strong>, and repeat clients spend <strong>67% more</strong> than new ones. Retained-patient lifetime value lands at 8–12× the first transaction.</p>
+    </div>
+
+    <h4>Worked model — one HK single-site clinic, monthly <span style="color:var(--warn)">(illustrative)</span></h4>
+    <div class="math">
+      <div class="row"><span class="k">Marketing spend (media + tools + content)</span><span class="v">HK$ 40,000</span></div>
+      <div class="row"><span class="k">Enquiries generated (all channels)</span><span class="v">100</span></div>
+      <div class="row"><span class="k">→ Consultation booked @ 35%</span><span class="v">35</span></div>
+      <div class="row"><span class="k">→ Attended @ 80%</span><span class="v">28</span></div>
+      <div class="row"><span class="k">→ Converted to first treatment @ 50%</span><span class="v">14</span></div>
+      <div class="row"><span class="k">Cost per acquired patient</span><span class="v hi">HK$ 2,857</span></div>
+      <div class="row"><span class="k">First treatment value (avg)</span><span class="v">HK$ 3,800</span></div>
+      <div class="row"><span class="k">Visits in first 12 months (retained cohort)</span><span class="v">3.2</span></div>
+      <div class="row"><span class="k">12-month value per acquired patient @ 45% retention</span><span class="v">HK$ 9,900</span></div>
+      <div class="row total"><span class="k">12-month LTV : CAC</span><span class="v hi">3.5 : 1</span></div>
+    </div>
+    <div class="prose">
+      <p>Now change one input. Hold spend flat and lift <strong>consultation-booking rate from 35% to 50%</strong> — achievable purely by replying to WhatsApp enquiries in minutes rather than hours — and cost per acquired patient falls to about HK$2,000, taking LTV:CAC to roughly <strong>5:1</strong>. Lift retention from 45% to 60% as well and the ratio clears 6:1.</p>
+      <p>This is the central finding of the whole exercise. <strong>In this market, operational response speed and rebooking discipline are worth more than any additional advertising budget you could realistically deploy.</strong> Chains buy reach because they have to fill many chairs. You do not.</p>
+    </div>
+  </section>
+
+  <!-- ============ PART 4: STRATEGY ============ -->
+  <section>
+    <div class="sec-head">
+      <div class="tag">Part 4 / Strategy</div>
+      <h2>The strategy for a single-site clinic</h2>
+      <p class="dek">Four decisions, in order. Each one narrows the next. Skipping straight to channels is why most small-clinic marketing fails.</p>
+    </div>
+
+    <h3>Decision 1 — Pick a narrow wedge, not a menu</h3>
+    <div class="prose">
+      <p>The chains compete on breadth: every device, every price point, every district. You cannot win that and should not fund the attempt. Pick <strong>one clinical wedge</strong> you can be genuinely the best in your district at, and let it pull everything else. Viable wedges in the current HK market:</p>
+    </div>
+    <div class="cards">
+      <div class="card">
+        <h5>Preventive / early-intervention (25–34)</h5>
+        <p>The fastest-growing behavioural segment. Low-dose neuromodulator, skin quality, sun-damage management. Long runway of repeat visits, low complication risk, and the "restraint" story sells itself.</p>
+        <span class="stat">Highest LTV per acquired patient</span>
+      </div>
+      <div class="card">
+        <h5>Post-40 skin quality &amp; laxity</h5>
+        <p>Higher ticket, more device-dependent, more price-comparison exposure to Shenzhen. Winnable on doctor time and follow-up, not on machine specs.</p>
+        <span class="stat">Highest first-visit value</span>
+      </div>
+      <div class="card">
+        <h5>Medical dermatology adjacency</h5>
+        <p>Acne, melasma, rosacea, scarring. Genuinely medical, so it sits comfortably within the advertising code as education, converts on trust rather than price, and feeds naturally into aesthetic work.</p>
+        <span class="stat">Most defensible vs. discounting</span>
+      </div>
+      <div class="card">
+        <h5>Male aesthetics</h5>
+        <p>Explicitly noted as an expanding segment and structurally under-served in HK. Lower competition for search terms, different creative, and buyers who research once then stay loyal.</p>
+        <span class="stat">Cheapest acquisition today</span>
+      </div>
+    </div>
+
+    <h3>Decision 2 — Make trust the product, and price the proof</h3>
+    <div class="prose">
+      <p>Given everything in Part 1, the highest-value thing a small clinic can do in 2026 is be conspicuously safe to buy from. This is a pricing and policy decision before it is a marketing one:</p>
+      <ul>
+        <li><strong>Publish prices.</strong> 45.5% of private-healthcare complaints are fee disputes; the government is actively consulting on price transparency. Published pricing converts anxious researchers and pre-empts the single most common complaint.</li>
+        <li><strong>Sell single sessions and short courses.</strong> Cap any prepaid course at a level you would happily refund. With a 7-day cooling-off and 2-year cap likely incoming, this is where the market is going anyway — get there first and say so.</li>
+        <li><strong>No commissioned sales staff, and say so.</strong> Hard-selling is the #1 driver of beauty-service complaints. "You will only ever speak to the doctor" is a positioning statement your competitors structurally cannot copy.</li>
+        <li><strong>Name your licence status.</strong> Cap 633 clinic licence or SPC exemption, doctor's registration, device certifications (FDA / CE / KFDA). Factual, verifiable, permitted.</li>
+      </ul>
+    </div>
+
+    <div class="note flag">
+      <h4>Reframe the Shenzhen comparison — do not ignore it</h4>
+      <p>Patients are running the price comparison whether you address it or not. Address it directly in your consultation and in an FAQ page: what happens if there is a complication at week two; who reviews you; what the device servicing and product sourcing chain is; what recourse exists. This is an honest, legally safe argument and it is the argument you actually win.</p>
+    </div>
+
+    <h3>Decision 3 — Build a content engine the code permits</h3>
+    <div class="prose">
+      <p>The MCHK constraints are usually treated as a handicap. They are closer to a filter that pushes you toward the content that performs best on Xiaohongshu and Google anyway: <strong>specific, honest, non-promotional explanation.</strong></p>
+      <ul>
+        <li><strong>Write the "who this doesn't suit" content.</strong> Contraindications, realistic timelines, what a treatment cannot fix. It ranks, it gets saved on 小紅書, it is fully compliant, and it pre-qualifies patients so consultations convert higher.</li>
+        <li><strong>Answer the pricing question in public.</strong> "What does Pico actually cost in HK and what changes the price" is a high-volume search with almost no honest answers. Own it.</li>
+        <li><strong>Explain the medical/beauty boundary.</strong> Use the DH distinction as a content pillar. Anxious first-timers are literally searching for this.</li>
+        <li><strong>Avoid entirely:</strong> before/after galleries used as advertising, patient testimonials, superiority claims, countdown offers, free trials, guaranteed results.</li>
+      </ul>
+      <p>Cadence that a small clinic can actually sustain: <strong>2 Xiaohongshu posts per week, 1 substantial website article per fortnight, 1 short educational video per month.</strong> Repurpose across platforms, but rewrite for each — 小紅書 rewards detail and honesty, Instagram rewards visual clarity.</p>
+    </div>
+
+    <h3>Decision 4 — Spend on the bottom of the funnel first</h3>
+    <div class="prose">
+      <p>Sequence matters. Fix capture and conversion before buying traffic, or you are paying to leak. In order: Google Business Profile and review flow → website that answers price and safety questions → WhatsApp response system → Google Search ads on narrow high-intent terms → Xiaohongshu content → Meta retargeting. Nothing further down the list gets funded until the thing above it works.</p>
+    </div>
+  </section>
+
+  <!-- ============ PART 5: OPERATIONS ============ -->
+  <section>
+    <div class="sec-head">
+      <div class="tag">Part 5 / Operations</div>
+      <h2>The operating system behind the marketing</h2>
+      <p class="dek">Marketing generates enquiries. These eight mechanics decide whether they become a patient who comes back — and they are where the 4.5× performance gap between average and top-decile clinics actually lives.</p>
+    </div>
+
+    <div class="tblwrap">
+      <table>
+        <thead>
+          <tr><th style="width:20%">Mechanic</th><th style="width:19%">Target</th><th>How to run it</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Speed to lead</td>
+            <td class="num-col">&lt; 5 min in hours<br>&lt; 12 hrs overnight</td>
+            <td>WhatsApp Business auto-reply that asks one qualifying question and offers two concrete appointment slots. Never "we'll get back to you". This single change typically moves booking rate 10–15 points.</td>
+          </tr>
+          <tr>
+            <td>Consultation structure</td>
+            <td class="num-col">50%+ to first treatment</td>
+            <td>Fixed sequence: concern → examination → what you'd do and what you would not → price in writing → no same-day pressure. Removing the close increases the close, because the objection in this market is pressure itself.</td>
+          </tr>
+          <tr>
+            <td>No-show control</td>
+            <td class="num-col">&lt; 12%</td>
+            <td>Confirm at booking, remind 48h and 3h by WhatsApp, take a small refundable deposit for first consultations only.</td>
+          </tr>
+          <tr>
+            <td>Rebooking at chair</td>
+            <td class="num-col">60%+ leave with next date</td>
+            <td>The next appointment is booked before the patient stands up, framed clinically ("your review is at 6 weeks"). This is the single largest retention lever available and it costs nothing.</td>
+          </tr>
+          <tr>
+            <td>Recall system</td>
+            <td class="num-col">3–4 visits / first 12 mo</td>
+            <td>Every treatment has a clinical interval. Diarise it, message at the interval, not at month-end. A dormant list is a marketing budget you already spent.</td>
+          </tr>
+          <tr>
+            <td>Review engine</td>
+            <td class="num-col">4+ new reviews / month</td>
+            <td>Ask in person at the follow-up visit, when satisfaction peaks, then send the link by WhatsApp. Never incentivise — that breaches platform policy and reads as fake. Reviews drive both map ranking and conversion.</td>
+          </tr>
+          <tr>
+            <td>Complaint handling</td>
+            <td class="num-col">Resolved in-house &lt; 7 days</td>
+            <td>A written policy, a named person, and a refund threshold you can approve without escalation. Given the sector's complaint environment, this is reputational insurance with a real ROI.</td>
+          </tr>
+          <tr>
+            <td>Attribution</td>
+            <td class="num-col">100% of enquiries sourced</td>
+            <td>One field at booking: "how did you hear about us". One spreadsheet, updated weekly. Without it every budget decision below is guesswork — and this is the discipline most small clinics skip.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <h4>A note on staffing</h4>
+      <p>For a single site, the correct first hire against marketing is not an agency — it is a competent front-desk / patient coordinator who owns speed-to-lead, rebooking and recall, plus a freelance content writer at a few thousand dollars a month. That combination outperforms a HK$25,000/month agency retainer for a clinic at this scale, because the constraint is conversion and retention, not creative.</p>
+    </div>
+  </section>
+
+  <!-- ============ PART 6: PLAN ============ -->
+  <section>
+    <div class="sec-head">
+      <div class="tag">Part 6 / Execution</div>
+      <h2>A 90-day sequence and two budget shapes</h2>
+      <p class="dek">Ordered deliberately: each phase depends on the one before it. Do not run them in parallel.</p>
+    </div>
+
+    <div class="phases">
+      <div class="phase">
+        <div class="when"><b>01</b>Days 1–30<br>Foundation</div>
+        <div>
+          <h5>Fix capture before buying traffic</h5>
+          <ul>
+            <li>Google Business Profile: complete, correct categories, real interior photos, opening hours, WhatsApp link.</li>
+            <li>Publish a price page and a "who this isn't for" page for your two lead treatments.</li>
+            <li>WhatsApp Business set up with auto-reply, saved replies, and a labelling system for enquiry stage.</li>
+            <li>Add the "how did you hear about us" field and start the attribution sheet.</li>
+            <li>Legal pass: have every existing ad, page and social post checked against Cap 231 and the MCHK code. Delete what fails.</li>
+            <li>Confirm your Cap 633 licence / SPC exemption status is current and displayed.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="phase">
+        <div class="when"><b>02</b>Days 31–60<br>Conversion</div>
+        <div>
+          <h5>Make the existing traffic worth more</h5>
+          <ul>
+            <li>Introduce the fixed consultation structure; script it, then run it identically every time.</li>
+            <li>Book-the-next-visit-at-the-chair becomes mandatory. Track the percentage weekly.</li>
+            <li>Launch the recall system against your existing patient list — this is your fastest revenue, and it costs nothing.</li>
+            <li>Start the review engine: ask every follow-up patient, target 4+ per month.</li>
+            <li>Begin Xiaohongshu at 2 posts/week. Educational, specific, unglamorous.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="phase">
+        <div class="when"><b>03</b>Days 61–90<br>Acquisition</div>
+        <div>
+          <h5>Now buy traffic, narrowly</h5>
+          <ul>
+            <li>Google Search ads: treatment + district terms only, tight match types, landing on the price page. Start at HK$8,000–12,000/month.</li>
+            <li>Meta retargeting to site visitors only, educational video creative.</li>
+            <li>First KOC collaborations on 小紅書 — micro-creators with genuine local followings, briefed on the code constraints in writing.</li>
+            <li>Review the attribution sheet: kill anything with a cost per acquired patient above HK$4,000, double anything below HK$2,000.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <h3>Two budget shapes</h3>
+    <div class="tblwrap">
+      <table>
+        <thead>
+          <tr><th style="width:34%">Line</th><th style="width:22%">Lean — HK$20k/mo</th><th style="width:22%">Growth — HK$50k/mo</th><th>Note</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Google Search ads</td><td class="num-col">HK$8,000</td><td class="num-col">HK$18,000</td><td>Highest intent. Scale this first when it works.</td></tr>
+          <tr><td>Content production</td><td class="num-col">HK$5,000</td><td class="num-col">HK$12,000</td><td>Freelance writer + basic video. The compounding asset.</td></tr>
+          <tr><td>Xiaohongshu KOC / ads</td><td class="num-col">HK$4,000</td><td class="num-col">HK$12,000</td><td>Entry tier is HK$5–10k/mo; scale only after content library exists.</td></tr>
+          <tr><td>Meta retargeting</td><td class="num-col">HK$2,000</td><td class="num-col">HK$5,000</td><td>Retargeting only. Do not run cold prospecting here.</td></tr>
+          <tr><td>Tools (CRM, WhatsApp, booking)</td><td class="num-col">HK$1,000</td><td class="num-col">HK$3,000</td><td>Non-negotiable. This is where retention lives.</td></tr>
+          <tr><td><strong>Expected new patients / mo</strong></td><td class="num-col">7–9 <span class="pill p-flat">est.</span></td><td class="num-col">16–22 <span class="pill p-flat">est.</span></td><td>At CAC of ~HK$2,300–2,800, post-optimisation.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note win">
+      <h4>The one-line version</h4>
+      <p>Spend the first two months making the patients you already have come back and the enquiries you already get convert. Then, and only then, buy narrow high-intent traffic and build a 小紅書 content library that a chain's compliance department would never approve. Compete on accountability, published pricing and doctor time — the three things a large group's operating model actively prevents it from offering.</p>
+    </div>
+  </section>
+
+  <!-- ============ PART 7: SCORECARD ============ -->
+  <section>
+    <div class="sec-head">
+      <div class="tag">Part 7 / Measurement</div>
+      <h2>The monthly scorecard</h2>
+      <p class="dek">Eight numbers, reviewed on the same day each month. If a marketing decision cannot be argued from this table, do not make it.</p>
+    </div>
+
+    <div class="tblwrap">
+      <table>
+        <thead>
+          <tr><th style="width:30%">Metric</th><th style="width:20%">Target</th><th style="width:20%">Warning level</th><th>Action if breached</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Enquiries by source</td><td class="num-col">Tracked at 100%</td><td class="num-col">Any untracked</td><td>Fix the booking field before anything else.</td></tr>
+          <tr><td>Median first-response time</td><td class="num-col">&lt; 5 min</td><td class="num-col">&gt; 30 min</td><td>Staffing or automation problem, not a marketing one.</td></tr>
+          <tr><td>Enquiry → consultation booked</td><td class="num-col">45–50%</td><td class="num-col">&lt; 30%</td><td>Response speed and reply scripts.</td></tr>
+          <tr><td>Consultation → first treatment</td><td class="num-col">50%+</td><td class="num-col">&lt; 35%</td><td>Consultation structure, or you are attracting the wrong enquiries.</td></tr>
+          <tr><td>Cost per acquired patient</td><td class="num-col">&lt; HK$2,500</td><td class="num-col">&gt; HK$4,000</td><td>Cut the worst channel; reallocate to the best.</td></tr>
+          <tr><td>Rebooked at chair</td><td class="num-col">60%+</td><td class="num-col">&lt; 40%</td><td>The highest-value fix available. Address immediately.</td></tr>
+          <tr><td>12-month retention</td><td class="num-col">45%+ → 60%</td><td class="num-col">&lt; 30%</td><td>Recall system is not running.</td></tr>
+          <tr><td>New reviews / month</td><td class="num-col">4+</td><td class="num-col">&lt; 2</td><td>Ask at the follow-up visit, not by email later.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ RELIABILITY ============ -->
+  <section>
+    <div class="sec-head">
+      <div class="tag">Appendix</div>
+      <h2>Reliability of the figures</h2>
+    </div>
+    <div class="prose">
+      <p><strong>High confidence</strong> — Consumer Council complaint counts, Legislative Council and Department of Health regulatory positions, the Cap 633 commencement dates and transitional window, the June 2026 cooling-off consultation parameters, EC Healthcare's audited FY2025 results, DataReportal platform penetration, cross-boundary trip volumes, and published HK media cost ranges.</p>
+      <p><strong>Directional only</strong> — HK medical-aesthetics market size and growth rate. The figures circulating (HK$1.5–1.8bn in 2023, 5–7% CAGR from one source; "over 20% CAGR" from another) come from clinic and agency blogs, not audited research, and they contradict each other. I have deliberately not built any argument in this report on market-size numbers. Clinic-level conversion, retention, CAC and LTV benchmarks are international med-spa data and should be treated as shape, not as HK values — the worked model is explicitly a model.</p>
+      <p><strong>Time-sensitive</strong> — The prepaid cooling-off consultation opened 29 June 2026 for two months, so it closes around the end of this month. If you intend to submit a view as an operator, that window is now. The Cap 633 transitional application window for pre-November-2018 clinics closed on 13 April 2026; if you have not dealt with licensing, treat it as urgent and take legal advice rather than acting on this document.</p>
+      <p><strong>Not legal advice.</strong> The advertising restrictions summarised in Part 2 are consequential and enforced against individual doctors. Have a Hong Kong solicitor review your actual marketing materials before publication.</p>
+    </div>
+
+    <h4 style="margin-top:2.5rem">Sources</h4>
+    <ul class="srcs">
+      <li><a href="https://www.consumer.org.hk/tc/press-release/p-private-healthcare-services-study-report">Consumer Council — private healthcare services study &amp; price transparency recommendations</a></li>
+      <li><a href="https://www.hk01.com/%E7%A4%BE%E6%9C%83%E6%96%B0%E8%81%9E/60324165/">HK01 — Consumer Council 2025 complaint league table</a></li>
+      <li><a href="https://www.hk01.com/%E7%A4%BE%E6%9C%83%E6%96%B0%E8%81%9E/60364876/">HK01 — proposed 7-day cooling-off, 2-year contract cap, consultation from 29 Jun 2026</a></li>
+      <li><a href="https://www.dotdotnews.com/a/202606/29/AP6a422578e4b04b6c5d31d239.html">Dot Dot News — cooling-off consultation details</a></li>
+      <li><a href="https://www.info.gov.hk/gia/general/202505/21/P2025052100418.htm">Government — commencement of the clinics / small practice clinics regulatory regime</a></li>
+      <li><a href="https://www.info.gov.hk/gia/general/202510/13/P2025101000314.htm">Government — DH begins accepting clinic licence and SPC exemption applications</a></li>
+      <li><a href="https://www.orphf.gov.hk/tc/clinic_licence_small_practice_clinic_exemption">ORPHF — clinic licence &amp; small practice clinic exemption</a></li>
+      <li><a href="https://www.drugoffice.gov.hk/eps/do/tc/pharmaceutical_trade/other_useful_information/umao.html">Drug Office — Undesirable Medical Advertisements Ordinance (Cap 231)</a></li>
+      <li><a href="https://www.elegislation.gov.hk/hk/cap231!zh-Hant-HK">e-Legislation — Cap 231 full text and schedules</a></li>
+      <li><a href="https://www.mchk.org.hk/tc_chi/code/index.html">Medical Council of Hong Kong — Code of Professional Conduct</a></li>
+      <li><a href="https://www.dh.gov.hk/tc_chi/useful/useful_medical_beauty/useful_medical_beauty.html">Department of Health — distinguishing medical procedures from beauty services</a></li>
+      <li><a href="https://www.dh.gov.hk/tc_chi/useful/useful_medical_beauty/files/Booklet_on_Cosmetic_Procedures.pdf">Department of Health — booklet on common cosmetic procedures</a></li>
+      <li><a href="https://news.hket.com/article/2058893/">HKET — aesthetics advertising with discounts and free trials found to breach the professional code</a></li>
+      <li><a href="https://www.info.gov.hk/gia/general/202503/06/P2025030600422.htm">Health Bureau — response on medical price transparency</a></li>
+      <li><a href="https://www1.hkexnews.hk/listedco/listconews/sehk/2025/1128/2025112800391.pdf">HKEX — EC Healthcare (2138.HK) filing</a></li>
+      <li><a href="https://finance.yahoo.com/quote/2138.HK/financials/">EC Healthcare FY2025 income statement</a></li>
+      <li><a href="https://datareportal.com/reports/digital-2026-hong-kong">DataReportal — Digital 2026: Hong Kong</a></li>
+      <li><a href="https://www.silkdrive.com/insights/hong-kong-social-media-statistics">Silkdrive — Hong Kong social media usage statistics 2026</a></li>
+      <li><a href="https://jmarketing.com.hk/">J Marketing — Xiaohongshu promotion budgets for HK brands</a></li>
+      <li><a href="https://www.wenweipo.com/a/202608/05/AP6a72c6cee4b0c1e50023a085.html">Wen Wei Po / LegCo data feature — visitor spending vs. resident local consumption</a></li>
+      <li><a href="https://zh.wikipedia.org/zh-hant/%E6%B8%AF%E4%BA%BA%E5%8C%97%E4%B8%8A">Northbound travel volumes, 2024–2025</a></li>
+      <li><a href="https://holimood.com/blog/shenzhen-medical-tourism-hk-specialist-charter-guide">Shenzhen medical/aesthetic tourism pricing and risk guidance</a></li>
+      <li><a href="https://blog.beauty-place.com.hk/%E9%A6%99%E6%B8%AF%E9%86%AB%E7%BE%8E%E9%82%8A%E9%96%93%E5%A5%BD-2/">HK treatment price ranges, 2026</a></li>
+      <li><a href="https://www.prospyrmed.com/blog/post/how-to-benchmark-kpis-for-aesthetic-clinics">Prospyr — aesthetic clinic KPI and retention benchmarks</a></li>
+      <li><a href="https://leadresponse.co/blog/med-spa-industry-statistics">LeadResponse — med spa industry statistics 2026</a></li>
+      <li><a href="https://www.pennock.co/blog/medspa-and-aesthetics-paid-media-benchmarks-google-vs-meta">Pennock — medspa paid media benchmarks, Google vs. Meta</a></li>
+      <li><a href="https://digitalmktg.com.hk/guides/the-complete-guide-to-digital-marketing-in-hong-kong">HK digital marketing cost benchmarks</a></li>
+    </ul>
+  </section>
+
+  <footer>
+    HK Medical Aesthetics Playbook · Compiled 19 August 2026 · Research summary and commercial recommendations only. Not legal, medical or financial advice.
+  </footer>
+
+</div>
