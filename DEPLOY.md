@@ -1,6 +1,85 @@
 # 上線
 
-## ⚡ 最快：撳個掣，唔使用 terminal
+## ☁️ 部署去 Cloudflare（你個網域已經喺嗰度）
+
+drtimeless.com 本身已經喺 Cloudflare（帳戶入面有 `drtimeless-claim-api`
+worker），所以部署去 Cloudflare 最順：同一個 dashboard、同一張帳單，
+仲可以直接掛個 subdomain，唔使搞跨供應商 DNS。
+
+專案已經配置好晒（`wrangler.jsonc` + `open-next.config.ts`），
+喺你部電腦行：
+
+```bash
+npm install
+npx wrangler login      # 會開瀏覽器叫你登入，撳「Allow」
+npm run cf:deploy
+```
+
+完成之後會俾你一條網址，例如
+`https://drtimeless-ai-consult.<你嘅帳戶>.workers.dev`。
+
+### ⚠️ Cloudflare 嘅環境變數同 Vercel 唔同
+
+**`.env` 喺 Workers 上面冇效。** 唔知呢樣就會出現「明明填咗但唔 work」。
+
+**秘密（唔可以俾人睇）** —— 用 `wrangler secret`：
+
+```bash
+npx wrangler secret put ANTHROPIC_API_KEY
+npx wrangler secret put STAFF_TOKEN
+npx wrangler secret put FUNNEL_TOKEN
+```
+
+**非秘密** —— 加喺 `wrangler.jsonc` 個 `vars` 入面：
+
+```jsonc
+"vars": {
+  "NEXT_PUBLIC_CLINIC_NAME": "Dr Timeless",
+  "NEXT_PUBLIC_WHATSAPP": "852xxxxxxxx",
+  "NEXT_PUBLIC_SITE_URL": "https://ai.drtimeless.com",
+  "EMBED_ALLOWED_ORIGINS": "https://www.drtimeless.com,https://drtimeless.com",
+  "RATE_LIMIT_DAILY_TOTAL": "300"
+}
+```
+
+改完 `vars` 要再 `npm run cf:deploy` 先生效。
+
+> `NEXT_PUBLIC_*` 係 **build 時**入到前端 bundle 嘅，所以佢哋一定要喺
+> `vars`（build 讀得到），唔可以用 secret。
+
+### 掛自己個 subdomain（建議）
+
+Cloudflare dashboard → **Workers & Pages → 揀個 project →
+Settings → Domains & Routes → Add → Custom Domain**，
+填 `ai.drtimeless.com`。DNS 會自動加，因為個網域已經喺同一個帳戶。
+
+之後條網址就係 `https://ai.drtimeless.com` —— 印海報、派連結、
+嵌入官網都用呢條。
+
+### 本機先試（唔會影響線上）
+
+```bash
+npm run cf:preview
+```
+
+呢個用真正嘅 Workers 執行環境（workerd）喺本機行，同線上一樣。
+本機要設環境變數就開一個 `.dev.vars`（格式同 `.env` 一樣，
+已經加咗入 `.gitignore`）。
+
+### 費用
+
+Workers 免費方案每日 10 萬個請求，對一間診所嚟講綽綽有餘。
+但**免費方案 CPU 上限係 10ms**，唔夠用 —— 要 **Workers Paid（US$5/月）**
+先有 30 秒 CPU。
+
+> 等 Anthropic 回應嗰 20–30 秒**唔計 CPU 時間**（等 fetch 唔算 CPU），
+> 所以真正用到嘅 CPU 主要係處理相片同 JSON，遠遠喺上限之內。
+
+---
+
+## 🅥 或者用 Vercel（如果你想分開）
+
+### 撳個掣，唔使用 terminal
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fherculesyue-sudo%2Ftest10&env=ANTHROPIC_API_KEY%2CNEXT_PUBLIC_CLINIC_NAME%2CNEXT_PUBLIC_WHATSAPP%2CSTAFF_TOKEN%2CDEMO_MODE&envDescription=%E5%A1%AB%E6%B3%95%E8%A6%8B%20.env.example&envLink=https%3A%2F%2Fgithub.com%2Fherculesyue-sudo%2Ftest10%2Fblob%2Fmain%2F.env.example&project-name=drtimeless-ai-consult&repository-name=drtimeless-ai-consult)
 

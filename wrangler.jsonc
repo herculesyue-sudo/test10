@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "drtimeless-ai-consult",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-08-01",
+
+  // nodejs_compat 一定要開：呢個 app 用咗 node:os、Buffer、
+  // 同埋 Anthropic SDK 入面嘅 Node API。
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+
+  "observability": { "enabled": true },
+
+  // 分析一次要等 Anthropic 回應 20–30 秒。喺 Workers，等 fetch 嘅時間
+  // **唔計 CPU 時間**，所以呢個唔係問題 —— 但 CPU 上限仍然要調高少少，
+  // 因為相片 base64 處理同 JSON 解析係實際 CPU。
+  "limits": { "cpu_ms": 30000 }
+}

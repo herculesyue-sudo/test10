@@ -13,7 +13,10 @@
     "check:catalogue": "tsx scripts/check-catalogue.ts",
     "tunnel": "node scripts/tunnel.mjs",
     "doctor": "node scripts/doctor.mjs",
-    "compare": "tsx scripts/compare-tiers.ts"
+    "compare": "tsx scripts/compare-tiers.ts",
+    "cf:build": "opennextjs-cloudflare build",
+    "cf:preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "cf:deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.116.0",
@@ -24,12 +27,14 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@opennextjs/cloudflare": "^1.20.2",
     "@types/node": "^22.15.3",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
     "cloudflared": "^0.7.3",
     "tsx": "^4.20.3",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "wrangler": "^4.124.0"
   }
 }

@@ -1,4 +1,18 @@
-import { networkInterfaces } from 'node:os';
+/**
+ * ⚠️ `node:os` 只喺真 Node 伺服器度有用。
+ *
+ * 喺 Cloudflare Workers（同其他 edge runtime）上面，就算開咗 nodejs_compat，
+ * `networkInterfaces()` 都唔存在或者會拋錯 —— 而呢個檔案係由 `/api/qr` 引用嘅，
+ * 即係話唔處理嘅話，個 QR endpoint 喺 Workers 上面會直接 500。
+ *
+ * 做法：靜態 import（Workers 開咗 nodejs_compat 就有呢個模組），但**包住個
+ * 呼叫**。攞唔到就當冇區域網位址 —— 本來就係咁：「喺本機用手機試」呢個
+ * 功能喺一部雲端伺服器上面本身就冇意義。
+ *
+ * 刻意唔用 `eval('require')`：嗰個瞞得過 bundler，但同時亦瞞過咗自己 ——
+ * 打包工具處理方式難以預測，而失敗係靜音嘅。
+ */
+import * as os from 'node:os';
 
 /**
  * 搵部伺服器喺區域網嘅 IP。
@@ -27,8 +41,16 @@ import { networkInterfaces } from 'node:os';
 const PRIVATE_RANGES = [/^192\.168\./, /^10\./, /^172\.(1[6-9]|2\d|3[01])\./];
 
 export function lanAddresses(): string[] {
+  let ifaces: ReturnType<typeof os.networkInterfaces>;
+  try {
+    if (typeof os.networkInterfaces !== 'function') return [];
+    ifaces = os.networkInterfaces();
+  } catch {
+    return []; // edge runtime：冇呢個概念，唔係錯誤
+  }
+
   const out: string[] = [];
-  for (const addrs of Object.values(networkInterfaces())) {
+  for (const addrs of Object.values(ifaces)) {
     for (const a of addrs ?? []) {
       // Node 18+ 嘅 family 係 'IPv4'，舊版係 4 —— 兩樣都接受
       const isV4 = a.family === 'IPv4' || (a.family as unknown as number) === 4;
