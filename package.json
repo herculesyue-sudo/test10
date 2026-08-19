@@ -11,7 +11,8 @@
     "eval": "tsx scripts/eval.ts",
     "test:engine": "tsx scripts/test-engine.ts",
     "check:catalogue": "tsx scripts/check-catalogue.ts",
-    "tunnel": "node scripts/tunnel.mjs"
+    "tunnel": "node scripts/tunnel.mjs",
+    "doctor": "node scripts/doctor.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.116.0",

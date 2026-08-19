@@ -1,45 +1,69 @@
-# 上線：由本機到客人用得到
+# 上線
 
-呢個工具而家淨係喺你部電腦行到。客人用唔到 —— **要放上網先算數**。
+## ⚡ 最快：撳個掣，唔使用 terminal
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fherculesyue-sudo%2Ftest10&env=ANTHROPIC_API_KEY%2CNEXT_PUBLIC_CLINIC_NAME%2CNEXT_PUBLIC_WHATSAPP%2CSTAFF_TOKEN%2CDEMO_MODE&envDescription=%E5%A1%AB%E6%B3%95%E8%A6%8B%20.env.example&envLink=https%3A%2F%2Fgithub.com%2Fherculesyue-sudo%2Ftest10%2Fblob%2Fmain%2F.env.example&project-name=drtimeless-ai-consult&repository-name=drtimeless-ai-consult)
+
+撳完會叫你：登入 GitHub → 填幾個設定 → 等一兩分鐘 → 俾你一條網址。
+
+**填設定嗰陣，最快嘅試法係只填 `DEMO_MODE` = `1`**，其餘留空。咁樣唔使
+API key、零成本，即刻有條公開網址試到成個流程同個 QR。試完先返去
+Vercel 嘅 Settings → Environment Variables 填返真嘢。
+
+> ### ⚠️ 撳之前要做一件事
+>
+> 呢個掣係由 GitHub 個 **`main`** branch 部署嘅，但而家啲 code 喺
+> **`claude/video-facial-analysis-ai-hiv912`** 度，`main` 淨係得個
+> README —— 就咁撳會部署到一個空 app。
+>
+> 兩個做法揀一個：
+>
+> **(A) 先合併去 `main`**（之後撳個掣就一定啱）
+> 喺 GitHub 開個 Pull Request 由 `claude/video-facial-analysis-ai-hiv912`
+> merge 落 `main`，撳 Merge，然後先撳上面個掣。
+>
+> **(B) 部署完再改 branch**
+> 照撳個掣部署，完成之後入 Vercel 個 project →
+> **Settings → Git → Production Branch** → 改做
+> `claude/video-facial-analysis-ai-hiv912` → 再去 **Deployments** 撳
+> **Redeploy**。
+
+部署好之後：
+
+1. 開 `https://你條網址/share?k=你個STAFF_TOKEN`
+   （`DEMO_MODE=1` 之下唔使 `?k=`）
+2. 個列印掣會著返，QR 會指住你條真網址
+3. 用手機掃嗰個 QR —— 呢次會開得到
 
 ---
 
-## 想即刻用手機試？一句指令
+## 🩺 掃唔到？行呢句
 
-未部署都試得。呢句會開一條**真嘅公開 https 網址**，手機用 4G 都開得到：
+```bash
+npm run doctor
+```
+
+會一次過查晒：設定、網絡位址、app 行緊未、個 QR 實際編碼緊咩網址、
+隧道連唔連得通，然後出一份報告。**直接複製成份報告出嚟**，就唔使
+逐句形容個問題。
+
+---
+
+## 想喺本機用手機試（唔部署）
 
 ```bash
 npm run tunnel
 ```
 
-跑完會印一個框出嚟：
+會開一條臨時公開 https 網址。**開 `/share` 要用嗰條隧道網址，唔好用
+localhost** —— 個 QR 係跟「你開緊邊條網址」砌嘅。
 
-```
-┌──────────────────────────────────────────────┐
-│  ✅ 公開網址開好喇 —— 手機用 4G 都開得到
-│
-│  客人版：  https://xxxx-yyyy.trycloudflare.com
-│  派海報：  https://xxxx-yyyy.trycloudflare.com/share
-└──────────────────────────────────────────────┘
-```
-
-用手機開嗰條網址就試得到成個流程，**影相都冇問題**。
-
-> ⚠️ **開 `/share` 一定要用嗰條隧道網址，唔好用 localhost。**
-> 個 QR 係跟住「你而家開緊邊條網址」嚟砌嘅 —— 用 localhost 開就會砌出
-> 一個指住 localhost 嘅 QR，手機掃咗一定去唔到。
-
-**點解唔用區域網位址（192.168.x）**：聽落簡單，但實際好多嘢會擋住 ——
-電腦防火牆、路由器嘅「用戶端隔離」（好多商用 Wi-Fi 預設開咗）、手機
-連咗 4G 唔係 Wi-Fi、公司網絡分 VLAN。每樣都要逐個查，查完可能仲係唔得。
-隧道直接繞過晒。
-
-呢條網址係**臨時**嘅：每次開都唔同，熄咗個 terminal 就冇，亦冇 uptime
-保證。純粹用嚟試 —— 印海報、派俾客人仍然要下面嘅正式部署。
+如果你間屋 / 診所嘅網絡封鎖咗 Cloudflare，呢句會失敗（`npm run doctor`
+會話你知）。咁就直接用上面個 Deploy 掣。
 
 ---
 
-## 正式部署
+## 正式部署（用 terminal 嘅話）
 
 用 Vercel（免費額度夠一間診所用），大約 15 分鐘。
 
