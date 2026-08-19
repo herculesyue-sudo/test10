@@ -291,3 +291,55 @@ button.ghost {
   .poster-steps { font-size: 1.35rem; }
   .poster-url, .poster-fine { color: #444; }
 }
+
+/* ══════════ 影相指引 ══════════ */
+.guide { }
+.guide-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  font-size: 0.76rem; padding: 4px 10px; border-radius: 999px;
+  background: var(--accent-soft); color: var(--accent); border: 1px solid transparent;
+}
+.guide-toggle {
+  /* 44px 高：Apple 同 Google 都建議嘅最細撳得中範圍。
+     之前得 25px，喺 320px 闊嘅螢幕上面手指好易撳唔中。 */
+  background: none; border: 0; padding: 12px 2px 8px; margin-top: 2px;
+  min-height: 44px; display: inline-flex; align-items: center;
+  color: var(--accent); font-family: inherit; font-size: 0.82rem;
+  cursor: pointer; text-decoration: underline;
+}
+.guide-detail { margin-top: 10px; border-top: 1px solid var(--border); padding-top: 12px; }
+.guide-lead { font-size: 0.8rem; color: var(--text-dim); margin: 0 0 12px; line-height: 1.6; }
+.guide-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 420px) { .guide-cols { grid-template-columns: 1fr; } }
+.guide-cols h4 { margin: 0 0 6px; font-size: 0.76rem; letter-spacing: 0.06em; }
+.guide-cols h4.yes { color: var(--ok); }
+.guide-cols h4.no { color: var(--danger); }
+.guide-cols ul { margin: 0; padding: 0; list-style: none; }
+.guide-cols li { margin-bottom: 8px; }
+.guide-cols li b { display: block; font-size: 0.81rem; }
+.guide-cols li span { display: block; font-size: 0.74rem; color: var(--text-dim); line-height: 1.5; }
+
+/* ══════════ 兩條快問 ══════════ */
+.qf-label { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 7px; }
+.qf-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.qf-chip {
+  /* 44px 高：手指撳得中。細過呢個喺手機上面就會撳極都唔中 */
+  min-height: 40px; padding: 8px 14px; border-radius: 10px;
+  border: 1.5px solid var(--border); background: var(--surface-2);
+  color: var(--text); font-family: inherit; font-size: 0.86rem; cursor: pointer;
+}
+.qf-chip.on { border-color: var(--accent); background: var(--accent-soft); }
+.qf-check {
+  display: flex; gap: 10px; align-items: flex-start;
+  border-top: 1px solid var(--border); padding-top: 14px; cursor: pointer;
+}
+.qf-check input { width: auto; margin-top: 3px; flex-shrink: 0; }
+.qf-check b { display: block; font-size: 0.87rem; }
+.qf-check em { display: block; font-style: normal; font-size: 0.76rem; color: var(--text-dim); line-height: 1.55; margin-top: 3px; }
+
+/* 手機上面 13px 嘅方格太細撳 —— 放大到 20px。
+   （包住佢嘅 label 本身都撳得，但客人會直覺去撳個方格。） */
+.qf-check input[type="checkbox"],
+.check input[type="checkbox"] {
+  width: 20px; height: 20px; accent-color: var(--accent);
+}

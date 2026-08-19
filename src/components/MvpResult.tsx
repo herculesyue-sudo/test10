@@ -30,10 +30,13 @@ export default function MvpResult({
   data,
   goals,
   onReset,
+  pregnant = false,
 }: {
   data: ConsultResponse;
   goals: GoalKey[];
   onReset: () => void;
+  /** 剔咗懷孕就會硬過濾所有禁忌療程 —— 一個建議都冇嘅時候要講返真正原因 */
+  pregnant?: boolean;
 }) {
   const { analysis: a } = data;
   const recs = data.recommendations.slice(0, TOP_N);
@@ -147,11 +150,25 @@ export default function MvpResult({
           </div>
         )}
 
-        {recs.length === 0 && (
-          <p style={{ fontSize: '0.88rem', color: 'var(--text-dim)', margin: 0 }}>
-            相片入面觀察唔到需要療程介入嘅明顯問題。想更深入評估，歡迎預約面診。
-          </p>
-        )}
+        {/* 一個建議都冇，可以係兩個完全唔同嘅原因。講錯咗就係誤導：
+            一個懷孕嘅客人見到「你冇咩問題」，會以為自己唔使做嘢，
+            而唔係知道係因為而家所有療程都唔適合佢。 */}
+        {recs.length === 0 &&
+          (pregnant ? (
+            <div className="alert warn" style={{ marginTop: 0, marginBottom: 0 }}>
+              <b>因為你話咗懷孕 / 餵人奶，所有療程都暫時過濾咗。</b>
+              <p style={{ margin: '6px 0 0', fontSize: '0.85rem' }}>
+                激光、射頻、肉毒同填充喺呢段時間都唔適合，所以系統唔會建議任何一項 ——
+                呢個係正常同安全嘅做法，唔代表你塊面冇嘢可以做。
+                上面「我哋睇到咩」嗰部分嘅觀察仍然有效，可以留返做將來嘅參考。
+                期間嘅日常護理同防曬，歡迎預約同醫生傾。
+              </p>
+            </div>
+          ) : (
+            <p style={{ fontSize: '0.88rem', color: 'var(--text-dim)', margin: 0 }}>
+              相片入面觀察唔到需要療程介入嘅明顯問題。想更深入評估，歡迎預約面診。
+            </p>
+          ))}
 
         {recs.map((r, i) => (
           <div className="rec" key={r.treatment.id}>

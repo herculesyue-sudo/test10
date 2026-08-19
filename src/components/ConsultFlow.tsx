@@ -13,6 +13,8 @@ import PhotoCapture, { type Shot } from '@/components/PhotoCapture';
 import MvpResult, { type ConsultResponse } from '@/components/MvpResult';
 import { useDemoMode, DemoBanner, DemoCasePicker } from '@/components/DemoMode';
 import Consent from '@/components/Consent';
+import CaptureGuide from '@/components/CaptureGuide';
+import QuickFacts, { ageFromBand } from '@/components/QuickFacts';
 import { GOALS, type GoalKey } from '@/lib/treatments/types';
 import { trackStep, resetTracking } from '@/lib/track-client';
 import { scrollParentToTop } from '@/lib/embed-client';
@@ -27,6 +29,8 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
   const [goals, setGoals] = useState<GoalKey[]>([]);
   const [demoCaseId, setDemoCaseId] = useState<string | undefined>();
   const [consented, setConsented] = useState(false);
+  const [ageBand, setAgeBand] = useState<string | null>(null);
+  const [pregnant, setPregnant] = useState(false);
   const [busy, setBusy] = useState(false);
   const [data, setData] = useState<ConsultResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -64,6 +68,9 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
             : [],
           goals,
           tier: 'budget',
+          age: ageFromBand(ageBand),
+          // 安全閘：引擎會硬過濾所有懷孕禁忌療程
+          isPregnantOrNursing: pregnant,
           demoCaseId,
         }),
       });
@@ -85,6 +92,8 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
     setShots(ONE_SHOT);
     setGoals([]);
     setConsented(false);
+    setAgeBand(null);
+    setPregnant(false);
     setData(null);
     setError(null);
     scrollParentToTop();
@@ -100,7 +109,7 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
           </header>
         )}
         {data.meta.demo && <DemoBanner caseLabel={data.meta.demoCaseLabel} />}
-        <MvpResult data={data} goals={goals} onReset={reset} />
+        <MvpResult data={data} goals={goals} onReset={reset} pregnant={pregnant} />
       </>
     );
   }
@@ -128,8 +137,9 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
             </span>
           )}
         </h2>
-        <p className="sub">素顏、自然光、對正鏡頭、唔好笑。相片只用嚟即時分析，唔會儲存。</p>
-        <div style={{ maxWidth: 200, margin: '0 auto' }}>
+        <p className="sub">相片只用嚟即時分析，唔會儲存。</p>
+        <CaptureGuide />
+        <div style={{ maxWidth: 200, margin: '14px auto 0' }}>
           <PhotoCapture shots={shots} onChange={setShots} />
         </div>
       </div>
@@ -151,6 +161,8 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
           ))}
         </div>
       </div>
+
+      <QuickFacts ageBand={ageBand} onAge={setAgeBand} pregnant={pregnant} onPregnant={setPregnant} />
 
       {isDemo && demo && (
         <DemoCasePicker cases={demo.cases} value={demoCaseId} onChange={setDemoCaseId} />
