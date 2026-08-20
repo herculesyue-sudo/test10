@@ -1,0 +1,593 @@
+<title>星期六滿座計劃</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+HK:wght@500;600&family=Noto+Sans+HK:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+  :root {
+    --paper:#F5F7F7; --surface:#FFFFFF; --surface-2:#EDF1F1;
+    --ink:#121A1C; --ink-2:#465559; --ink-3:#78888C;
+    --rule:#DCE3E4; --rule-firm:#C3CFD1;
+    --accent:#0A6B72; --accent-ink:#08565C; --accent-wash:#E0EFEF;
+    --good:#2E6F4E; --warn:#8F6410; --crit:#A4322A;
+    --good-wash:#E4F0E9; --warn-wash:#F6EEDC; --crit-wash:#F6E5E3;
+    --f-display:"Noto Serif HK",Georgia,serif;
+    --f-body:"Noto Sans HK",-apple-system,"PingFang HK","Microsoft JhengHei",sans-serif;
+    --f-mono:"IBM Plex Mono","Noto Sans HK",ui-monospace,Menlo,monospace;
+    --shell:74rem; --measure:38em;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:#0D1214; --surface:#151D1F; --surface-2:#1C2528;
+      --ink:#E7EDEE; --ink-2:#A2B1B5; --ink-3:#7A898D;
+      --rule:#263134; --rule-firm:#384649;
+      --accent:#56C3C7; --accent-ink:#8AD8DA; --accent-wash:#102E31;
+      --good:#6FC392; --warn:#D6A742; --crit:#E1877B;
+      --good-wash:#11291D; --warn-wash:#2B2314; --crit-wash:#2C1917;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:#0D1214; --surface:#151D1F; --surface-2:#1C2528;
+    --ink:#E7EDEE; --ink-2:#A2B1B5; --ink-3:#7A898D;
+    --rule:#263134; --rule-firm:#384649;
+    --accent:#56C3C7; --accent-ink:#8AD8DA; --accent-wash:#102E31;
+    --good:#6FC392; --warn:#D6A742; --crit:#E1877B;
+    --good-wash:#11291D; --warn-wash:#2B2314; --crit-wash:#2C1917;
+  }
+
+  * { box-sizing:border-box; }
+  body {
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--f-body); font-size:16.5px; line-height:1.85;
+    letter-spacing:0.012em; -webkit-font-smoothing:antialiased;
+  }
+  .shell { max-width:var(--shell); margin:0 auto; padding:0 clamp(1.1rem,4vw,3.5rem); }
+  .prose { max-width:var(--measure); }
+  p { margin:0 0 1.05em; color:var(--ink-2); }
+  strong { color:var(--ink); font-weight:700; }
+  a { color:var(--accent-ink); text-underline-offset:3px; }
+  a:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+
+  .masthead { border-bottom:1px solid var(--rule-firm); padding:clamp(2.5rem,7vw,5rem) 0 2.4rem; }
+  .kicker {
+    font-family:var(--f-mono); font-size:0.72rem; letter-spacing:0.14em;
+    color:var(--accent-ink); margin:0 0 1.4rem; display:flex; flex-wrap:wrap; gap:0.5rem 1.1rem;
+  }
+  .kicker span { color:var(--ink-3); }
+  h1 {
+    font-family:var(--f-display); font-weight:600;
+    font-size:clamp(2rem,5vw,3.4rem); line-height:1.25; margin:0 0 1.1rem;
+    text-wrap:balance; max-width:15em;
+  }
+  h1 em { font-style:normal; color:var(--accent-ink); }
+  .standfirst { font-size:clamp(1rem,2vw,1.15rem); color:var(--ink-2); max-width:34em; margin:0 0 2rem; }
+  .byline {
+    font-family:var(--f-mono); font-size:0.74rem; color:var(--ink-3); line-height:2;
+    border-top:1px solid var(--rule); padding-top:1rem; max-width:42em;
+  }
+
+  section { padding:clamp(2.6rem,6vw,4.4rem) 0 0; }
+  .sec-head {
+    display:grid; grid-template-columns:8rem 1fr; gap:0 1.5rem; align-items:start;
+    border-top:1px solid var(--rule); padding-top:1.3rem; margin-bottom:2rem;
+  }
+  .sec-head .tag {
+    font-family:var(--f-mono); font-size:0.71rem; letter-spacing:0.11em;
+    color:var(--ink-3); padding-top:0.65rem; line-height:1.6;
+  }
+  h2 {
+    font-family:var(--f-display); font-weight:600;
+    font-size:clamp(1.5rem,3vw,2.1rem); line-height:1.35; margin:0;
+    text-wrap:balance; max-width:18em;
+  }
+  .sec-head .dek { grid-column:2; margin:0.8rem 0 0; max-width:36em; color:var(--ink-2); }
+  @media (max-width:640px) {
+    .sec-head { grid-template-columns:1fr; }
+    .sec-head .tag { padding-top:0; margin-bottom:0.6rem; }
+    .sec-head .dek { grid-column:1; }
+  }
+
+  h3 { font-weight:700; font-size:1.06rem; color:var(--ink); margin:2.2rem 0 0.7rem; }
+  h4 {
+    font-family:var(--f-mono); font-weight:600; font-size:0.73rem;
+    letter-spacing:0.11em; color:var(--ink-3); margin:0 0 0.85rem;
+  }
+  ul, ol { margin:0 0 1.1em; padding-left:1.2rem; color:var(--ink-2); }
+  li { margin-bottom:0.5em; }
+  li::marker { color:var(--ink-3); }
+
+  /* paste-ready copy block */
+  .copy {
+    background:var(--surface); border:1px solid var(--rule-firm);
+    border-left:3px solid var(--accent); padding:1.2rem 1.35rem;
+    margin:1rem 0 1.6rem; font-size:0.93rem; line-height:1.9;
+    white-space:pre-wrap; color:var(--ink);
+  }
+  .copy .ph { color:var(--warn); font-weight:700; }
+  .copy-label {
+    font-family:var(--f-mono); font-size:0.68rem; letter-spacing:0.1em;
+    color:var(--accent-ink); margin:1.6rem 0 0;
+  }
+
+  .note {
+    border-left:3px solid var(--rule-firm); background:var(--surface);
+    padding:1.15rem 1.3rem; margin:1.6rem 0; font-size:0.93rem;
+  }
+  .note p:last-child { margin-bottom:0; }
+  .note.flag { border-left-color:var(--warn); background:var(--warn-wash); }
+  .note.hard { border-left-color:var(--crit); background:var(--crit-wash); }
+  .note.win { border-left-color:var(--good); background:var(--good-wash); }
+
+  .tblwrap { overflow-x:auto; margin:1.5rem 0 1.9rem; border:1px solid var(--rule); background:var(--surface); }
+  table { border-collapse:collapse; width:100%; min-width:38rem; font-size:0.87rem; }
+  thead th {
+    text-align:left; font-family:var(--f-mono); font-weight:500; font-size:0.7rem;
+    letter-spacing:0.08em; color:var(--ink-3); padding:0.85rem 1rem;
+    border-bottom:1px solid var(--rule-firm); white-space:nowrap; vertical-align:bottom;
+  }
+  tbody td { padding:0.8rem 1rem; border-bottom:1px solid var(--rule); color:var(--ink-2); vertical-align:top; line-height:1.75; }
+  tbody tr:last-child td { border-bottom:none; }
+  tbody td:first-child { color:var(--ink); font-weight:500; }
+  .num-col { font-family:var(--f-mono); font-variant-numeric:tabular-nums; white-space:nowrap; }
+
+  .pill {
+    display:inline-block; font-family:var(--f-mono); font-size:0.66rem;
+    letter-spacing:0.05em; padding:0.18rem 0.5rem; border-radius:2px; white-space:nowrap;
+  }
+  .p-good { background:var(--good-wash); color:var(--good); }
+  .p-warn { background:var(--warn-wash); color:var(--warn); }
+  .p-crit { background:var(--crit-wash); color:var(--crit); }
+  .p-flat { background:var(--surface-2); color:var(--ink-3); }
+
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(16rem,1fr)); gap:1px; background:var(--rule); border:1px solid var(--rule); margin:1.6rem 0 1.9rem; }
+  .card { background:var(--surface); padding:1.35rem 1.3rem; }
+  .card h5 { font-size:0.97rem; font-weight:700; margin:0 0 0.5rem; color:var(--ink); }
+  .card p { font-size:0.88rem; margin:0; }
+  .card .stat { font-family:var(--f-mono); font-size:0.72rem; color:var(--accent-ink); display:block; margin-top:0.7rem; }
+
+  .phases { display:grid; gap:1px; background:var(--rule); border:1px solid var(--rule); margin:1.6rem 0 1.9rem; }
+  .phase { background:var(--surface); display:grid; grid-template-columns:8rem 1fr; gap:0 1.5rem; padding:1.4rem 1.3rem; }
+  .phase .when { font-family:var(--f-mono); font-size:0.73rem; color:var(--accent-ink); line-height:1.7; }
+  .phase .when b { display:block; font-size:1.4rem; font-weight:500; color:var(--ink); margin-bottom:0.2rem; }
+  .phase h5 { font-size:0.98rem; font-weight:700; margin:0 0 0.45rem; color:var(--ink); }
+  .phase ul { margin:0; font-size:0.88rem; }
+  @media (max-width:640px) {
+    .phase { grid-template-columns:1fr; }
+    .phase .when { margin-bottom:0.7rem; }
+    .phase .when b { display:inline; margin-right:0.5rem; }
+  }
+
+  .math { background:var(--surface); border:1px solid var(--rule); padding:1.4rem; margin:1.6rem 0 1.9rem; font-size:0.86rem; line-height:2; }
+  .math .row { display:flex; justify-content:space-between; gap:1.5rem; border-bottom:1px dotted var(--rule); padding:0.12rem 0; }
+  .math .row:last-child { border-bottom:none; }
+  .math .row.total { border-top:1px solid var(--rule-firm); border-bottom:none; margin-top:0.5rem; padding-top:0.6rem; }
+  .math .row.total .k, .math .row.total .v { color:var(--ink); font-weight:700; }
+  .math .k { color:var(--ink-2); }
+  .math .v { color:var(--ink); font-family:var(--f-mono); font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .math .v.hi { color:var(--accent-ink); }
+
+  footer {
+    margin-top:clamp(3rem,7vw,4.5rem); border-top:1px solid var(--rule-firm);
+    padding:1.8rem 0 3.5rem; font-family:var(--f-mono); font-size:0.73rem;
+    color:var(--ink-3); line-height:2;
+  }
+</style>
+
+<div class="shell">
+
+<header class="masthead">
+  <p class="kicker">執行包 · 30 日 <span>1403 Mediskin ／ 1404A Clinic</span> <span>2026年8月</span></p>
+  <h1>目標唔係「多啲客」。<br>係<em>每個星期六填滿五至六個位</em>。</h1>
+  <p class="standfirst">所有文字都寫好晒，貼上去就用得。方括號嗰啲係你要填嘅資料。</p>
+  <p class="byline">
+    產能前提：星期六 4 小時（兼職醫生，注射／埋線）＋ 平日彈性（隔籬 GP，脫疣／一般科）<br>
+    現況前提：每月網上查詢近乎零，生意主要靠轉介<br>
+    ⚠️ 本文件為營運建議，非法律意見。合規部分請交律師確認。
+  </p>
+</header>
+
+<!-- ===== 目標 ===== -->
+<section>
+  <div class="sec-head">
+    <div class="tag">起點</div>
+    <h2>你實際要嘅係九個人</h2>
+    <p class="dek">先睇清楚個數字有幾細。呢個決定咗你唔應該做乜。</p>
+  </div>
+
+  <div class="math">
+    <div class="row"><span class="k">星期六可用時間</span><span class="v">4 小時 × 4.3 星期</span></div>
+    <div class="row"><span class="k">每個星期六可接人數（新客 45 分／覆診 30 分）</span><span class="v">5–6</span></div>
+    <div class="row"><span class="k">每月人次上限</span><span class="v">22–26</span></div>
+    <div class="row"><span class="k">當中回頭客（假設留客率 60%）</span><span class="v">13–16</span></div>
+    <div class="row total"><span class="k">每月實際需要嘅新客</span><span class="v hi">9–10 人</span></div>
+  </div>
+
+  <div class="note win">
+    <p><strong>九個人，唔係九十個。</strong>呢個數字唔需要落廣告——而家落廣告反而危險：如果一個月入到 40 個查詢，你星期六接得住 6 個，你就係畀錢買人嚟排隊，排到走。<strong>喺你加到醫生時數之前，買流量係錯嘅動作。</strong></p>
+  </div>
+
+  <h3>而你有兩個產能池，一直當成一個</h3>
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th style="width:24%">服務</th><th style="width:20%">邊個做</th><th style="width:22%">幾時做得</th><th>而家用緊</th></tr></thead>
+      <tbody>
+        <tr><td>注射／埋線</td><td>兼職醫生（代任）</td><td class="num-col">淨係星期六 4 小時</td><td>樽頸所在</td></tr>
+        <tr><td>脫疣／一般科</td><td>1404A 嘅 GP 老闆</td><td class="num-col">平日，有需要就上到</td><td><span class="pill p-crit">近乎零</span></td></tr>
+        <tr><td>美容（非醫生）</td><td>1403 Mediskin 團隊</td><td class="num-col">全週</td><td>視乎排程</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="prose">所以：<strong>平日推脫疣，星期六推注射。</strong>兩個 offer、兩個產能池、互不搶位。唔使請人、唔使加錢。</p>
+</section>
+
+<!-- ===== 轉介 ===== -->
+<section>
+  <div class="sec-head">
+    <div class="tag">工具 01</div>
+    <h2>轉介工具包</h2>
+    <p class="dek">你唯一已經證實行得通嘅渠道，但你係被動收。以下係主動版本——每星期約 10 分鐘。</p>
+  </div>
+
+  <h3>開口嘅時機</h3>
+  <p class="prose"><strong>唔係療程完嗰刻</strong>（嗰陣客人未見到效果）。係<strong>覆診、客人自己講「好咗好多」嗰一刻</strong>。滿意度喺呢一刻見頂，開口最自然。</p>
+
+  <p class="copy-label">▸ 逐字稿 — 覆診時當面講</p>
+  <div class="copy">好開心見到效果咁明顯。
+
+我哋係細診所，冇落廣告，主要靠客人介紹。如果你身邊有朋友有類似問題，歡迎叫佢直接 WhatsApp 我哋，我幫佢安排醫生應診嗰日。
+
+（遞卡）呢張卡有我哋資料，你 send 個 WhatsApp 畀朋友都得。</div>
+
+  <p class="copy-label">▸ 可以 forward 嘅 WhatsApp 訊息 — 存做常用回覆</p>
+  <div class="copy">Timeless Clinic（<span class="ph">[地區]</span> <span class="ph">[大廈名]</span> 1404A 室）
+
+註冊醫生應診，可處理疣、皮膚及一般科問題。
+星期六設醫生應診時段。
+
+預約：WhatsApp <span class="ph">[診所號碼]</span>
+地址：<span class="ph">[完整地址]</span>
+
+（衞生署獲豁免小型執業診所）</div>
+
+  <p class="copy-label">▸ 實體卡文案 — 卡片背面</p>
+  <div class="copy">TIMELESS CLINIC
+註冊醫生應診 · 小型執業診所（獲豁免）
+
+<span class="ph">[大廈名]</span> 1404A 室
+WhatsApp / 電話：<span class="ph">[號碼]</span>
+
+疣 · 皮膚問題 · 一般科診症
+星期六設醫生應診時段</div>
+
+  <div class="note hard">
+    <h4>回饋方式：唔可以畀現金或佣金</h4>
+    <p>醫委會嘅招徠條文之下，現金回贈式轉介好容易踩界。用<strong>臨床價值</strong>回饋：轉介者下次覆診時免費皮膚檢查、或延長諮詢時間。加一張手寫多謝卡——成本近乎零，而且效果好過折扣。</p>
+  </div>
+
+  <h3>要記低</h3>
+  <p class="prose">每個新客問一句：<strong>「邊位介紹你嚟？」</strong>記落下面嗰張表。冇呢個記錄，你三個月後唔知邊個轉介人幫緊你，亦唔知應該多謝邊個。</p>
+</section>
+
+<!-- ===== 脫疣 ===== -->
+<section>
+  <div class="sec-head">
+    <div class="tag">工具 02</div>
+    <h2>脫疣：你嘅平日入口</h2>
+    <p class="dek">已經喺度做緊，但一個字都冇講出去。呢個係你成副牌入面最抵嗰張。</p>
+  </div>
+
+  <div class="cards">
+    <div class="card"><h5>真係醫療需要</h5><p>所以喺 GBP 同網站上係「服務項目」，唔係「療程推廣」——完全避開醫委會嗰堆宣傳限制。</p><span class="stat">合規上最安全</span></div>
+    <div class="card"><h5>搜尋意圖急</h5><p>生咗疣嘅人係即刻搵、即刻想 book，唔會格價三個月。同「醫美」嗰種慢決策完全唔同。</p><span class="stat">轉化最快</span></div>
+    <div class="card"><h5>競爭低</h5><p>遠低過「醫美」「皮秒」呢類關鍵字。細診所贏得到。</p><span class="stat">最易排到頭位</span></div>
+    <div class="card"><h5>佢係入口</h5><p>一個嚟脫疣、體驗好嘅人，之後就係你診所嘅病人。喺你名單入面，日後臨床上合適嘅嘢都傾得落去。</p><span class="stat">真正價值所在</span></div>
+  </div>
+
+  <div class="note flag">
+    <h4>做之前驗證一次</h4>
+    <p>去 Google Keyword Planner（免費）查「脫疣」「脫疣 價錢」「疣 治療」加你個區嘅搜尋量。邏輯我有信心，但實際搜尋量我冇數據，唔想拍腦袋畀你一個數。查完先決定投幾多力。</p>
+  </div>
+
+  <p class="copy-label">▸ GBP 服務項目 — 貼落 1404A 檔案</p>
+  <div class="copy">疣（Wart / Verruca）診治
+
+由註冊醫生評估及處理，包括面部、頸部、手部及身體之疣。
+
+診症費：HK$<span class="ph">[　]</span>
+處理費：HK$<span class="ph">[　]</span> 起，視乎數量、大小及部位
+
+平日設應診時段，可 WhatsApp 預約。</div>
+
+  <p class="copy-label">▸ 網站／GBP Q&A — 呢四條係人真正搜尋嘅問題</p>
+  <div class="copy">Q：疣同暗粒、油脂粒點分？
+A：外觀相似但成因唔同。疣由病毒引起，有機會擴散或傳染；暗粒同油脂粒唔會。單靠肉眼有時分唔到，需要由醫生檢查確認。
+
+Q：處理完會唔會留疤？
+A：視乎疣嘅大小、深度同部位，亦視乎處理方法。醫生會喺處理前講解可能出現嘅情況同術後護理。
+
+Q：一次做唔做得晒？
+A：視乎數量同深度。部分需要覆診跟進。醫生會喺首次檢查後同你講清楚預計次數。
+
+Q：邊個做？
+A：由註冊醫生親自評估及處理。本診所為衞生署獲豁免之小型執業診所。</div>
+
+  <div class="note">
+    <p>留意呢四條答案嘅寫法：<strong>全部係解釋，冇一句係推銷。</strong>冇「效果顯著」、冇「無痛」、冇「保證」。呢個唔止係合規——呢種寫法喺搜尋同小紅書上表現本身就好過推銷文。</p>
+  </div>
+</section>
+
+<!-- ===== GBP ===== -->
+<section>
+  <div class="sec-head">
+    <div class="tag">工具 03</div>
+    <h2>兩個 Google 商家檔案</h2>
+    <p class="dek">內容寫好晒。前提：兩個單位要有兩個唔同電話號碼，否則 Google 會合併或停用。</p>
+  </div>
+
+  <h3>檔案一 — Timeless Mediskin（1403 室）</h3>
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th style="width:22%">欄位</th><th>填法</th></tr></thead>
+      <tbody>
+        <tr><td>名稱</td><td>Timeless Mediskin<br><span style="color:var(--crit)">✗ 唔好加關鍵字（例如「醫學美容中心」）——封號風險</span></td></tr>
+        <tr><td>主類別</td><td>美容院 / Beauty salon</td></tr>
+        <tr><td>次類別</td><td>Skin care clinic、Facial spa</td></tr>
+        <tr><td>地址</td><td>必須顯示 <strong>1403 室</strong></td></tr>
+        <tr><td>電話</td><td>1403 專用號碼（同 1404A 唔同）</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="copy-label">▸ 商戶簡介</p>
+  <div class="copy">Timeless Mediskin 位於<span class="ph">[地區]</span><span class="ph">[大廈名]</span>1403 室，提供面部及皮膚護理服務。
+
+我哋主張按個人膚質制定護理方案，並會清楚說明每項服務嘅內容、次數同收費。
+
+如需醫生評估或醫療程序，可轉介至同層 1404A 室之 Timeless Clinic（衞生署獲豁免小型執業診所），由註冊醫生處理。
+
+營業時間：<span class="ph">[時間]</span>
+預約：WhatsApp <span class="ph">[1403 號碼]</span></div>
+
+  <h3>檔案二 — Timeless Clinic（1404A 室）</h3>
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th style="width:22%">欄位</th><th>填法</th></tr></thead>
+      <tbody>
+        <tr><td>名稱</td><td>Timeless Clinic（註冊名，一個字都唔好加）</td></tr>
+        <tr><td>主類別</td><td><strong>全科醫生 / General practitioner</strong></td></tr>
+        <tr><td>次類別</td><td>Medical clinic<br><span style="color:var(--crit)">✗ 絕對唔好揀 Dermatologist／皮膚科——你位醫生係 GP，揀錯同時踩 Google 準確性規則同醫委會資歷申述</span></td></tr>
+        <tr><td>地址</td><td>必須顯示 <strong>1404A 室</strong></td></tr>
+        <tr><td>電話</td><td>1404A 專用號碼</td></tr>
+        <tr><td>營業時間</td><td><span class="pill p-warn">關鍵</span> 只填<strong>醫生實際喺場</strong>嘅時間。Google 要求「喺所列時間內喺該地址聯絡得到」。填多咗係踩規則兼氹客白行。</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="copy-label">▸ 商戶簡介</p>
+  <div class="copy">Timeless Clinic 位於<span class="ph">[地區]</span><span class="ph">[大廈名]</span>1404A 室，為衞生署《私營醫療機構條例》下獲豁免之小型執業診所。
+
+由註冊醫生應診，提供一般科診症、皮膚問題評估及疣之診治。星期六設醫生應診時段。
+
+所有需由註冊醫生施行之程序，均於本診所內由醫生親自進行。收費於診症前以書面說明。
+
+應診時間：<span class="ph">[實際醫生時間]</span>
+預約：WhatsApp <span class="ph">[1404A 號碼]</span></div>
+
+  <p class="copy-label">▸ 服務項目 — 事實式列出，唔加形容詞</p>
+  <div class="copy">· 一般科診症
+· 皮膚問題評估
+· 疣（Wart）診治
+· 其他由註冊醫生施行之程序（詳情請於診症時查詢）</div>
+
+  <p class="copy-label">▸ Q&A 預填（自問自答，Google 容許）</p>
+  <div class="copy">Q：需要預約嗎？
+A：建議先 WhatsApp 預約，以確認醫生應診時間。
+
+Q：星期六以外有冇醫生？
+A：有，平日設應診時段，請先 WhatsApp 確認當日時間。
+
+Q：收費點計？
+A：診症費及程序費用會喺診症前以書面向你說明，唔會有隱藏收費。
+
+Q：1403 同 1404A 有咩分別？
+A：1404A 室係 Timeless Clinic，由註冊醫生應診，處理醫療程序。1403 室係 Timeless Mediskin，提供非醫療嘅面部及皮膚護理服務。兩者為獨立公司。</div>
+
+  <div class="note win">
+    <p>最後嗰條 Q&A 唔好慳。<strong>佢同時做緊三件事：</strong>向客人解釋清楚（減少誤會同投訴）、向 Google 證明兩個檔案係真正獨立實體（過驗證）、向監管方展示你嘅分工清晰。一條問題，三重作用。</p>
+  </div>
+
+  <h3>相片清單</h3>
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th style="width:26%">相</th><th style="width:14%">數量</th><th>要點</th></tr></thead>
+      <tbody>
+        <tr><td>門牌／招牌</td><td class="num-col">各 2 張</td><td>兩個單位各自嘅門牌要影清楚。呢個係 Google 驗證「真係兩個獨立實體」嘅關鍵證據。</td></tr>
+        <tr><td>接待處</td><td class="num-col">各 2 張</td><td>自然光，唔好用 stock photo</td></tr>
+        <tr><td>診症／護理房</td><td class="num-col">各 3 張</td><td>整齊、真實。唔使似樣板房</td></tr>
+        <tr><td>大廈入口／電梯大堂</td><td class="num-col">2 張</td><td>幫新客搵路——實際減少甩底</td></tr>
+        <tr><td>儀器</td><td class="num-col">2–3 張</td><td>唔好加療效字幕</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ===== 評價 ===== -->
+<section>
+  <div class="sec-head">
+    <div class="tag">工具 04</div>
+    <h2>評價引擎</h2>
+    <p class="dek">對你嚟講，評價唔係攞新客。佢係接住轉介——朋友介紹咗你，對方一定會 Google 你。</p>
+  </div>
+
+  <div class="note">
+    <p><strong>頭六個月，所有評價集中推去 1404A 診所檔案。</strong>原因：診所檔案先係解決「轉介查證」嗰一步嗰個，而數據顯示 84% 人唔會考慮 4 星以下嘅醫療服務提供者。做到 20 個評價之後，先開始分流去 Mediskin 檔案。</p>
+  </div>
+
+  <p class="copy-label">▸ 當面開口 — 覆診、客人表達滿意之後</p>
+  <div class="copy">如果你覺得今次幫到你，可唔可以喺 Google 度留返一兩句？
+
+我哋係細診所，冇落廣告，好多人係介紹嚟嘅——佢哋通常會上網搵吓我哋。你一兩句對我哋幫助好大。
+
+我陣間 WhatsApp 個連結畀你。</div>
+
+  <p class="copy-label">▸ 覆診後 WhatsApp 跟進（當面問完之後先發）</p>
+  <div class="copy">你好，多謝你今日嚟。
+
+如果你方便，可唔可以喺呢度留返一兩句評價？<span class="ph">[Google 短連結]</span>
+
+（如果覺得有咩地方可以做好啲，都歡迎直接覆我，唔使客氣。）</div>
+
+  <div class="note hard">
+    <h4>三條唔可以踩嘅線</h4>
+    <ul>
+      <li><strong>唔可以利誘。</strong>畀折扣、禮物換評價違反 Google 政策，而且一睇就知係假。</li>
+      <li><strong>唔可以將評價剪出嚟做宣傳。</strong>請人留誠實評價，同將病人見證放落廣告／海報，係兩件事。前者一般接受，後者踩醫委會守則。</li>
+      <li><strong>公開回覆醫療評價要極小心。</strong>你一回覆，就等於確認咗嗰個人係你嘅病人——呢個本身可能已經係保密問題。回覆要短、唔好提任何病情或治療細節。</li>
+    </ul>
+  </div>
+
+  <p class="copy-label">▸ 好評回覆範本</p>
+  <div class="copy">多謝你抽時間留言，我哋好重視每一位嘅意見。期待再為你服務。</div>
+
+  <p class="copy-label">▸ 差評回覆範本 — 唔爭辯、唔透露、轉私下</p>
+  <div class="copy">多謝你提出。我哋好希望了解清楚同跟進，方便嘅話請 WhatsApp <span class="ph">[號碼]</span> 或致電我哋，會有專人直接同你處理。</div>
+</section>
+
+<!-- ===== 追蹤 ===== -->
+<section>
+  <div class="sec-head">
+    <div class="tag">工具 05</div>
+    <h2>一張表，每星期五分鐘</h2>
+    <p class="dek">唔使 CRM。Excel 或 Google Sheet 就夠。冇呢張表，三個月後所有決定都係靠估。</p>
+  </div>
+
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th>日期</th><th>姓名</th><th>來源</th><th>轉介人</th><th>服務</th><th>單位</th><th>金額</th><th>下次預約</th><th>留咗評價？</th></tr></thead>
+      <tbody>
+        <tr><td class="num-col">8/22</td><td>陳小姐</td><td>轉介</td><td>李太</td><td>脫疣</td><td class="num-col">1404A</td><td class="num-col">1,800</td><td class="num-col">9/12</td><td>✓</td></tr>
+        <tr><td class="num-col">8/22</td><td>黃先生</td><td>Google</td><td>—</td><td>注射</td><td class="num-col">1404A</td><td class="num-col">4,200</td><td class="num-col">10/3</td><td>—</td></tr>
+        <tr><td class="num-col">8/23</td><td>張小姐</td><td>路過</td><td>—</td><td>Facial</td><td class="num-col">1403</td><td class="num-col">880</td><td class="num-col">9/20</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>每月只睇四個數</h3>
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th style="width:34%">指標</th><th style="width:20%">目標</th><th>做唔到即係</th></tr></thead>
+      <tbody>
+        <tr><td>新客數</td><td class="num-col">9–10 / 月</td><td>轉介冇系統咁做，或者根本冇開口</td></tr>
+        <tr><td>星期六填座率</td><td class="num-col">80%+</td><td>未夠客——但先睇覆診有冇約起</td></tr>
+        <tr><td>離座前約好下次</td><td class="num-col">60%+</td><td>最平嘅修補項。醫生節數愈少愈緊要</td></tr>
+        <tr><td>新增 Google 評價</td><td class="num-col">4 / 月</td><td>冇當面開口，淨係靠事後發訊息</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note flag">
+    <p><strong>連續兩個月星期六填到 80% 以上</strong>，就係加醫生節數嘅訊號。加咗之後先好考慮買流量——次序倒轉就會蝕錢。</p>
+  </div>
+</section>
+
+<!-- ===== 30日 ===== -->
+<section>
+  <div class="sec-head">
+    <div class="tag">執行</div>
+    <h2>30 日排程</h2>
+    <p class="dek">總共大約 6 小時工夫，分四星期。之後每星期維持約 20 分鐘。</p>
+  </div>
+
+  <div class="phases">
+    <div class="phase">
+      <div class="when"><b>W1</b>約 2 小時</div>
+      <div>
+        <h5>開兩個 GBP 檔案</h5>
+        <ul>
+          <li>確認兩個單位有兩個唔同電話號碼（做唔到就要先解決）</li>
+          <li>用上面嘅文字建立兩個檔案，提交驗證</li>
+          <li>影相：兩個門牌、接待、房、大廈入口</li>
+          <li>開追蹤表，即刻開始記每一個客</li>
+        </ul>
+      </div>
+    </div>
+    <div class="phase">
+      <div class="when"><b>W2</b>約 1 小時</div>
+      <div>
+        <h5>啟動轉介</h5>
+        <ul>
+          <li>印卡（100 張夠用好耐）</li>
+          <li>WhatsApp 訊息存做常用回覆</li>
+          <li>同前台過一次逐字稿，練兩次</li>
+          <li>本星期起：每個覆診客人都開口</li>
+        </ul>
+      </div>
+    </div>
+    <div class="phase">
+      <div class="when"><b>W3</b>約 1.5 小時</div>
+      <div>
+        <h5>上脫疣內容 + 評價引擎</h5>
+        <ul>
+          <li>查 Keyword Planner 確認搜尋量</li>
+          <li>脫疣服務項目同 Q&A 上 1404A 檔案</li>
+          <li>攞 Google 評價短連結，存做常用回覆</li>
+          <li>本星期起：每個滿意客人當面開口攞評價</li>
+        </ul>
+      </div>
+    </div>
+    <div class="phase">
+      <div class="when"><b>W4</b>約 1.5 小時</div>
+      <div>
+        <h5>覆盤 + 補漏</h5>
+        <ul>
+          <li>睇追蹤表：新客幾多個？來源分佈點？</li>
+          <li>GBP 檔案驗證咗未？未就跟進</li>
+          <li>評價夠唔夠 4 個？唔夠就係冇當面開口</li>
+          <li>離座前約好下次嘅比率係幾多？</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 律師 ===== -->
+<section>
+  <div class="sec-head">
+    <div class="tag">附件</div>
+    <h2>交畀律師嘅三條問題</h2>
+    <p class="dek">你話已經搞掂，但呢三條建議白紙黑字問一次、留低書面答覆。都係關於張豁免牌，而張牌係你醫生嘅執業基礎。</p>
+  </div>
+
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th style="width:8%">#</th><th style="width:34%">問題</th><th>點解要問</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="num-col">1</td>
+          <td>做注射／埋線嘅兼職醫生，係咪由 <strong>Timeless Clinic Ltd 以代任（locum）身分</strong>聘用、出糧、記錄？</td>
+          <td>小型執業診所豁免條件：除營運者本人及代任安排外，其他醫生不得於該診所執業。如果係 Mediskin 出糧再入去 1404A 做嘢，有機會踩條件。</td>
+        </tr>
+        <tr>
+          <td class="num-col">2</td>
+          <td>所有只有醫生做得嘅程序（注射、埋線、表皮層以下剝脫），係咪<strong>全部喺 1404A 進行</strong>？</td>
+          <td>1403 冇診所牌亦冇豁免。任何一針喺 1403 度打過，嗰一刻 1403 就係無牌醫療機構。冇灰色地帶。</td>
+        </tr>
+        <tr>
+          <td class="num-col">3</td>
+          <td>醫療程序係咪由 <strong>Timeless Clinic Ltd 直接向病人收費並出單</strong>，Mediskin 只收美容服務費用？</td>
+          <td>如果 Mediskin 收醫療費再同醫生分成，就係 2018 年醫委會處理過嗰批醫美集團個案嘅同一形態——非醫生公司從醫療服務獲利兼為醫生招徠。兩間公司、兩張單。</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <p>另外提你兩位醫生一句：<strong>醫委會有先例，醫生即使只係僱員，都有責任確保機構嘅宣傳符合守則。</strong>呢份文件入面所有對外文字，出街前應該由你嘅醫生親自過目一次。呢個保護緊佢，亦保護緊你——佢一有事你就停擺。</p>
+  </div>
+</section>
+
+<footer>
+  星期六滿座計劃 · 2026年8月 · 營運建議，非法律、醫療或財務意見。合規事項請以律師書面意見為準。
+</footer>
+
+</div>
