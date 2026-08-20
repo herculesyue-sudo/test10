@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { checkPhoto, type PhotoIssue } from '@/lib/photo-check';
+import CameraCapture from '@/components/CameraCapture';
 
 export interface Shot {
   angle: string;
@@ -51,6 +52,20 @@ export default function PhotoCapture({
   const [busy, setBusy] = useState<number | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [issues, setIssues] = useState<PhotoIssue[]>([]);
+  // 開唔到頁面內相機就退回 file input。null = 未試過 / 用緊相機
+  const [camFallback, setCamFallback] = useState<string | null>(null);
+
+  /** 相機影完之後行同一套檢查 —— 唔可以因為用另一條入口就鬆咗手。 */
+  async function acceptShot(i: number, data: string, preview: string) {
+    setErr(null);
+    setIssues([]);
+    const check = await checkPhoto(preview);
+    setIssues(check.issues);
+    if (!check.ok) return;
+    const next = [...shots];
+    next[i] = { ...next[i], data, preview, mediaType: 'image/jpeg' };
+    onChange(next);
+  }
 
   async function handle(i: number, file: File | undefined) {
     if (!file) return;
@@ -79,8 +94,33 @@ export default function PhotoCapture({
     }
   }
 
+  // MVP 只影一張正面相，先至用即時相機。多角度（/pro）維持 file input，
+  // 因為逐個角度開關鏡頭反而煩。
+  const singleShot = shots.length === 1;
+  if (singleShot && !shots[0].preview && camFallback === null) {
+    return (
+      <>
+        <CameraCapture
+          onCapture={({ data, preview }) => acceptShot(0, data, preview)}
+          onFallback={(reason) => setCamFallback(reason)}
+        />
+        {issues.map((iss, k) => (
+          <p key={k} className={`shot-issue${iss.level === 'blocking' ? ' bad' : ''}`}>
+            {iss.level === 'blocking' ? '⚠️ ' : 'ℹ️ '}
+            {iss.message}
+          </p>
+        ))}
+      </>
+    );
+  }
+
   return (
     <>
+      {camFallback && !shots[0]?.preview && (
+        <p className="shot-issue" style={{ marginBottom: 10 }}>
+          ℹ️ {camFallback} —— 用下面個掣影相或者揀相簿都一樣得。
+        </p>
+      )}
       <div className="shots">
         {shots.map((s, i) => (
           <button
@@ -122,15 +162,7 @@ export default function PhotoCapture({
       </div>
       {err && <p style={{ color: 'var(--danger)', fontSize: '0.82rem' }}>{err}</p>}
       {issues.map((iss, k) => (
-        <p
-          key={k}
-          style={{
-            color: iss.level === 'blocking' ? 'var(--danger)' : 'var(--text-dim)',
-            fontSize: '0.82rem',
-            margin: '6px 0 0',
-            lineHeight: 1.5,
-          }}
-        >
+        <p key={k} className={`shot-issue${iss.level === 'blocking' ? ' bad' : ''}`}>
           {iss.level === 'blocking' ? '⚠️ ' : 'ℹ️ '}
           {iss.message}
         </p>
