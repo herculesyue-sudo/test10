@@ -1,0 +1,448 @@
+<title>六百人喚醒計劃</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+HK:wght@500;600&family=Noto+Sans+HK:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+  :root {
+    --paper:#F5F7F7; --surface:#FFFFFF; --surface-2:#EDF1F1;
+    --ink:#121A1C; --ink-2:#465559; --ink-3:#78888C;
+    --rule:#DCE3E4; --rule-firm:#C3CFD1;
+    --accent:#0A6B72; --accent-ink:#08565C; --accent-wash:#E0EFEF;
+    --good:#2E6F4E; --warn:#8F6410; --crit:#A4322A;
+    --good-wash:#E4F0E9; --warn-wash:#F6EEDC; --crit-wash:#F6E5E3;
+    --f-display:"Noto Serif HK",Georgia,serif;
+    --f-body:"Noto Sans HK",-apple-system,"PingFang HK","Microsoft JhengHei",sans-serif;
+    --f-mono:"IBM Plex Mono","Noto Sans HK",ui-monospace,Menlo,monospace;
+    --shell:74rem; --measure:38em;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:#0D1214; --surface:#151D1F; --surface-2:#1C2528;
+      --ink:#E7EDEE; --ink-2:#A2B1B5; --ink-3:#7A898D;
+      --rule:#263134; --rule-firm:#384649;
+      --accent:#56C3C7; --accent-ink:#8AD8DA; --accent-wash:#102E31;
+      --good:#6FC392; --warn:#D6A742; --crit:#E1877B;
+      --good-wash:#11291D; --warn-wash:#2B2314; --crit-wash:#2C1917;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:#0D1214; --surface:#151D1F; --surface-2:#1C2528;
+    --ink:#E7EDEE; --ink-2:#A2B1B5; --ink-3:#7A898D;
+    --rule:#263134; --rule-firm:#384649;
+    --accent:#56C3C7; --accent-ink:#8AD8DA; --accent-wash:#102E31;
+    --good:#6FC392; --warn:#D6A742; --crit:#E1877B;
+    --good-wash:#11291D; --warn-wash:#2B2314; --crit-wash:#2C1917;
+  }
+
+  * { box-sizing:border-box; }
+  body {
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--f-body); font-size:16.5px; line-height:1.85;
+    letter-spacing:0.012em; -webkit-font-smoothing:antialiased;
+  }
+  .shell { max-width:var(--shell); margin:0 auto; padding:0 clamp(1.1rem,4vw,3.5rem); }
+  .prose { max-width:var(--measure); }
+  p { margin:0 0 1.05em; color:var(--ink-2); }
+  strong { color:var(--ink); font-weight:700; }
+  a { color:var(--accent-ink); text-underline-offset:3px; }
+  a:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+
+  .masthead { border-bottom:1px solid var(--rule-firm); padding:clamp(2.5rem,7vw,5rem) 0 2.4rem; }
+  .kicker { font-family:var(--f-mono); font-size:0.72rem; letter-spacing:0.14em; color:var(--accent-ink); margin:0 0 1.4rem; display:flex; flex-wrap:wrap; gap:0.5rem 1.1rem; }
+  .kicker span { color:var(--ink-3); }
+  h1 { font-family:var(--f-display); font-weight:600; font-size:clamp(2rem,5vw,3.4rem); line-height:1.25; margin:0 0 1.1rem; text-wrap:balance; max-width:15em; }
+  h1 em { font-style:normal; color:var(--accent-ink); }
+  .standfirst { font-size:clamp(1rem,2vw,1.15rem); color:var(--ink-2); max-width:34em; margin:0 0 2rem; }
+  .byline { font-family:var(--f-mono); font-size:0.74rem; color:var(--ink-3); line-height:2; border-top:1px solid var(--rule); padding-top:1rem; max-width:42em; }
+
+  section { padding:clamp(2.6rem,6vw,4.4rem) 0 0; }
+  .sec-head { display:grid; grid-template-columns:8rem 1fr; gap:0 1.5rem; align-items:start; border-top:1px solid var(--rule); padding-top:1.3rem; margin-bottom:2rem; }
+  .sec-head .tag { font-family:var(--f-mono); font-size:0.71rem; letter-spacing:0.11em; color:var(--ink-3); padding-top:0.65rem; line-height:1.6; }
+  h2 { font-family:var(--f-display); font-weight:600; font-size:clamp(1.5rem,3vw,2.1rem); line-height:1.35; margin:0; text-wrap:balance; max-width:18em; }
+  .sec-head .dek { grid-column:2; margin:0.8rem 0 0; max-width:36em; color:var(--ink-2); }
+  @media (max-width:640px) {
+    .sec-head { grid-template-columns:1fr; }
+    .sec-head .tag { padding-top:0; margin-bottom:0.6rem; }
+    .sec-head .dek { grid-column:1; }
+  }
+
+  h3 { font-weight:700; font-size:1.06rem; color:var(--ink); margin:2.2rem 0 0.7rem; }
+  h4 { font-family:var(--f-mono); font-weight:600; font-size:0.73rem; letter-spacing:0.11em; color:var(--ink-3); margin:0 0 0.85rem; }
+  ul, ol { margin:0 0 1.1em; padding-left:1.2rem; color:var(--ink-2); }
+  li { margin-bottom:0.5em; }
+  li::marker { color:var(--ink-3); }
+
+  .copy {
+    background:var(--surface); border:1px solid var(--rule-firm); border-left:3px solid var(--accent);
+    padding:1.2rem 1.35rem; margin:1rem 0 1.6rem; font-size:0.93rem; line-height:1.9;
+    white-space:pre-wrap; color:var(--ink);
+  }
+  .copy .ph { color:var(--warn); font-weight:700; }
+  .copy-label { font-family:var(--f-mono); font-size:0.68rem; letter-spacing:0.1em; color:var(--accent-ink); margin:1.6rem 0 0; }
+
+  .note { border-left:3px solid var(--rule-firm); background:var(--surface); padding:1.15rem 1.3rem; margin:1.6rem 0; font-size:0.93rem; }
+  .note p:last-child { margin-bottom:0; }
+  .note.flag { border-left-color:var(--warn); background:var(--warn-wash); }
+  .note.hard { border-left-color:var(--crit); background:var(--crit-wash); }
+  .note.win { border-left-color:var(--good); background:var(--good-wash); }
+
+  .tblwrap { overflow-x:auto; margin:1.5rem 0 1.9rem; border:1px solid var(--rule); background:var(--surface); }
+  table { border-collapse:collapse; width:100%; min-width:38rem; font-size:0.87rem; }
+  thead th { text-align:left; font-family:var(--f-mono); font-weight:500; font-size:0.7rem; letter-spacing:0.08em; color:var(--ink-3); padding:0.85rem 1rem; border-bottom:1px solid var(--rule-firm); white-space:nowrap; vertical-align:bottom; }
+  tbody td { padding:0.8rem 1rem; border-bottom:1px solid var(--rule); color:var(--ink-2); vertical-align:top; line-height:1.75; }
+  tbody tr:last-child td { border-bottom:none; }
+  tbody td:first-child { color:var(--ink); font-weight:500; }
+  .num-col { font-family:var(--f-mono); font-variant-numeric:tabular-nums; white-space:nowrap; }
+
+  .pill { display:inline-block; font-family:var(--f-mono); font-size:0.66rem; letter-spacing:0.05em; padding:0.18rem 0.5rem; border-radius:2px; white-space:nowrap; }
+  .p-good { background:var(--good-wash); color:var(--good); }
+  .p-warn { background:var(--warn-wash); color:var(--warn); }
+  .p-crit { background:var(--crit-wash); color:var(--crit); }
+  .p-flat { background:var(--surface-2); color:var(--ink-3); }
+
+  .math { background:var(--surface); border:1px solid var(--rule); padding:1.4rem; margin:1.6rem 0 1.9rem; font-size:0.86rem; line-height:2; }
+  .math .row { display:flex; justify-content:space-between; gap:1.5rem; border-bottom:1px dotted var(--rule); padding:0.12rem 0; }
+  .math .row:last-child { border-bottom:none; }
+  .math .row.total { border-top:1px solid var(--rule-firm); border-bottom:none; margin-top:0.5rem; padding-top:0.6rem; }
+  .math .row.total .k, .math .row.total .v { color:var(--ink); font-weight:700; }
+  .math .k { color:var(--ink-2); }
+  .math .v { color:var(--ink); font-family:var(--f-mono); font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .math .v.hi { color:var(--accent-ink); }
+
+  .phases { display:grid; gap:1px; background:var(--rule); border:1px solid var(--rule); margin:1.6rem 0 1.9rem; }
+  .phase { background:var(--surface); display:grid; grid-template-columns:8rem 1fr; gap:0 1.5rem; padding:1.4rem 1.3rem; }
+  .phase .when { font-family:var(--f-mono); font-size:0.73rem; color:var(--accent-ink); line-height:1.7; }
+  .phase .when b { display:block; font-size:1.35rem; font-weight:500; color:var(--ink); margin-bottom:0.2rem; }
+  .phase h5 { font-size:0.98rem; font-weight:700; margin:0 0 0.45rem; color:var(--ink); }
+  .phase ul { margin:0; font-size:0.88rem; }
+  @media (max-width:640px) {
+    .phase { grid-template-columns:1fr; }
+    .phase .when { margin-bottom:0.7rem; }
+    .phase .when b { display:inline; margin-right:0.5rem; }
+  }
+
+  footer { margin-top:clamp(3rem,7vw,4.5rem); border-top:1px solid var(--rule-firm); padding:1.8rem 0 3.5rem; font-family:var(--f-mono); font-size:0.73rem; color:var(--ink-3); line-height:2; }
+</style>
+
+<div class="shell">
+
+<header class="masthead">
+  <p class="kicker">喚醒計劃 · 3 星期 <span>500–800 個從未購買嘅登記客</span> <span>2026年8月</span></p>
+  <h1>佢哋當初喺你原價面前冇買。<br><em>再平一次，佢哋一樣唔會買。</em></h1>
+  <p class="standfirst">呢份名單值大約 4 至 10 個新客——用啱嘅話。用錯嘅話，你會一次過燒晒佢，冇第二次機會。</p>
+  <p class="byline">
+    ⚠️ 未確認《個人資料（私隱）條例》第 6A 部嘅同意狀況之前，一個字都唔好發。<br>
+    詳見下面「第 0 步」。呢個唔係謹慎，係刑事責任問題。
+  </p>
+</header>
+
+<!-- ===== 第0步 ===== -->
+<section>
+  <div class="sec-head">
+    <div class="tag">第 0 步</div>
+    <h2>先確認你有冇權用呢批資料</h2>
+    <p class="dek">呢一步做唔到，後面全部唔好做。</p>
+  </div>
+
+  <div class="note hard">
+    <h4>《個人資料（私隱）條例》第 6A 部</h4>
+    <p>喺用客戶個人資料作直接促銷之前，資料使用者<strong>必須事先通知對方擬作此用途、提供訂明資訊，並取得對方同意或不反對</strong>。</p>
+    <ul>
+      <li>未經同意使用個人資料作直接促銷 —— <strong>最高罰款 HK$500,000 及監禁 3 年</strong></li>
+      <li>未經同意向第三方提供資料作促銷用途（不論是否收取利益）—— 最高罰款 HK$1,000,000 及監禁 5 年</li>
+    </ul>
+    <p>2025 年 10 月已有實際定罪個案。呢個唔係「執法鬆」嘅範疇。</p>
+  </div>
+
+  <h3>你要翻出嚟睇嘅嘢</h3>
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th style="width:30%">查乜</th><th style="width:22%">結果</th><th>可以點</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>當初登記表格／同意書有冇「個人資料收集聲明」，並列明會用作促銷？</td>
+          <td><span class="pill p-good">有，而且對方同意／冇反對</span></td>
+          <td>可以行。但每一則訊息都必須提供免費拒收途徑，並即時處理拒收要求。</td>
+        </tr>
+        <tr>
+          <td>同上</td>
+          <td><span class="pill p-crit">冇／搵唔返／唔記得</span></td>
+          <td><strong>唔好發。</strong>交律師處理，問清楚可唔可以先發一則「徵求同意」訊息，定係連呢個都唔得。</td>
+        </tr>
+        <tr>
+          <td>曾經實際上嚟見過醫生、有病歷嘅人</td>
+          <td><span class="pill p-warn">法律位置可能唔同</span></td>
+          <td>同「淨係登記但從未上嚟」分開處理。醫療關係下嘅覆診提醒，同促銷訊息係兩回事——但界線要律師劃。</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note flag">
+    <p><strong>另外要開一張「拒收名單」。</strong>任何人講過一次唔想收，就永久唔好再發。呢張表要保存、要有人負責。呢個唔止係守法，亦係唔好搞爛你喺個區嘅名聲。</p>
+  </div>
+</section>
+
+<!-- ===== 期望 ===== -->
+<section>
+  <div class="sec-head">
+    <div class="tag">期望值</div>
+    <h2>老實計一次，唔好呃自己</h2>
+    <p class="dek">坊間講嘅「喚醒轉化 15–30%」係指曾經買過嘅客。你嗰批係從來冇買過——完全唔同嘅名單。</p>
+  </div>
+
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th style="width:34%">名單類型</th><th style="width:20%">轉化率</th><th>你嘅名單屬邊種</th></tr></thead>
+      <tbody>
+        <tr><td>冷流量（完全唔識你）</td><td class="num-col">1–3%</td><td>—</td></tr>
+        <tr><td><strong>暖名單（接觸過、未買過）</strong></td><td class="num-col">5–10%</td><td><span class="pill p-warn">← 你喺呢度</span>，而且名單愈舊愈低</td></tr>
+        <tr><td>曾經買過但停咗</td><td class="num-col">15–30%</td><td>唔係你嗰批。唔好用呢個數做預算。</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="math">
+    <div class="row"><span class="k">名單總數</span><span class="v">600</span></div>
+    <div class="row"><span class="k">電話仍有效、未拒收、有同意記錄</span><span class="v">~400</span></div>
+    <div class="row"><span class="k">回覆率（暖名單，執行得好）3–8%</span><span class="v">12–32</span></div>
+    <div class="row"><span class="k">→ 約到診 ~50%</span><span class="v">6–16</span></div>
+    <div class="row"><span class="k">→ 到診後成交 ~60%</span><span class="v">4–10</span></div>
+    <div class="row total"><span class="k">整份名單認真做一次，實際新客</span><span class="v hi">4–10 人</span></div>
+  </div>
+
+  <div class="note win">
+    <p>啱啱好係你一個月嘅目標。所以佢好有價值——但要記住：<strong>呢個係一次性資產，唔係機器。</strong>發錯咗、發到似 spam，你就永久燒咗呢 600 個人，冇第二次。所以寧願慢啲、分段做，唔好一次過亂咁 blast。</p>
+  </div>
+</section>
+
+<!-- ===== 唔好畀折扣 ===== -->
+<section>
+  <div class="sec-head">
+    <div class="tag">策略</div>
+    <h2>唔好用折扣。用「新消息」。</h2>
+    <p class="dek">你直覺會想打個折。以你嘅情況，呢個係錯嘅——有四個具體原因。</p>
+  </div>
+
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th style="width:36%">點解唔用折扣</th><th>後果</th></tr></thead>
+      <tbody>
+        <tr><td>佢哋當初就係喺你原價面前冇買</td><td>折扣吸返嚟嘅係另一批人——搵平嘢嗰批。行業數據顯示呢批人留客率近乎零，你會用時間換一批唔會返轉頭嘅客。</td></tr>
+        <tr><td>你星期六得 5–6 個位</td><td>你唔需要人多，你需要啱嗰九個。低價 offer 會用平客塞爆你唯一嗰個醫生時段。</td></tr>
+        <tr><td>折扣式醫美廣告正正係醫委會 2018 年點名嗰種招徠</td><td>你位醫生要孭。而佢係兼職、唔常喺度，佢一有事你就停擺。</td></tr>
+        <tr><td>你會訓練埋轉介客等優惠</td><td>轉介係你目前唯一行得通嘅渠道。搞爛咗佢，你就冇嘢剩。</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>你真正嘅武器</h3>
+  <p class="prose">呢 600 人絕大部分係喺你仲係一間美容中心嗰陣登記嘅。佢哋<strong>從來未聽過</strong>你隔籬有一間醫生 100% 持有、衞生署獲豁免嘅診所。</p>
+
+  <div class="note win">
+    <p style="font-size:1.05rem"><strong>「我哋而家有註冊醫生應診」係真．新消息。</strong></p>
+    <p>佢係事實、係新嘅、係差異化嘅，而且係<strong>公告</strong>而唔係<strong>促銷</strong>——所以佢同時更合規、亦更有效過「五折」。一個收到「五折」嘅人會諗「又賣嘢」；一個收到「而家有醫生」嘅人會諗「吓，幾時嘅事？」</p>
+  </div>
+</section>
+
+<!-- ===== 分段 ===== -->
+<section>
+  <div class="sec-head">
+    <div class="tag">分段</div>
+    <h2>唔好 600 人發同一段字</h2>
+    <p class="dek">花兩個鐘分三堆，回覆率差好遠。呢個係整個計劃入面最抵做嘅兩個鐘。</p>
+  </div>
+
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th style="width:16%">段</th><th style="width:24%">係邊啲人</th><th style="width:14%">預期回覆</th><th>訊息角度</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>A</strong></td>
+          <td>曾經上嚟過、做過諮詢或試過，但最後冇買</td>
+          <td class="num-col">8–12% <span class="pill p-good">最高</span></td>
+          <td>最個人化。提返佢當初關注嘅問題。呢批人見過你、記得你，最值得逐個手寫。</td>
+        </tr>
+        <tr>
+          <td><strong>B</strong></td>
+          <td>登記過（網上、活動、街站）但從未上嚟</td>
+          <td class="num-col">3–6%</td>
+          <td>純「新消息」角度。佢哋對你冇印象，所以要畀佢一個全新嘅理由，唔係提醒。</td>
+        </tr>
+        <tr>
+          <td><strong>C</strong></td>
+          <td>兩年以上、資料殘缺、或者連點嚟都唔記得</td>
+          <td class="num-col">1–3% <span class="pill p-flat">最低</span></td>
+          <td>最後先發。當佢係清單練習——順手清走死號碼同拒收，令你張名單之後乾淨。</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="prose"><strong>次序：A → B → C，一星期一段。</strong>唔好同一日發晒。分開發你先睇到邊段有反應，而且萬一文案有問題，你唔會一次過燒晒三段。</p>
+</section>
+
+<!-- ===== 文案 ===== -->
+<section>
+  <div class="sec-head">
+    <div class="tag">文案</div>
+    <h2>三次接觸，逐字稿</h2>
+    <p class="dek">WhatsApp。方括號填你嘅資料。每則都保留咗拒收句——唔好刪。</p>
+  </div>
+
+  <h3>第一次 — 新消息（第 1 星期）</h3>
+
+  <p class="copy-label">▸ 給 A 段（曾經上嚟過）</p>
+  <div class="copy"><span class="ph">[稱呼]</span>你好，我係 Timeless 嘅<span class="ph">[你個名]</span>。
+
+好耐冇見。想同你講聲，我哋喺 1403 隔籬開咗 Timeless Clinic（1404A 室），係衞生署《私營醫療機構條例》下獲豁免嘅小型執業診所，有註冊醫生應診。
+
+即係話，一啲以前要轉介出去嘅嘢——例如疣、皮膚問題呢類——而家同一層就處理到，由醫生親自睇。
+
+如果你之前關注嗰個問題一直未搞掂，可以覆我，我幫你睇吓邊個時段方便。
+
+（如果唔想再收到我哋嘅訊息，覆「取消」就得，我哋唔會再打擾你。）</div>
+
+  <p class="copy-label">▸ 給 B 段（登記過但從未上嚟）</p>
+  <div class="copy"><span class="ph">[稱呼]</span>你好，我係 Timeless 嘅<span class="ph">[你個名]</span>。
+
+你之前喺我哋度留過聯絡，一直未有機會招呼你。
+
+想話你知一個更新：我哋隔籬（<span class="ph">[大廈名]</span> 1404A 室）而家有 Timeless Clinic，衞生署獲豁免嘅小型執業診所，由註冊醫生應診——包括疣、皮膚問題同一般科。
+
+如果你有啲問題一直想搵人睇但唔知搵邊個，可以覆我一句，我幫你安排。
+
+（唔想再收訊息嘅話，覆「取消」，即刻幫你除名。）</div>
+
+  <div class="note">
+    <p><strong>留意呢兩段字冇乜嘢：</strong>冇折扣、冇「限時」、冇「療程」、冇「效果」、冇感嘆號。佢由頭到尾係一則通知。呢個唔止避開咗醫委會嘅招徠條文——佢喺 WhatsApp 上嘅打開同回覆率亦高過促銷訊息，因為佢唔似 spam。</p>
+  </div>
+
+  <h3>第二次 — 具體入口（第 2 星期，只發畀冇回覆嘅人）</h3>
+
+  <p class="copy-label">▸ A 段 + B 段共用</p>
+  <div class="copy"><span class="ph">[稱呼]</span>你好，補多句。
+
+如果你唔肯定自己個情況需唔需要睇醫生，我哋有個<strong>皮膚檢查評估</strong>：由專人詳細睇一次，講清楚你嗰個情況係咩、有咩選擇、大概點收費，全程唔會推銷。
+
+收費 HK$<span class="ph">[　]</span>，如果之後決定做任何療程，呢筆會全數扣返。
+
+平日同星期六都有時段。有興趣就覆我，我發時間表畀你。
+
+（覆「取消」可停止接收。）</div>
+
+  <div class="note flag">
+    <h4>點解唔做「免費」</h4>
+    <p>三個理由。一，醫美「免費試做」正正係醫委會點名嗰種招徠形態。二，免費會再吸一次同一批唔會買嘅人——佢哋當初就係咁樣登記完唔買。三，收一個細數目（一兩百蚊）而且<strong>可以全數扣返</strong>，會篩走純粹貪免費嘅人，而真心想搞掂問題嘅人完全唔會介意。</p>
+    <p>「全程唔會推銷」呢句唔好慳。硬銷係美容業投訴嘅頭號成因，而呢批人當初冇買，好可能就係因為當時感覺被迫。</p>
+  </div>
+
+  <h3>第三次 — 收線（第 3 星期，只發畀仍然冇回覆嘅人）</h3>
+
+  <p class="copy-label">▸ 最後一則</p>
+  <div class="copy"><span class="ph">[稱呼]</span>你好，最後一次打擾你。
+
+我哋醫生應診嘅時段唔多（主要星期六，平日視乎安排），所以想問埋一次：如果你有任何皮膚或者疣嘅問題想搵醫生睇，覆我一句就得，我幫你留位。
+
+如果暫時唔需要，完全冇問題，我唔會再發訊息畀你。多謝你。</div>
+
+  <div class="note win">
+    <p>第三則最緊要嗰句係<strong>「我唔會再發訊息畀你」</strong>，而且你要真係做到。呢句同時做三件事：畀對方一個真實嘅最後限期（唔使作「限時優惠」）、表現尊重、以及自動幫你清乾張名單。而且「醫生時段唔多」係<strong>真</strong>嘅——你唔使作稀缺，你本身就係稀缺。</p>
+  </div>
+</section>
+
+<!-- ===== 執行 ===== -->
+<section>
+  <div class="sec-head">
+    <div class="tag">執行</div>
+    <h2>三星期排程</h2>
+    <p class="dek">每日發 40–60 個，唔好一次過 blast。手機一日狂發幾百個訊息會被 WhatsApp 限制甚至封號。</p>
+  </div>
+
+  <div class="phases">
+    <div class="phase">
+      <div class="when"><b>W0</b>發之前</div>
+      <div>
+        <h5>合規同準備</h5>
+        <ul>
+          <li>翻出登記表格／同意記錄，確認第 6A 部同意狀況。冇 → 停，交律師</li>
+          <li>開拒收名單，指定一個人負責</li>
+          <li>將 600 人分 A／B／C 三段</li>
+          <li>清走明顯無效號碼</li>
+          <li>訊息文案交你醫生過目一次（佢要孭嘅）</li>
+        </ul>
+      </div>
+    </div>
+    <div class="phase">
+      <div class="when"><b>W1</b>第一次</div>
+      <div>
+        <h5>A 段 → B 段</h5>
+        <ul>
+          <li>星期一至三發 A 段（每日 40–60 個）</li>
+          <li>星期四至五發 B 段</li>
+          <li>有人覆 → <strong>當日內回</strong>，直接畀兩個具體時段揀</li>
+          <li>逐個記入追蹤表：來源標「喚醒 A」或「喚醒 B」</li>
+        </ul>
+      </div>
+    </div>
+    <div class="phase">
+      <div class="when"><b>W2</b>第二次</div>
+      <div>
+        <h5>只發冇回覆嘅人</h5>
+        <ul>
+          <li>發第二則（皮膚檢查評估）</li>
+          <li>C 段呢個星期先發第一則</li>
+          <li>已回覆嘅人唔好再收到群發訊息——最漏氣就係呢個位</li>
+        </ul>
+      </div>
+    </div>
+    <div class="phase">
+      <div class="when"><b>W3</b>收線 + 覆盤</div>
+      <div>
+        <h5>最後一則，然後埋數</h5>
+        <ul>
+          <li>發第三則畀仍然冇回覆嘅人</li>
+          <li>所有拒收、死號碼從名單移除——之後張名單係乾淨嘅</li>
+          <li>埋數：回覆幾多？約到幾多？到診幾多？成交幾多？</li>
+          <li>邊一段回覆率最高？呢個話畀你聽你嘅客實際係邊種人</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="note hard">
+    <h4>四樣一定唔好做</h4>
+    <ul>
+      <li><strong>唔好用 WhatsApp 群組或廣播列表發。</strong>要逐個一對一發。群發訊息一眼睇得出，回覆率插水，而且好易被舉報。</li>
+      <li><strong>唔好一日發幾百個。</strong>會觸發 WhatsApp 限制甚至封號。每日 40–60 個，慢慢嚟。</li>
+      <li><strong>唔好對已回覆嘅人繼續發群發訊息。</strong>佢一覆你就要即刻標記、抽出嚟人手跟。</li>
+      <li><strong>唔好喺訊息入面放療程前後對比相或者價目表。</strong>一放就由「通知」變成「廣告」，成個合規基礎冧晒。</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===== 之後 ===== -->
+<section>
+  <div class="sec-head">
+    <div class="tag">之後</div>
+    <h2>做完之後，最重要嗰件事</h2>
+  </div>
+
+  <div class="prose">
+    <p>呢份名單用完就冇。所以喚醒計劃真正嘅價值，唔係嗰 4–10 個客本身，而係<strong>你要確保呢一次唔會再重演</strong>。</p>
+    <p>由今日開始，每一個新登記嘅人：</p>
+    <ul>
+      <li><strong>個人資料收集聲明要寫得清清楚楚</strong>，包括直接促銷用途，並且要對方明確同意——咁你三年後先再有一張用得嘅名單</li>
+      <li><strong>登記當日就要跟進</strong>，唔好等佢變成「登記過但從來冇買」。呢 600 人就係咁樣累積返嚟嘅</li>
+      <li><strong>離座前約定下一次</strong>——呢個係唯一可以令名單唔會再次沉底嘅動作</li>
+    </ul>
+    <p>換句話講：呢次喚醒係一次補救。真正要修嘅係<strong>點解會有 600 個人登記完就消失</strong>。做完呢個計劃，記得問返自己呢條問題。</p>
+  </div>
+</section>
+
+<footer>
+  六百人喚醒計劃 · 2026年8月 · 營運建議，非法律意見。《個人資料（私隱）條例》相關事宜請以律師書面意見為準。
+</footer>
+
+</div>
