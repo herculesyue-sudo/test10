@@ -23,7 +23,25 @@ import type { Treatment } from './types';
  * 執行 `npm run check:catalogue` 可以睇邊啲條目仲欠資料。
  */
 
-const DOCTOR_ONLY = '香港：須由註冊醫生施行（衞生署高風險美容程序）';
+/**
+ * ⚠️ 注射同儀器**唔可以用同一句規管字串**。
+ *
+ * 診所嘅實際運作：注射／處方類（肉毒、填充劑、溶脂針）由香港註冊醫生
+ * 執行；儀器類（激光、射頻、聚焦超聲波）由美容治療師操作。
+ *
+ * 所以喺儀器條目寫「須由註冊醫生施行」係一句**虛假嘅資格聲稱** ——
+ * 同「寫治療師係註冊醫護」性質一樣，只係方向掉轉。喺《不良廣告
+ * （醫藥）條例》（第 231 章）下係風險，亦同官網已修正嘅寫法自相矛盾。
+ *
+ * 診所已拍板嘅處理原則：
+ *   注射／處方 → 寫「註冊醫生施行」（真確）
+ *   儀器操作   → **拆走資格聲稱，唔另作聲明**，只保留「須經註冊醫生評估」
+ *
+ * 唔寫「由美容治療師操作」係刻意嘅：香港從來冇立法界定治療師可唔可以
+ * 操作呢類儀器，主動公告等於自己踩入灰色地帶。呢個係診所嘅決定。
+ */
+const DOCTOR_INJECT = '香港：注射程序須由註冊醫生施行（衞生署高風險美容程序）';
+const DEVICE_REG = '香港：屬高能量儀器程序，療程前須經註冊醫生評估';
 
 /**
  * 診所同時備有多隻牌子。
@@ -78,7 +96,7 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     priceHKD: { min: 0, max: 0, unit: '每次' },
     priceStatus: 'tbc',
     risk: 'medium',
-    regulation: DOCTOR_ONLY,
+    regulation: DEVICE_REG,
     contraindications: ['懷孕', '近期曬傷', '正服食光敏感藥物', '活躍疱疹'],
     notes: '黃褐斑須用低能量多次數，能量過高會反黑，亞洲膚色尤其要小心。凹凸洞 / 痘疤方面，激光係基礎，實際會按疤痕類型配合其他療程一齊做，面診時醫生會度身安排。',
     internalNote:
@@ -109,7 +127,7 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     priceHKD: { min: 0, max: 0, unit: '每次' },
     priceStatus: 'tbc',
     risk: 'medium',
-    regulation: DOCTOR_ONLY,
+    regulation: DEVICE_REG,
     contraindications: ['懷孕', '心臟起搏器 / 植入式除顫器', '治療區金屬植入物'],
     notes: '偏向緊緻同收細毛孔，提升力度不及 HIFU；兩者常配搭（一緊一提）。',
   },
@@ -139,7 +157,7 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     priceHKD: { min: 0, max: 0, unit: '每次（按發數）' },
     priceStatus: 'tbc',
     risk: 'medium',
-    regulation: DOCTOR_ONLY,
+    regulation: DEVICE_REG,
     contraindications: ['懷孕', '治療區金屬植入物 / 心臟起搏器', '嚴重活躍暗瘡', '面部填充劑未穩定（建議相隔 2 週）'],
     notes: '按「發數」計，但比較發數要留意探頭深度，唔淨係睇總數 —— 同樣 300 發，深層探頭同淺層探頭做出嚟嘅效果差好遠。',
     internalNote: 'MPT 已確認。落價錢嗰陣記住 MPT 同 III 嘅發數計價唔同，唔好照抄舊價目表。',
@@ -192,7 +210,7 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     priceHKD: { min: 0, max: 0, unit: '每次' },
     priceStatus: 'tbc',
     risk: 'low',
-    regulation: DOCTOR_ONLY,
+    regulation: DOCTOR_INJECT,
     contraindications: ['注射區感染或活躍暗瘡', '懷孕/哺乳'],
     internalNote: '診所有 Restylane 同 Juvederm，所以水光針好大機會就係 Restylane Vital 或者 Juvederm Volite —— 但呢個係我推測，未確認唔可以當真，請落實。',
   },
@@ -266,7 +284,7 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     priceHKD: { min: 0, max: 0, unit: '每次（雙側）' },
     priceStatus: 'tbc',
     risk: 'medium',
-    regulation: DOCTOR_ONLY,
+    regulation: DOCTOR_INJECT,
     contraindications: ['懷孕/哺乳', '神經肌肉疾病（如重症肌無力）', '注射部位感染', '對配方成分過敏'],
     notes: '劑量或位置唔啱可致咀嚼無力、面頰凹陷、笑容不對稱。',
     internalNote: '品牌已確認：Botox / Dysport / Xeomin 三隻都有。落價錢嗰陣三隻應該係唔同價，可能要拆做三個條目 —— 睇你想唔想喺報告度俾客人揀。',
@@ -293,7 +311,7 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     priceHKD: { min: 0, max: 0, unit: '每個部位' },
     priceStatus: 'tbc',
     risk: 'medium',
-    regulation: DOCTOR_ONLY,
+    regulation: DOCTOR_INJECT,
     contraindications: ['懷孕/哺乳', '神經肌肉疾病', '注射部位感染'],
     notes: '適合仍有彈性嘅動態紋；已成形嘅靜態深紋需要配合填充或激光。眼皮下垂為已知風險。',
     internalNote: '品牌已確認（Botox / Dysport / Xeomin）。仲要確認係咪按「部位」計價、定係按單位（unit）計 —— Dysport 嘅單位換算同另外兩隻唔同，唔講清楚客人會以為平咗。',
@@ -318,7 +336,7 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     priceHKD: { min: 0, max: 0, unit: '每次（全面）' },
     priceStatus: 'tbc',
     risk: 'medium',
-    regulation: DOCTOR_ONLY,
+    regulation: DOCTOR_INJECT,
     contraindications: ['懷孕/哺乳', '神經肌肉疾病', '注射部位感染'],
     internalNote: '已確認診所有做。',
   },
@@ -345,7 +363,7 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     priceHKD: { min: 0, max: 0, unit: '每 cc' },
     priceStatus: 'tbc',
     risk: 'high',
-    regulation: DOCTOR_ONLY,
+    regulation: DOCTOR_INJECT,
     contraindications: ['懷孕/哺乳', '自體免疫疾病活躍期', '注射區感染或發炎', '對透明質酸/利多卡因過敏'],
     notes: '最嚴重風險為血管栓塞致皮膚壞死或失明；必須由熟悉解剖嘅醫生施行，並須備有溶解酶。',
     internalNote: '品牌系列已確認（Juvederm / Restylane / Belotero）。中面部要高支撐款，即係 Juvederm Voluma 或者 Restylane Lyft 呢個級數 —— 確認下實際入邊隻，同計價單位係每 cc 定每支。',
@@ -370,7 +388,7 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     priceHKD: { min: 0, max: 0, unit: '每 cc' },
     priceStatus: 'tbc',
     risk: 'high',
-    regulation: DOCTOR_ONLY,
+    regulation: DOCTOR_INJECT,
     contraindications: ['嚴重眼袋（脂肪疝出）', '甲狀腺眼病', '懷孕/哺乳', '注射區感染'],
     notes: '眼下皮膚薄，易現丁達爾效應（藍光）同水腫。色素型黑眼圈填充無效，要用激光處理。',
     internalNote: '品牌系列已確認。淚溝要最軟嘅款，即係 Belotero Balance 或者 Restylane Refyne 呢個級數（Juvederm 系列偏親水，眼下較易水腫）—— 確認下實際入邊隻。',
@@ -396,7 +414,7 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     priceHKD: { min: 0, max: 0, unit: '每 cc' },
     priceStatus: 'tbc',
     risk: 'high',
-    regulation: DOCTOR_ONLY,
+    regulation: DOCTOR_INJECT,
     contraindications: ['懷孕/哺乳', '注射區感染', '嚴重咬合問題（應先見牙科 / 正頜）'],
     internalNote: '品牌系列已確認。下巴／下顎線要最高支撐力，即係 Juvederm Volux 或者 Restylane Defyne / Lyft 呢個級數 —— 確認下實際入邊隻。',
   },
@@ -419,7 +437,7 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     priceHKD: { min: 0, max: 0, unit: '每 cc' },
     priceStatus: 'tbc',
     risk: 'high',
-    regulation: DOCTOR_ONLY,
+    regulation: DOCTOR_INJECT,
     contraindications: ['懷孕/哺乳', '注射區感染'],
     notes: '顳部血管豐富，屬高風險注射區。',
     internalNote: '品牌系列已確認（Juvederm / Restylane / Belotero）。',
@@ -443,7 +461,7 @@ export const CLINIC_TREATMENTS: Treatment[] = [
     priceHKD: { min: 0, max: 0, unit: '每 cc' },
     priceStatus: 'tbc',
     risk: 'medium',
-    regulation: DOCTOR_ONLY,
+    regulation: DOCTOR_INJECT,
     contraindications: ['活躍唇皰疹', '懷孕/哺乳', '注射區感染'],
     notes: '有唇皰疹病史者宜術前預防性服抗病毒藥。',
     internalNote: '已確認診所有做。',

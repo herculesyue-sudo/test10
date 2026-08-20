@@ -183,7 +183,7 @@ ${recs.map((r, i) => `<div class="rec"><div class="k">${CATEGORY_LABELS[r.treatm
 <div class="c"><h2>其他服務</h2><p class="sub">呢啲服務唔可以靠相片評估，需要醫生現場檢查。</p>
 ${CLINIC_OTHER_SERVICES.map((s) => `<div class="f"><div class="tp"><b>${esc(s.name)}</b></div><p>${esc(s.note)}</p></div>`).join('')}</div>
 <p class="dis">呢份報告由 AI 根據相片產生，屬<b>初步參考</b>，並非醫學診斷，唔可以取代註冊醫生嘅面對面檢查。
-光線、角度、化妝都會影響判斷。喺香港，注射同高能量儀器療程均須由<b>註冊醫生</b>評估及施行。療程收費請直接向診所查詢。</p>
+光線、角度、化妝都會影響判斷。喺香港，注射類療程須由<b>註冊醫生</b>施行；所有療程均須經<b>註冊醫生</b>評估。療程收費請直接向診所查詢。</p>
 </div>`,
     'utf8',
   );

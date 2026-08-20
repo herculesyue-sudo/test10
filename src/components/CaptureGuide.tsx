@@ -51,7 +51,7 @@ export default function CaptureGuide() {
         <div className="guide-detail">
           <p className="guide-lead">
             相片質素嘅影響大過用邊個 AI 模型。一張影得好嘅相，分析準確度會高好多 ——
-            呢一步唔使錢，但係最有效。
+            呢一步唔使錢，但對結果嘅影響好大。
           </p>
           <div className="guide-cols">
             <div>

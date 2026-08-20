@@ -169,7 +169,7 @@ export default function SharePage() {
           </div>
           <div className="poster-url">{link}</div>
           <div className="poster-fine">
-            結果屬初步參考，並非醫學診斷。注射及高能量儀器療程須由註冊醫生評估及施行。
+            結果屬初步參考，並非醫學診斷。注射類療程須由註冊醫生施行；所有療程均須經註冊醫生評估。
           </div>
         </div>
 
