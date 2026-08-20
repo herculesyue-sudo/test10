@@ -16,7 +16,8 @@
     "compare": "tsx scripts/compare-tiers.ts",
     "cf:build": "opennextjs-cloudflare build",
     "cf:preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "cf:deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
+    "cf:deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "report": "tsx scripts/report.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.116.0",
