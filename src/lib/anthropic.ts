@@ -5,6 +5,7 @@ import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { AnalysisSchema, type Analysis } from './schema';
 import { SYSTEM_PROMPT, buildUserPrompt } from './prompt';
 import { postProcess, usabilityVerdict, type Adjustment } from './postprocess';
+import { geminiMode, analyzeOnceGemini } from './gemini';
 
 export type Tier = 'budget' | 'balanced' | 'max';
 
@@ -130,6 +131,10 @@ function costOf(tier: Tier, inTok: number, outTok: number): number {
 
 /** 單次分析。 */
 export async function analyzeOnce(opts: AnalyzeOptions): Promise<AnalyzeResult> {
+  // Vertex（Gemini）通道成個請求形狀都唔同，整份委託去 gemini.ts；
+  // 下面 Anthropic 各通道先共用呢個函數嘅其餘部分。
+  if (geminiMode()) return analyzeOnceGemini(opts);
+
   const cfg = TIERS[opts.tier];
 
   const content: Anthropic.ContentBlockParam[] = [];

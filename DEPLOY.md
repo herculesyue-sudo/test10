@@ -44,6 +44,19 @@ npx wrangler secret put STAFF_TOKEN
 npx wrangler secret put FUNNEL_TOKEN
 ```
 
+> **香港公司注意（2026-08 實測）：Anthropic 全線唔支援香港** ——
+> anthropic.com/supported-countries 冇香港，console 香港卡買唔到 credits、
+> Claude Platform on AWS 個 Marketplace 出「not available in your current region」、
+> Bedrock 去到 invoke 嗰步出「Access to Anthropic models is not allowed from
+> unsupported countries」。所以生產環境行 **Google Vertex AI（Gemini）**：
+> ① console.cloud.google.com 開 project、開 billing（收香港卡）、啟用 Vertex AI API；
+> ② IAM → Service Accounts → 開一個俾「Vertex AI User」role → 出 JSON key；
+> ③ `npx wrangler secret put GCP_SERVICE_ACCOUNT_JSON < key.json`；
+> ④ `wrangler.jsonc` vars 加 `GEMINI_VERTEX_PROJECT`（project id）。
+> 引擎分支喺 `src/lib/gemini.ts`（tier 對應 model 同價錢都喺嗰度）。
+>
+> 下面兩段 Anthropic 通道嘅設定留返俾將來政策鬆綁時用：
+>
 > **冇外國信用卡？** 可以唔用 console.anthropic.com，改行 **Amazon Bedrock**
 > （AWS 原生服務，香港 AWS 帳戶用到，帳單經 AWS 收）。做法：
 > ① Bedrock console → Model catalog → 提交一次 Anthropic 用途表格；
