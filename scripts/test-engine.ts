@@ -43,6 +43,9 @@ import type { Analysis } from '../src/lib/schema';
 import { analysePixels, THRESHOLDS } from '../src/lib/photo-check';
 import { allowedOrigins, frameAncestors, isAllowedOrigin } from '../src/lib/embed-config';
 import { checkStaff, isStaffPath } from '../src/lib/staff-auth';
+import { computeCategoryScores, partitionCheck, CATEGORIES, bandOf } from '../src/lib/categories';
+import { normalizePhone, createMemoryVisitStore, type VisitRecord } from '../src/lib/visits';
+import { readFileSync } from 'node:fs';
 import { classifyHost, resolvePublicUrl } from '../src/lib/public-url';
 import { lanAddresses, lanUrl } from '../src/lib/lan-address';
 
@@ -469,6 +472,10 @@ console.log('\n── 職員頁面保護 ──');
   check('/pro 要保護', isStaffPath('/pro'));
   check('/share 要保護', isStaffPath('/share'));
   check('/embed/setup 要保護', isStaffPath('/embed/setup'));
+  check('/records 要保護（客人電話＋評分喺入面）', isStaffPath('/records'));
+  check('/api/records 要保護', isStaffPath('/api/records'));
+  // 前綴比對唔可以誤中相似路徑
+  check('/record（冇 s）唔會誤中', !isStaffPath('/record'));
   check('客人版 / 唔可以被鎖', !isStaffPath('/'));
   check('嵌入版 /embed 唔可以被鎖', !isStaffPath('/embed'));
   // /embed 同 /embed/setup 只差幾個字，前綴比對寫錯就會鎖死客人入口
@@ -736,5 +743,117 @@ console.log('\n── 前端埋點 ──');
   delete g.window;
 }
 
-console.log(failures === 0 ? '\n✅ 全部通過\n' : `\n❌ ${failures} 項失敗\n`);
-process.exit(failures === 0 ? 0 : 1);
+console.log('\n── 8 大範疇評分 ──');
+{
+  // 完整分割：33 個特徵，每個恰好屬一個範疇。加新 FindingKey 而唔分類，
+  // 個特徵就會喺雷達圖靜靜雞消失 —— 呢個測試就係為咗唔俾佢靜靜雞。
+  const part = partitionCheck();
+  check('全部特徵都有範疇', part.missing.length === 0, part.missing.join(', '));
+  check('冇特徵被分入兩個範疇', part.duplicated.length === 0, part.duplicated.join(', '));
+  check('固定 8 個範疇（雷達圖軸唔可以浮動）', CATEGORIES.length === 8, String(CATEGORIES.length));
+
+  const empty = computeCategoryScores([]);
+  check('冇觀察 → 照回 8 項', empty.length === 8, String(empty.length));
+  check('冇觀察 → 全部 100 分', empty.every((c) => c.score === 100));
+  check('冇觀察 → 「冇明顯問題」而唔係「良好」', empty.every((c) => c.bandLabel === '冇明顯問題'));
+
+  const single = computeCategoryScores([{ key: 'pigmentation', severity: 40, confidence: 1 }]);
+  const pig = single.find((c) => c.key === 'pigment')!;
+  check('單一觀察 sev40 conf1 → 60 分', pig.score === 60, String(pig.score));
+  check('其他範疇唔受影響（照 100）', single.filter((c) => c.key !== 'pigment').every((c) => c.score === 100));
+
+  // 信心加權：低信心觀察拉分嘅力要細啲
+  const weighted = computeCategoryScores([
+    { key: 'forehead_lines', severity: 80, confidence: 0.5 },
+    { key: 'crows_feet', severity: 20, confidence: 1 },
+  ]);
+  const wr = weighted.find((c) => c.key === 'wrinkles')!;
+  // (80×0.5 + 20×1) / 1.5 = 40 → 100 − 40 = 60
+  check('信心加權平均（唔係求其平均）', wr.score === 60, String(wr.score));
+
+  check('85 分係「良好」下限', bandOf(85, 1).bandLabel === '良好');
+  check('84 分落「可改善」', bandOf(84, 1).bandLabel === '可改善');
+  check('60 分仲係「可改善」', bandOf(60, 1).bandLabel === '可改善');
+  check('59 分落「建議關注」', bandOf(59, 1).bandLabel === '建議關注');
+
+  const extreme = computeCategoryScores([{ key: 'redness', severity: 100, confidence: 1 }]);
+  check('分數唔會負', extreme.every((c) => c.score >= 0));
+
+  const lowC = computeCategoryScores([{ key: 'acne_active', severity: 50, confidence: 0.4 }]);
+  check('平均信心 <0.5 → 標 lowConfidence', lowC.find((c) => c.key === 'acne_oil')!.lowConfidence);
+  const okC = computeCategoryScores([{ key: 'acne_active', severity: 50, confidence: 0.6 }]);
+  check('信心 0.6 → 唔標', !okC.find((c) => c.key === 'acne_oil')!.lowConfidence);
+
+  // API 嗰邊 key 係 string —— 未知 key 唔可以炸，亦唔可以亂入賬
+  const unknown = computeCategoryScores([{ key: 'not_a_real_key', severity: 90, confidence: 1 }]);
+  check('未知 key 靜靜跳過', unknown.every((c) => c.score === 100));
+
+  // 合規：範疇名同分數帶字眼會直接見客
+  const banned = /保證|永久|根治|最有效|100%|無風險|絕對|醫護/;
+  const labels = [...CATEGORIES.map((c) => c.label), '冇明顯問題', '良好', '可改善', '建議關注'];
+  check('範疇／分數帶字眼冇違禁詞', labels.every((l) => !banned.test(l)),
+    labels.filter((l) => banned.test(l)).join(', '));
+}
+
+console.log('\n── 電話標準化（儲存紀錄用）──');
+{
+  check('+852 空格 → 8 位', normalizePhone('+852 9123 4567') === '91234567');
+  check('852 前綴 → 剝走', normalizePhone('85291234567') === '91234567');
+  check('連字號 → 剝走', normalizePhone('9123-4567') === '91234567');
+  check('00852 固網 → 8 位', normalizePhone('00852 2123 4567') === '21234567');
+  check('太短 → 唔收', normalizePhone('12345') === null);
+  check('9 位 → 唔收', normalizePhone('123456789') === null);
+  check('1 字頭 → 唔收（香港冇）', normalizePhone('11234567') === null);
+  check('空字串 → 唔收', normalizePhone('') === null);
+}
+
+console.log('\n── schema.sql 同 code 同步 ──');
+{
+  // D1 個表係手寫 SQL，冇 ORM 幫手對欄名 —— 改咗 code 唔改 schema
+  // 就要等到部署先炸。至少確保啲名冇甩開。
+  const sql = readFileSync('schema.sql', 'utf-8');
+  for (const token of ['visits', 'phone', 'created_at', 'category_scores', 'findings', 'idx_visits_phone']) {
+    check(`schema 有 ${token}`, sql.includes(token));
+  }
+  check("source 有 CHECK 約束", /CHECK\s*\(\s*source\s+IN/i.test(sql));
+}
+
+console.log('\n── 客人紀錄（記憶體 store）──');
+(async () => {
+  const store = createMemoryVisitStore();
+  check('記憶體 store 承認自己唔持久', store.persistent === false);
+
+  const rec = (phone: string, createdAt: string): VisitRecord => ({
+    id: `${phone}-${createdAt}`,
+    phone,
+    createdAt,
+    source: 'customer',
+    goals: [],
+    categoryScores: [],
+    findings: [],
+  });
+
+  await store.save(rec('91234567', '2026-08-01T10:00:00.000Z'));
+  await store.save(rec('91234567', '2026-08-20T10:00:00.000Z'));
+  await store.save(rec('21234567', '2026-08-10T10:00:00.000Z'));
+
+  const a = await store.listByPhone('91234567');
+  check('搵到自己兩次', a.length === 2, String(a.length));
+  check('新到舊排序（後台睇最新一次先）', a[0]?.createdAt === '2026-08-20T10:00:00.000Z');
+  check('唔會撈埋第二個人嘅紀錄', (await store.listByPhone('21234567')).length === 1);
+  check('冇紀錄嘅電話 → 空list，唔係錯誤', (await store.listByPhone('98765432')).length === 0);
+
+  // 保留期：25 個月前嘅紀錄唔應該再出現（PDPO 講咗 24 個月就係 24 個月）
+  const old = new Date();
+  old.setMonth(old.getMonth() - 25);
+  await store.save(rec('34567890', old.toISOString()));
+  check('超過保留期嘅紀錄唔會列出', (await store.listByPhone('34567890')).length === 0);
+
+  const deleted = await store.deleteByPhone('91234567');
+  check('刪除覆到實數（PDPO 回覆要講到刪咗幾多）', deleted === 2, String(deleted));
+  check('刪完真係冇晒', (await store.listByPhone('91234567')).length === 0);
+  check('刪一個人唔會累到第二個', (await store.listByPhone('21234567')).length === 1);
+
+  console.log(failures === 0 ? '\n✅ 全部通過\n' : `\n❌ ${failures} 項失敗\n`);
+  process.exit(failures === 0 ? 0 : 1);
+})();

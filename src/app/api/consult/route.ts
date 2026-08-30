@@ -13,6 +13,9 @@ import {
 } from '@/lib/treatments';
 import { pickDemoCase, DEMO_CASES } from '@/lib/demo';
 import { checkRateLimit, recordUsage, usageSnapshot } from '@/lib/ratelimit';
+import { computeCategoryScores } from '@/lib/categories';
+import { getVisitStore, normalizePhone, type VisitRecord } from '@/lib/visits';
+import { checkStaff, STAFF_COOKIE } from '@/lib/staff-auth';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -47,6 +50,8 @@ interface Body {
   isPregnantOrNursing?: boolean;
   /** 測試模式：指定用邊個示範個案 */
   demoCaseId?: string;
+  /** 自願儲存評分紀錄（SaveRecordCard）。冇 consent 或者冇 phone 就乜都唔會儲。 */
+  record?: { phone?: string; consent?: boolean };
 }
 
 function bad(msg: string, status = 400) {
@@ -90,6 +95,59 @@ function goalCoverage(goals: GoalKey[], shown: ScoredTreatment[]) {
   });
 }
 
+/**
+ * 客人自願同意先至儲；一切由 server 自己計自己寫 —— 冇公開寫入口。
+ *
+ * source 由 server 判斷（有有效 drt_staff cookie = 職員喺 /pro 代做），
+ * 唔信 client 自報。findings 喺呢個邊界剝走 observation / location ——
+ * 同 stripInternal 同一個原則：唔想儲嘅嘢就唔好俾佢入到 store。
+ */
+async function maybeSaveVisit(
+  req: Request,
+  body: Body,
+  findings: Finding[],
+  goals: GoalKey[],
+): Promise<{ saved: boolean; persistent: boolean; reason?: string } | undefined> {
+  if (!body.record?.consent || !body.record.phone) return undefined; // 冇要求過 = 乜都唔儲（現狀）
+
+  let persistent = false;
+  try {
+    const store = await getVisitStore();
+    persistent = store.persistent;
+
+    const phone = normalizePhone(body.record.phone);
+    if (!phone) return { saved: false, persistent, reason: '電話號碼格式唔啱' };
+
+    const cookie = /(?:^|;\s*)drt_staff=([^;]+)/.exec(req.headers.get('cookie') ?? '')?.[1];
+    const isStaff = checkStaff(null, cookie ? decodeURIComponent(cookie) : undefined).action === 'allow';
+    void STAFF_COOKIE; // cookie 名同 staff-auth 一致（regex 內冇辦法用常量）
+
+    const ageBand =
+      body.age !== undefined
+        ? body.age < 30 ? '20s' : body.age < 40 ? '30s' : body.age < 50 ? '40s' : body.age < 60 ? '50s' : '60+'
+        : undefined;
+
+    const visit: VisitRecord = {
+      id: crypto.randomUUID(),
+      phone,
+      createdAt: new Date().toISOString(),
+      source: isStaff ? 'pro' : 'customer',
+      ageBand,
+      goals,
+      categoryScores: computeCategoryScores(findings).map((c) => ({
+        key: c.key,
+        score: c.score,
+        lowConfidence: c.lowConfidence,
+      })),
+      findings: findings.map((f) => ({ key: f.key, severity: f.severity, confidence: f.confidence })),
+    };
+    await store.save(visit);
+    return { saved: true, persistent };
+  } catch {
+    return { saved: false, persistent, reason: '儲存失敗' };
+  }
+}
+
 export async function POST(req: Request) {
   let body: Body;
   try {
@@ -131,8 +189,12 @@ export async function POST(req: Request) {
     });
 
     const demoShown = presentable(scored);
+    // demo 都行真嘅儲存流程（記憶體 store）—— 成個「儲存→/records 搜尋」
+    // 喺未部署之前就測試得到
+    const demoRecord = await maybeSaveVisit(req, body, findings, goals);
     return NextResponse.json({
       analysis: demoAnalysis,
+      record: demoRecord,
       recommendations: demoShown,
       goalCoverage: goalCoverage(goals, demoShown),
       usability: demoUsability,
@@ -225,8 +287,10 @@ export async function POST(req: Request) {
     const plan = buildPhasedPlan(scored);
 
     const shown = presentable(scored);
+    const record = await maybeSaveVisit(req, body, findings, goals);
     return NextResponse.json({
       analysis: result.analysis,
+      record,
       recommendations: shown,
       goalCoverage: goalCoverage(goals, shown),
       // 相片唔夠好嘅時候要照講。之前 usable:false 係計咗出嚟但冇人理 ——

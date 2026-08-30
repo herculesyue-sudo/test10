@@ -11,6 +11,7 @@ import {
 import { buildBookingUrl } from '@/lib/booking';
 import { trackStep } from '@/lib/track-client';
 import { CLINIC_POLICY, CLINIC_OTHER_SERVICES } from '@/lib/treatments/clinic';
+import CategoryScores from '@/components/CategoryScores';
 import type { ConsultResponse } from './Report';
 
 export type { ConsultResponse };
@@ -92,6 +93,10 @@ export default function MvpResult({
           </div>
         )
       )}
+
+      {/* 雷達放喺質素警示之後 —— 一份「呢張相唔多好」嘅警告上面
+          唔可以擺一個睇落好肯定嘅分數版面 */}
+      <CategoryScores findings={a.findings} />
 
       <div className="card">
         <h2>我哋睇到咩</h2>

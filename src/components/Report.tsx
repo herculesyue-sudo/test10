@@ -2,6 +2,7 @@
 
 import { FINDING_LABELS, type FindingKey } from '@/lib/treatments/types';
 import { CLINIC_POLICY } from '@/lib/treatments/clinic';
+import CategoryScores from '@/components/CategoryScores';
 
 export interface ConsultResponse {
   analysis: {
@@ -44,6 +45,8 @@ export interface ConsultResponse {
     priceConfirmed: boolean;
   }[];
   goalCoverage?: { goal: string; label: string; covered: boolean }[];
+  /** 有嘗試儲存先會出現（SaveRecordCard 自願opt-in） */
+  record?: { saved: boolean; persistent: boolean; reason?: string };
   usability?: { ok: boolean; reason?: string; retakeHints: string[] };
   plan: {
     phase: number;
@@ -129,6 +132,8 @@ export default function Report({ data, onReset }: { data: ConsultResponse; onRes
           </div>
         </div>
       )}
+
+      <CategoryScores findings={a.findings} />
 
       {/* ── 總結 ── */}
       <div className="card">

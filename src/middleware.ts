@@ -18,15 +18,24 @@ export function middleware(req: NextRequest) {
 
   if (isStaffPath(pathname)) {
     const verdict = checkStaff(searchParams.get('k'), req.cookies.get(STAFF_COOKIE)?.value);
+    const isApi = pathname.startsWith('/api/');
 
     if (verdict.action === 'deny') {
+      const status = verdict.reason === 'no-token-configured' ? 403 : 401;
+      // API 呼叫者係 fetch()，唔係人 —— 回 JSON，唔好塞份 HTML 俾佢 parse
+      if (isApi) {
+        return NextResponse.json(
+          { error: verdict.reason === 'no-token-configured' ? '未設定 STAFF_TOKEN' : 'unauthorized' },
+          { status },
+        );
+      }
       return new NextResponse(denyPage(verdict.reason), {
-        status: verdict.reason === 'no-token-configured' ? 403 : 401,
+        status,
         headers: { 'Content-Type': 'text/html; charset=utf-8' },
       });
     }
 
-    if (verdict.action === 'set-cookie') {
+    if (verdict.action === 'set-cookie' && !isApi) {
       // 種完 cookie 就將 ?k= 由網址剝走 —— 否則個密碼會留喺瀏覽器
       // 歷史、書籤同分享出去嘅連結入面。
       const clean = req.nextUrl.clone();

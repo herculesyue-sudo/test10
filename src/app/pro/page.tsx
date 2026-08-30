@@ -5,6 +5,7 @@ import PhotoCapture, { DEFAULT_SHOTS, type Shot } from '@/components/PhotoCaptur
 import Report, { type ConsultResponse } from '@/components/Report';
 import { useDemoMode, DemoBanner, DemoCasePicker } from '@/components/DemoMode';
 import Consent from '@/components/Consent';
+import SaveRecordCard from '@/components/SaveRecordCard';
 import { GOALS, type GoalKey } from '@/lib/treatments/types';
 import { PRICING_ENABLED } from '@/lib/treatments';
 
@@ -21,6 +22,8 @@ export default function Page() {
   const isDemo = demo?.demo === true;
   const [demoCaseId, setDemoCaseId] = useState<string | undefined>();
   const [consented, setConsented] = useState(false);
+  const [recPhone, setRecPhone] = useState('');
+  const [recConsent, setRecConsent] = useState(false);
   const [step, setStep] = useState<Step>('photo');
   const [shots, setShots] = useState<Shot[]>(DEFAULT_SHOTS);
   const [goals, setGoals] = useState<GoalKey[]>([]);
@@ -58,6 +61,7 @@ export default function Page() {
           age: age ? Number(age) : undefined,
           gender: gender || undefined,
           tier,
+          record: recConsent && recPhone ? { phone: recPhone, consent: true } : undefined,
           budgetHKD: budget ? Number(budget) : undefined,
           maxDowntimeDays: downtime ? Number(downtime) : undefined,
           noInjectables: noInj,
@@ -79,6 +83,8 @@ export default function Page() {
     setShots(DEFAULT_SHOTS);
     setGoals([]);
     setConsented(false);
+    setRecPhone('');
+    setRecConsent(false);
     setNotes('');
     setData(null);
     setError(null);
@@ -91,7 +97,12 @@ export default function Page() {
     <div className="wrap">
       <header className="site">
         <h1>AI 視像面診</h1>
-        <p>自拍分析 · 香港可用療程配對</p>
+        <p>
+          自拍分析 · 香港可用療程配對 ·{' '}
+          <a href="/records" style={{ color: 'var(--accent)' }}>
+            📋 客人紀錄
+          </a>
+        </p>
       </header>
 
       {isDemo && step !== 'report' && <DemoBanner />}
@@ -118,7 +129,7 @@ export default function Page() {
               <div>· 面向窗口自然光最好，避免頭頂燈（會做出假陰影，令 AI 誤判凹陷）</div>
               <div>· 表情放鬆，唔好笑 — 動態紋同靜態紋要分開睇</div>
               <div>· 頭髮撥開，露出額頭同下顎線</div>
-              <div>· 相片只會傳去 AI 分析，唔會存喺伺服器</div>
+              <div>· 相片只會傳去 AI 分析，唔會存喺伺服器（如客人同意儲存紀錄，只會儲評分數字，唔會儲相片）</div>
             </div>
           </div>
 
@@ -230,6 +241,14 @@ export default function Page() {
           )}
 
           {!isDemo && <Consent checked={consented} onChange={setConsented} />}
+
+          <SaveRecordCard
+            staffMode
+            phone={recPhone}
+            onPhone={setRecPhone}
+            consented={recConsent}
+            onConsent={setRecConsent}
+          />
 
           <div className="card">
             <h2>4. 分析模式</h2>

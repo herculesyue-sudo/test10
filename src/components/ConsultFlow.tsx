@@ -15,6 +15,8 @@ import { useDemoMode, DemoBanner, DemoCasePicker } from '@/components/DemoMode';
 import Consent from '@/components/Consent';
 import CaptureGuide from '@/components/CaptureGuide';
 import QuickFacts, { ageFromBand } from '@/components/QuickFacts';
+import SaveRecordCard from '@/components/SaveRecordCard';
+import { normalizePhone } from '@/lib/visits';
 import { GOALS, type GoalKey } from '@/lib/treatments/types';
 import { trackStep, resetTracking } from '@/lib/track-client';
 import { scrollParentToTop } from '@/lib/embed-client';
@@ -31,6 +33,8 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
   const [consented, setConsented] = useState(false);
   const [ageBand, setAgeBand] = useState<string | null>(null);
   const [pregnant, setPregnant] = useState(false);
+  const [recPhone, setRecPhone] = useState('');
+  const [recConsent, setRecConsent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [data, setData] = useState<ConsultResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +52,10 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
 
   const hasPhoto = Boolean(shots[0]?.data);
   // 測試模式冇真實相片，唔需要同意；正式模式一定要先同意先可以傳相
-  const ready = (isDemo || (hasPhoto && consented)) && goals.length > 0;
+  // 剔咗「儲存」但電話無效 → 擋住提交。靜靜雞唔儲一樣客人以為儲咗嘅嘢，
+  // 係比擋一擋更差嘅結果。
+  const recBlocked = recConsent && normalizePhone(recPhone) === null;
+  const ready = (isDemo || (hasPhoto && consented)) && goals.length > 0 && !recBlocked;
 
   function toggle(g: GoalKey) {
     setGoals((p) => (p.includes(g) ? p.filter((x) => x !== g) : [...p, g]));
@@ -72,6 +79,7 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
           // 安全閘：引擎會硬過濾所有懷孕禁忌療程
           isPregnantOrNursing: pregnant,
           demoCaseId,
+          record: recConsent && recPhone ? { phone: recPhone, consent: true } : undefined,
         }),
       });
       const json = await res.json();
@@ -94,6 +102,8 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
     setConsented(false);
     setAgeBand(null);
     setPregnant(false);
+    setRecPhone('');
+    setRecConsent(false);
     setData(null);
     setError(null);
     scrollParentToTop();
@@ -109,6 +119,20 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
           </header>
         )}
         {data.meta.demo && <DemoBanner caseLabel={data.meta.demoCaseLabel} />}
+        {/* 儲存結果要有交代 —— 客人剔咗個掣，唔可以唔知有冇成功 */}
+        {data.record?.saved && data.record.persistent && (
+          <div className="alert" style={{ background: 'var(--accent-soft)' }}>
+            已儲存今次嘅評分紀錄（唔包括相片）。你可以隨時聯絡我哋要求刪除。
+          </div>
+        )}
+        {data.record?.saved && !data.record.persistent && (
+          <div className="alert warn">已記錄今次評分，但系統而家未接駁資料庫，紀錄未必可以長期保存。</div>
+        )}
+        {data.record && !data.record.saved && (
+          <div className="alert warn">
+            今次嘅評分紀錄儲存唔到{data.record.reason ? `（${data.record.reason}）` : ''}。你嘅分析結果唔受影響。
+          </div>
+        )}
         <MvpResult data={data} goals={goals} onReset={reset} pregnant={pregnant} />
       </>
     );
@@ -170,6 +194,8 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
 
       {!isDemo && <Consent checked={consented} onChange={setConsented} />}
 
+      <SaveRecordCard phone={recPhone} onPhone={setRecPhone} consented={recConsent} onConsent={setRecConsent} />
+
       <button className="primary" disabled={!ready || busy} onClick={submit}>
         {busy
           ? isDemo
@@ -183,7 +209,9 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
               ? '請先影相'
               : goals.length === 0
                 ? '請揀最少一項'
-                : '請先同意相片處理說明'}
+                : recBlocked
+                  ? '請輸入正確電話，或者取消儲存'
+                  : '請先同意相片處理說明'}
       </button>
 
       <p style={{ fontSize: '0.74rem', color: 'var(--text-dim)', textAlign: 'center', marginTop: 14 }}>

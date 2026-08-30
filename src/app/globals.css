@@ -382,3 +382,6 @@ button.ghost {
   color: var(--text-dim); font-size: 0.82rem; margin: 6px 0 0; line-height: 1.5;
 }
 .shot-issue.bad { color: var(--danger); }
+
+/* ══════════ 8 大範疇評分 ══════════ */
+.radar { display: block; width: 100%; max-width: 300px; margin: 0 auto 6px; }

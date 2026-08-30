@@ -14,14 +14,15 @@
  * 系統嘅維護成本（改密碼、重設、鎖帳戶）遠高於佢解決嘅問題。撳一次
  * 連結之後種 cookie，之後唔使再輸。
  *
- * ⚠️ 呢個唔係用嚟保護病人資料嘅 —— 系統本身唔存任何病人資料。佢係
- *    用嚟擋住「陌生人用你嘅 API 額度」同「療程成本俾人睇晒」。
+ * ⚠️ 由加入客人紀錄（/records）嗰日起，呢個 token 亦都係保護個人資料
+ *    （電話號碼＋皮膚評分）嘅唯一屏障，唔再只係擋 API 額度。
+ *    STAFF_TOKEN 一定要夠長夠隨機；懷疑洩露就要即刻換。
  */
 
 export const STAFF_COOKIE = 'drt_staff';
 
 /** 要密碼先入得嘅路徑。 */
-export const STAFF_PATHS = ['/pro', '/share', '/embed/setup'];
+export const STAFF_PATHS = ['/pro', '/share', '/embed/setup', '/records', '/api/records'];
 
 export function isStaffPath(pathname: string): boolean {
   return STAFF_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'));

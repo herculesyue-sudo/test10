@@ -75,6 +75,37 @@ Workers 免費方案每日 10 萬個請求，對一間診所嚟講綽綽有餘�
 > 等 Anthropic 回應嗰 20–30 秒**唔計 CPU 時間**（等 fetch 唔算 CPU），
 > 所以真正用到嘅 CPU 主要係處理相片同 JSON，遠遠喺上限之內。
 
+### 客人紀錄資料庫（D1，可選）
+
+唔設都行得：客人照做分析、照出 8 大範疇評分，只係「儲存紀錄」會
+落喺記憶體（重啟即清），`/records` 會有橫額提醒你未接駁。
+想要真正嘅客人歷史（跨日、跨重啟、趨勢對比）先需要做呢步。
+
+```bash
+# 1. 開個 D1 資料庫（一次過）
+npx wrangler d1 create drtimeless-visits
+```
+
+佢會印返個 `database_id` 出嚟。開 `wrangler.jsonc`，將註釋咗嘅
+`d1_databases` 嗰塊解開，貼上個 id。
+
+```bash
+# 2. 建表（--remote 係郁線上個庫；唔加就係本機測試庫）
+npx wrangler d1 execute drtimeless-visits --remote --file=./schema.sql
+
+# 3. 重新部署，個 binding 先會生效
+npm run cf:deploy
+```
+
+本機想連埋 D1 試：`npm run cf:preview` 會自動用本機 miniflare 版嘅
+D1（第一次要行 `npx wrangler d1 execute drtimeless-visits --local
+--file=./schema.sql` 建表）。
+
+**私隱（《個人資料（私隱）條例》）**：個庫淨係儲電話號碼＋評分數字
+＋觀察項目編號，唔儲相片、唔儲文字描述；只有客人剔咗同意先會寫入。
+保留期 24 個月，過期紀錄會自動清走。客人要求刪除嘅話，職員開
+`/records` 搵佢個電話撳刪除就得。
+
 ---
 
 ## 🅥 或者用 Vercel（如果你想分開）
@@ -212,6 +243,7 @@ vercel --prod
 - [ ] 報告**冇** 🧪 測試模式橫額
 - [ ] 撳「WhatsApp 預約」→ 開到你哋個號碼，訊息預填咗
 - [ ] 開 `你條網址/pro?k=你個STAFF_TOKEN` → 入得，之後 30 日唔使再輸
+- [ ] 開 `你條網址/records`（登入咗職員嗰部機）→ 見到客人紀錄版面；未接駁 D1 會有黃色橫額屬正常
 - [ ] 開 `你條網址/pro`（用另一部冇登入嘅機）→ 應該 401
 
 ---
