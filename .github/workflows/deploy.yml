@@ -62,8 +62,15 @@ jobs:
             const fs=require('fs');
             const p='wrangler.jsonc';
             const s=fs.readFileSync(p,'utf8');
-            if(!s.includes('AUTO_FILLED_BY_CI')){console.error('placeholder 唔見咗');process.exit(1);}
-            fs.writeFileSync(p,s.replace('AUTO_FILLED_BY_CI','$DB_ID'));
+            if(s.includes('AUTO_FILLED_BY_CI')){
+              fs.writeFileSync(p,s.replace('AUTO_FILLED_BY_CI','$DB_ID'));
+              console.log('placeholder 已填上真 id');
+            } else if(s.includes('$DB_ID')){
+              console.log('已經係真 id（本機部署嗰陣填咗），唔使郁');
+            } else {
+              console.error('wrangler.jsonc 嘅 database_id 同帳戶入面嗰個唔一致 —— 人手核對');
+              process.exit(1);
+            }
           "
 
       - name: Apply D1 schema
