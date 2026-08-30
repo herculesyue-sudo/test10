@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import { checkPhoto, type PhotoIssue } from '@/lib/photo-check';
 import CameraCapture from '@/components/CameraCapture';
+import { trackStep } from '@/lib/track-client';
 
 export interface Shot {
   angle: string;
@@ -102,7 +103,10 @@ export default function PhotoCapture({
       <>
         <CameraCapture
           onCapture={({ data, preview }) => acceptShot(0, data, preview)}
-          onFallback={(reason) => setCamFallback(reason)}
+          onFallback={(reason) => {
+            trackStep('camera_fallback');
+            setCamFallback(reason);
+          }}
         />
         {issues.map((iss, k) => (
           <p key={k} className={`shot-issue${iss.level === 'blocking' ? ' bad' : ''}`}>
@@ -153,7 +157,6 @@ export default function PhotoCapture({
               }}
               type="file"
               accept="image/*"
-              capture="user"
               hidden
               onChange={(e) => handle(i, e.target.files?.[0])}
             />

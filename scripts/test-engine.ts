@@ -41,7 +41,7 @@ import { trackStep, resetTracking } from '../src/lib/track-client';
 import { postProcess, usabilityVerdict } from '../src/lib/postprocess';
 import type { Analysis } from '../src/lib/schema';
 import { analysePixels, THRESHOLDS } from '../src/lib/photo-check';
-import { allowedOrigins, frameAncestors, isAllowedOrigin } from '../src/lib/embed-config';
+import { allowedOrigins, frameAncestors } from '../src/lib/embed-config';
 import { checkStaff, isStaffPath } from '../src/lib/staff-auth';
 import { computeCategoryScores, partitionCheck, CATEGORIES, bandOf } from '../src/lib/categories';
 import { normalizePhone, createMemoryVisitStore, type VisitRecord } from '../src/lib/visits';
@@ -517,22 +517,22 @@ console.log('\n── 官網嵌入允許清單（成本安全）──');
   // API 額度做佢哋生意，而你唯一嘅線索係月尾張帳單。
   set(undefined);
   check('未設定時只准同源（fail closed）', frameAncestors() === "'self'", frameAncestors());
-  check('未設定時任何外部網域都唔准', !isAllowedOrigin('https://www.drtimeless.com'));
+  check('未設定時清單係空', allowedOrigins().length === 0);
 
+  // 真正執行者係瀏覽器 CSP —— 呢度驗嘅係我哋餵俾 frame-ancestors 嘅字串
   set('https://www.drtimeless.com,https://drtimeless.com');
   check('設咗之後 CSP 列齊', frameAncestors() === "'self' https://www.drtimeless.com https://drtimeless.com", frameAncestors());
-  check('清單內嘅網域放行', isAllowedOrigin('https://www.drtimeless.com'));
-  check('清單外嘅網域擋住', !isAllowedOrigin('https://copycat-clinic.com'));
-  // www 同冇 www 係兩個 origin，要分別列 —— 呢個係最常見嘅設定錯誤
-  check('冇 www 版本要獨立列先放行', isAllowedOrigin('https://drtimeless.com'));
+  // www 同冇 www 係兩個 origin，要分別列 —— 呢個係最常見嘅設定錯誤；
+  // 清單唔會自動補另一個版本
+  check('冇 www 版本要獨立列', allowedOrigins().includes('https://drtimeless.com') && allowedOrigins().length === 2);
   // http 同 https 亦係兩個 origin，唔可以自動當同一個
-  check('http 版本唔會自動當 https', !isAllowedOrigin('http://www.drtimeless.com'));
+  set('https://www.drtimeless.com');
+  check('http 版本唔會自動出現', !frameAncestors().includes('http://www.drtimeless.com'));
 
   set(' https://a.com , https://b.com ,, ');
   check('清單容忍空格同多餘逗號', allowedOrigins().length === 2, JSON.stringify(allowedOrigins()));
   set('https://a.com/');
-  check('尾隨斜線唔會令比對失敗', isAllowedOrigin('https://a.com'));
-  check('空 origin 一定唔放行', !isAllowedOrigin(null) && !isAllowedOrigin(''));
+  check('尾隨斜線會被剝走', allowedOrigins()[0] === 'https://a.com', JSON.stringify(allowedOrigins()));
 
   set(original);
 }
@@ -696,6 +696,13 @@ console.log('\n── 漏斗統計 ──');
   setFunnelStore(createMemoryFunnel());
 }
 
+{
+  // camera_fallback：側事件，要收（唔收就唔知全站相機死咗），但唔入
+  // 線性轉化鏈（佢唔係「下一步」，係徵狀）
+  check('camera_fallback 已註冊', FUNNEL_STEPS.includes('camera_fallback'));
+  check('camera_fallback 唔喺線性轉化鏈', conversionRates({}).every((r) => r.step !== 'camera_fallback'));
+}
+
 console.log('\n── 前端埋點 ──');
 {
   // trackStep 靠 window 判斷係咪喺瀏覽器；喺 node 度模擬一個
@@ -722,6 +729,11 @@ console.log('\n── 前端埋點 ──');
   calls = [];
   trackStep('goals_selected');
   check('resetTracking 之後可以再計（再分析一次）', calls.length === 1);
+
+  calls = [];
+  trackStep('camera_fallback');
+  trackStep('camera_fallback');
+  check('camera_fallback 每 session 計一次', calls.length === 1 && calls[0] === 'camera_fallback', calls.join(','));
 
   calls = [];
   trackStep('analyze_failed', { once: false });

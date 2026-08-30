@@ -89,8 +89,11 @@ NEXT_PUBLIC_WHATSAPP=85212345678     # 國際格式，唔要 + 號
 會擋住：電腦防火牆、路由器嘅「用戶端隔離」、手機連咗 4G 唔係 Wi-Fi、公司網絡分 VLAN。
 隧道繞過晒，所以做預設建議。
 
-> 影相**唔需要 HTTPS**：呢個工具用 `<input type="file" capture="user">`，即係叫作業
-> 系統個相機 app，唔係 `getUserMedia`，所以唔需要 secure context。
+> 影相**需要 HTTPS**：頁面內即時相機用 `getUserMedia`
+> （`src/components/CameraCapture.tsx`），要 secure context 先開得到 ——
+> 所以上面先至叫你用 `npm run tunnel`（隧道本身就係 https）。
+> 相機開唔到嘅話會自動退去 `<input type="file">` 揀相（相簿／系統相機），
+> 嗰條後備路唔使 HTTPS，工具照用得。
 
 ```bash
 npm run check:catalogue  # 睇療程目錄仲欠咩價錢 / 內容 / 覆蓋
@@ -462,7 +465,7 @@ export const PRICING_ENABLED = ALL_TREATMENTS.some(
 `/api/consult` 設咗 `maxDuration = 300`（秒）。`max` 模式加 3 次共識分析可以跑到 2–3 分鐘。
 
 - **Vercel Hobby** 上限 60 秒 —— 只夠 `budget` / `balanced` 單次分析。要開 `max` 或多次共識，要升 Pro（可去到 300 秒）。
-- **Cloudflare Workers** 唔適合（CPU 時間限制），用 Node runtime 嘅平台（Vercel / Railway / Fly.io / 自建）。
+- **Cloudflare Workers Paid（US$5/月）係主要部署路徑**（見 `DEPLOY.md`）：`wrangler.jsonc` 設咗 `cpu_ms: 30000`，而等 Anthropic 回應嗰 20–30 秒係等 fetch，唔計 CPU。免費方案 10ms CPU 唔夠，要 Paid。
 
 **上線 checklist**
 
@@ -538,7 +541,7 @@ API 額度做佢哋生意，而你唯一嘅線索係月尾張帳單。
 | | |
 |---|---|
 | `/embed` | 嵌入版頁面：冇標題、背景透明、主動報高度 |
-| `public/embed.js` | 診所貼嘅腳本。由自己個 `src` 推算 widget 網址 —— 診所唔使喺兩個地方填網址 |
+| `public/embed.js` | 診所貼嘅腳本。由自己個 `src` 推算 widget 網址；個 iframe 帶住 `allow="camera; clipboard-write"` —— **唔可以拆**，拆咗跨域 iframe 入面 `getUserMedia` 會靜靜失敗 |
 | `src/middleware.ts` | 設 `frame-ancestors`。**刻意唔放喺 `next.config`** |
 | `src/lib/embed-config.ts` | 允許清單解析，fail closed |
 

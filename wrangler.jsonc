@@ -18,6 +18,15 @@
   // 客人紀錄資料庫（可選）。未建立 D1 之前留住註解 —— app 會自動用記憶體
   // 模式（唔會 crash），/records 會顯示「未接駁資料庫」警告。
   // 建立步驟見 DEPLOY.md「客人紀錄資料庫」一節。
+  // 部署前解開呢塊，填返自己嘅值（點解要喺度而唔係 .env：見 DEPLOY.md ——
+  // Workers 唔讀 .env，而 NEXT_PUBLIC_* 係 build 時烘入前端嘅，唔可以用 secret）
+  // "vars": {
+  //   "NEXT_PUBLIC_CLINIC_NAME": "Dr Timeless",
+  //   "NEXT_PUBLIC_WHATSAPP": "852xxxxxxxx",
+  //   "NEXT_PUBLIC_SITE_URL": "https://ai.drtimeless.com",
+  //   "EMBED_ALLOWED_ORIGINS": "https://www.drtimeless.com,https://drtimeless.com",
+  //   "RATE_LIMIT_DAILY_TOTAL": "300"
+  // },
   // "d1_databases": [
   //   { "binding": "VISITS_DB", "database_name": "drtimeless-visits", "database_id": "＜wrangler d1 create 出嚟嗰個 id＞" }
   // ],

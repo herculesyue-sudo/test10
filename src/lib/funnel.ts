@@ -24,6 +24,7 @@ export type FunnelStep =
   | 'analyze_started' // 撳咗分析
   | 'analyze_succeeded' // 收到報告
   | 'analyze_failed' // 分析失敗
+  | 'camera_fallback' // 頁面內相機開唔到，退咗去揀相
   | 'booking_clicked'; // 撳咗 WhatsApp 預約
 
 export const FUNNEL_STEPS: FunnelStep[] = [
@@ -34,6 +35,7 @@ export const FUNNEL_STEPS: FunnelStep[] = [
   'analyze_started',
   'analyze_succeeded',
   'analyze_failed',
+  'camera_fallback',
   'booking_clicked',
 ];
 
@@ -45,6 +47,7 @@ export const STEP_LABELS: Record<FunnelStep, string> = {
   analyze_started: '開始分析',
   analyze_succeeded: '收到報告',
   analyze_failed: '分析失敗',
+  camera_fallback: '相機開唔到，退回揀相',
   booking_clicked: '撳預約',
 };
 
@@ -103,6 +106,8 @@ export function funnelSnapshot() {
 
 /** 由計數算出每一步嘅通過率，直接指出邊一步跌最多人。 */
 export function conversionRates(counts: Partial<Record<FunnelStep, number>>) {
+  // 側事件（analyze_failed、camera_fallback）唔入呢條鏈 —— 佢哋唔係
+  // 「上一步嘅人去咗邊」，而係徵狀計數，喺 total/byDay 度睇。
   const chain: FunnelStep[] = [
     'page_view',
     'photo_added',

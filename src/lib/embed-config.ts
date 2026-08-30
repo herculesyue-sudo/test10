@@ -32,12 +32,3 @@ export function frameAncestors(): string {
   const list = allowedOrigins();
   return list.length ? `'self' ${list.join(' ')}` : "'self'";
 }
-
-/**
- * 檢查一個 origin 可唔可以嵌入。
- * 冇設定嘅時候一律拒絕（fail closed）—— 安全設定唔應該喺未設定時放行。
- */
-export function isAllowedOrigin(origin: string | null): boolean {
-  if (!origin) return false;
-  return allowedOrigins().includes(origin.replace(/\/+$/, ''));
-}

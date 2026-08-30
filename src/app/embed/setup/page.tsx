@@ -103,7 +103,8 @@ export default function SetupPage() {
               <b>⚠️ 未設定 EMBED_ALLOWED_ORIGINS —— 而家貼上官網會顯示唔到。</b>
             </div>
             <p style={{ fontSize: '0.88rem', lineHeight: 1.7 }}>
-              喺部署平台（Vercel / Railway）嘅環境變數加：
+              Cloudflare 部署：加入 <code>wrangler.jsonc</code> 嘅 <code>vars</code>{' '}
+              再重新部署（見 DEPLOY.md）。其他平台就加環境變數：
             </p>
             <Code>{`EMBED_ALLOWED_ORIGINS=https://www.drtimeless.com,https://drtimeless.com`}</Code>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)', margin: 0 }}>
@@ -123,7 +124,12 @@ export default function SetupPage() {
             想改最低高度就寫 <code>&lt;div id=&quot;drt-consult&quot; data-min-height=&quot;700&quot;&gt;</code>。
           </li>
           <li>
-            <b>手機影相要 HTTPS。</b>官網一定要行 https，否則 iOS / Android 都唔會俾開鏡頭。
+            <b>相機有三個前提。</b>①官網要行 https；②段 code 要<b>直接貼落頁面</b>，
+            唔可以俾平台再包一層自己嘅 iframe（例如 Wix 嘅「嵌入 HTML」）——
+            相機權限要一層一層傳落嚟，斷咗一層就開唔到，個 widget 甚至可能成個唔顯示；
+            ③官網唔可以送 <code>Permissions-Policy: camera=()</code> 呢類封鎖 header
+            （有啲 security plugin 會靜靜加）。就算相機開唔到，客人都仲可以揀相簿相 ——
+            工具照用得，只係冇即時自拍。
           </li>
           <li>
             <b>相片唔會經你個官網。</b>客人張相由 widget 直接送去分析，唔會存落任何伺服器，

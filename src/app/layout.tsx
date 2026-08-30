@@ -37,7 +37,8 @@ export const metadata: Metadata = {
     title: TITLE,
     description: DESCRIPTION,
   },
-  // 報告係個人化結果，唔應該入搜尋器索引
+  // 主頁要俾人搵到（佢就係個產品門口）；報告本身係 client-side 狀態，
+  // 冇獨立網址，唔會被索引。/embed 嗰邊由佢自己個 segment layout noindex。
   robots: { index: true, follow: true },
   formatDetection: { telephone: false },
 };

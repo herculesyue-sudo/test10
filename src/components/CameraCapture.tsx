@@ -75,9 +75,22 @@ export default function CameraCapture({
     } catch (e) {
       const err = e as DOMException;
       setPhase('denied');
+      // NotAllowedError 有兩個成因：客人自己撳咗拒絕，或者我哋個 iframe
+      // 冇攞到 Permissions-Policy 授權（官網嵌入嗰邊嘅設定問題）。
+      // 錯誤訊息唔可以一律賴客人 —— 嵌入版要照直講係版面未開放權限。
+      // 檢測用同步 API：navigator.permissions.query 舊 iOS Safari 冇。
+      const framed = typeof window !== 'undefined' && window.parent !== window;
+      const fp = (document as Document & {
+        featurePolicy?: { allowsFeature?: (f: string) => boolean };
+      }).featurePolicy;
+      const policyBlocked = framed && fp?.allowsFeature?.('camera') === false;
       onFallback(
         err.name === 'NotAllowedError'
-          ? '你拒絕咗相機權限'
+          ? policyBlocked
+            ? '內嵌版面未開放相機權限'
+            : framed
+              ? '開唔到相機（可能係內嵌版面未開放相機權限）'
+              : '你拒絕咗相機權限'
           : err.name === 'NotFoundError'
             ? '搵唔到相機'
             : location.protocol !== 'https:' && location.hostname !== 'localhost'

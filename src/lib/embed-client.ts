@@ -15,8 +15,12 @@ export function startHeightSync() {
 
   let last = 0;
   const post = () => {
-    // scrollHeight 而唔係 clientHeight：要嘅係內容嘅真實高度
-    const h = Math.ceil(document.documentElement.scrollHeight);
+    // 量 body 嘅 rect 高度，唔好用 documentElement.scrollHeight ——
+    // scrollHeight 有 viewport 下限：父頁一將 iframe 拉高，我哋嘅
+    // viewport 就係咁高，內容縮短之後個數字縮唔返，iframe 只加唔減。
+    // 「再分析一次」由長報告返去短表格嗰下就會留低成千 px 死位。
+    // body 冇設高度（globals.css），係 content-sized，縮得返。
+    const h = Math.ceil(document.body.getBoundingClientRect().height);
     if (h === last) return;
     last = h;
     // targetOrigin 用 '*'：父頁面網域係診所自己設嘅，呢度只送高度數字，
@@ -25,7 +29,9 @@ export function startHeightSync() {
   };
 
   const ro = new ResizeObserver(post);
-  ro.observe(document.documentElement);
+  // observe 個量度對象本身 —— 觀察 documentElement 但量 body，
+  // body 縮嗰下 documentElement 可能冇 resize，事件會漏
+  ro.observe(document.body);
   window.addEventListener('load', post);
   post();
 

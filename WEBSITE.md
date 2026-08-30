@@ -1,79 +1,90 @@
-# 喺 drtimeless.com 開一個新頁面
+# 官網（drtimeless.com）點樣接呢個工具
 
-## 要做三件事
+## 次序好重要：先有獨立網址，官網係加項
 
 ```
-1. 部署個 app        → 攞一條網址        （做一次）
-2. 官網開一個新頁面   → 例如 /ai-analysis （做一次）
-3. 貼兩行 code 落去   → 完成             （做一次）
+1. 部署個 app 去 ai.drtimeless.com     ← 必需（跟 DEPLOY.md，Cloudflare）
+2. 官網加一個掣連過去                  ← 最簡單嘅整合，下次更新官網時順手做
+3. 官網開頁面嵌入個 widget（iframe）    ← 可選加強版，有前提（下面講）
 ```
 
-第 1 步唔做唔得。個工具要一個伺服器幫你叫 AI —— **你嘅 API key 一定要留喺
+第 1 步冇得慳。個工具要一個伺服器幫你叫 AI —— **你嘅 API key 一定要留喺
 伺服器度**，唔可以放喺官網嘅網頁入面（放咗等於公開俾全世界用你個 key）。
+而且職員後台（`/records`）、QR 海報（`/share`）、WhatsApp／IG 派發連結
+全部住喺獨立網址上面 —— 就算官網咩都唔改，個工具已經完整用得。
+
+> **點解唔使急住改官網**：你嘅三條派客路（QR 海報、IG、WhatsApp）本身
+> 就係指去獨立網址嘅，唔經官網。官網嗰步係俾「自己搵上門」嘅客多一個
+> 入口，唔係個工具能唔能夠用嘅前提。
 
 ---
 
-## 第 1 步：部署
+## 第 1 步：部署去 ai.drtimeless.com
 
-跟 [DEPLOY.md](./DEPLOY.md)。最快係撳嗰個 Deploy 掣，唔使用 terminal。
+跟 [DEPLOY.md](./DEPLOY.md) 嘅 Cloudflare 部分（你個網域本身喺 Cloudflare，
+同一個 dashboard 搞掂）。完成之後你會有 `https://ai.drtimeless.com`。
 
-完成之後你會有一條網址，例如 `https://drtimeless-ai.vercel.app`。
-
-**部署好之後，喺 Vercel 環境變數加：**
+如果打算做第 3 步（嵌入），記得喺 `wrangler.jsonc` 嘅 `vars` 加：
 
 ```
 EMBED_ALLOWED_ORIGINS=https://www.drtimeless.com,https://drtimeless.com
 ```
 
 冇呢個，個 widget 貼咗落官網都唔會顯示（預設唔准任何外部網站嵌入 ——
-呢個係防止同行攞你個工具去用你嘅 API 額度）。加完要重新部署。
+呢個係防止同行攞你個工具去用你嘅 API 額度）。改完要重新部署。
 
 ---
 
-## 第 2 步：喺官網開新頁面
+## 第 2 步：官網加一個掣（最簡單，適合所有網站系統）
 
-我唔知你官網用咩系統，所以四個常見嘅都寫咗。
+喺主選單或者當眼位置加一個連結：
 
-### WordPress
-1. 後台 → **頁面 → 新增頁面**
-2. 標題填「AI 免費面部分析」
-3. 撳右上角 **⋮ → 程式碼編輯器**（或者加一個「自訂 HTML」區塊）
-4. 貼第 3 步嘅 code
-5. **發佈**
+```html
+<a href="https://ai.drtimeless.com">AI 免費面部分析</a>
+```
 
-### Wix
-1. 左邊選單 → **頁面 → + 新增頁面 → 空白頁**
-2. 頂部 **+ 新增 → 嵌入 → 嵌入 HTML / HTML iframe**
-3. 撳 **輸入程式碼**，貼第 3 步嘅 code
-4. 將個框拉闊到成版（重要，否則會出現兩層 scrollbar）
-5. **發佈**
-
-### Squarespace
-1. **Pages → + → Blank Page**
-2. 加一個 **Code Block**（唔係 Embed Block）
-3. 貼第 3 步嘅 code
-4. **Save**
-
-> Squarespace 個人版（Personal plan）冇 Code Block。冇嘅話，就喺頁面放一個
-> 掣連去你條 Vercel 網址，唔嵌入 —— 效果一樣，只係唔喺官網入面顯示。
-
-### Webflow / 自建網站
-加一個 **Embed / Custom Code** 元素，貼第 3 步嘅 code。
+就係咁多。冇 iframe、冇權限問題、冇高度問題；客人撳入去係全螢幕版，
+手機影相體驗仲好過嵌入版。想正式啲就開一個 `/ai-analysis` 頁面，
+放低下面「新頁面嘅文字」嗰啲文案，個掣擺喺中間。
 
 ---
 
-## 第 3 步：貼呢兩行
+## 第 3 步（可選）：嵌入 widget
 
-把 `https://你條網址` 換成第 1 步攞到嗰條。
+想客人唔離開官網就用到，先做呢步。貼呢兩行：
 
 ```html
 <div id="drt-consult"></div>
-<script src="https://你條網址/embed.js" async></script>
+<script src="https://ai.drtimeless.com/embed.js" async></script>
 ```
 
 **個 `<div>` 一定要喺 `<script>` 之前**，否則腳本搵唔到擺喺邊。
-
 高度會自動調校，唔使自己度尺寸。
+
+### ⚠️ 嵌入版相機有三個前提
+
+1. 官網要行 **https**（drtimeless.com 本身係，✓）
+2. 段 code 要**直接貼入頁面 HTML**，唔可以俾平台再包一層佢自己嘅
+   iframe —— 相機權限（Permissions-Policy）要一層一層傳落嚟，
+   中間斷咗一層，相機就開唔到，個 widget 甚至可能成個唔顯示
+   （因為中間嗰層 iframe 嘅網域唔喺允許清單入面）
+3. 官網唔可以送 `Permissions-Policy: camera=()` 呢類封鎖 header
+   （有啲 security plugin 會靜靜加）
+
+就算相機開唔到，客人都仲可以揀相簿相 —— 工具照用得，只係冇即時自拍。
+貼完之後開 `https://ai.drtimeless.com/embed/setup`（要職員密碼），
+嗰版會即場檢查允許清單設咗未。
+
+### 各網站系統點貼
+
+- **自建靜態網站（drtimeless.com 而家就係）／Webflow**：直接編輯頁面
+  HTML，貼上面兩行。✓ 相機正常。
+- **WordPress**：新增頁面 → 「自訂 HTML」區塊 → 貼 code。✓ 相機正常。
+- **Squarespace**：**Code Block**（唔係 Embed Block）→ 貼 code。✓ 相機正常。
+  個人版（Personal plan）冇 Code Block —— 用返第 2 步嘅連結方案。
+- **Wix**：佢嘅「嵌入 HTML」會將你段 code 包入佢自己嘅 sandbox iframe ——
+  正正係上面前提 2 嘅斷權限情況，個 widget 好大機會**成個唔顯示**。
+  Wix 網站請用第 2 步嘅連結方案，唔好嵌入。
 
 ---
 
@@ -139,7 +150,7 @@ AI 免費面部分析
 用**手機**（唔好用電腦）開嗰個新頁面：
 
 - [ ] 個 widget 顯示到（顯示唔到 → 檢查 `EMBED_ALLOWED_ORIGINS` 有冇加、有冇重新部署）
-- [ ] 撳到影相，開到手機相機
+- [ ] 撳到影相，開到手機相機（開唔到但可以揀相 → 睇返上面「嵌入版相機有三個前提」）
 - [ ] 出到報告，療程係你哋真係有嘅
 - [ ] 報告**冇** 🧪 測試模式橫額（有 → `.env` 未移除 `DEMO_MODE`）
 - [ ] 撳「WhatsApp 預約」→ 開到你哋個號碼，訊息預先填好
