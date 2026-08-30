@@ -34,7 +34,7 @@
   // 喺自己電腦 deploy 嘅話：npx wrangler d1 list 搵 drtimeless-visits
   // 個 uuid，貼住入嚟先好行 cf:deploy。
   "d1_databases": [
-    { "binding": "VISITS_DB", "database_name": "drtimeless-visits", "database_id": "AUTO_FILLED_BY_CI" }
+    { "binding": "VISITS_DB", "database_name": "drtimeless-visits", "database_id": "8a7c4f71-c4d3-419c-8f1c-41230243fafa" }
   ],
 
   // 分析一次要等 Anthropic 回應 20–30 秒。喺 Workers，等 fetch 嘅時間
