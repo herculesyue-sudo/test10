@@ -133,7 +133,9 @@ export default function SharePage() {
               <p style={{ fontSize: '0.8rem', color: 'var(--text-dim)', margin: '12px 0 0' }}>
                 掃唔到嘅話，多數係 dev server 淨係聽 localhost。用{' '}
                 <code>npm run dev -- -H 0.0.0.0</code> 重新開就得。
-                影相冇問題 —— 呢個工具用系統相機（file input），唔需要 HTTPS。
+                注意：http 之下頁面內相機開唔到（要 HTTPS），會自動退去
+                系統揀相／影相 —— 流程照試得完。想試埋頁面內相機就用{' '}
+                <code>npm run tunnel</code>。
               </p>
             </>
           ) : (

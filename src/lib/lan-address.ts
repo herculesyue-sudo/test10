@@ -24,9 +24,11 @@ import * as os from 'node:os';
  * ⚠️ 呢個係**測試用**，唔係印海報用。區域網位址出咗診所個 Wi-Fi 就冇效，
  *    所以 /share 只會攞佢做「測試 QR」，正式海報仍然要求公開網址。
  *
- * 相機點解喺 http 都用得：影相係用 `<input type="file" capture="user">`，
- * 即係叫作業系統個相機 app，唔係 getUserMedia。前者唔需要 secure context，
- * 所以區域網用 http 都影到相，成個流程試得足。
+ * 相機喺 http 之下嘅行為：頁面內即時相機用 getUserMedia，要 secure
+ * context —— 區域網 http 開唔到，會自動退去 `<input type="file">`
+ * 系統選擇器（揀相簿或者叫系統相機影）。即係流程照試得完，只係行嘅
+ * 係後備路，同時每次都會記一個 camera_fallback 漏斗事件（測試時見到
+ * 呢個數字唔使出奇）。要試埋頁面內相機就用 `npm run tunnel`（https）。
  */
 
 /**

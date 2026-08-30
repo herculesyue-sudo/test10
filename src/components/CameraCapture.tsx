@@ -77,18 +77,22 @@ export default function CameraCapture({
       setPhase('denied');
       // NotAllowedError 有兩個成因：客人自己撳咗拒絕，或者我哋個 iframe
       // 冇攞到 Permissions-Policy 授權（官網嵌入嗰邊嘅設定問題）。
-      // 錯誤訊息唔可以一律賴客人 —— 嵌入版要照直講係版面未開放權限。
-      // 檢測用同步 API：navigator.permissions.query 舊 iOS Safari 冇。
+      // 錯誤訊息唔可以賴錯人：政策封鎖唔可以賴客人，客人拒絕亦唔可以
+      // 賴去官網設定度（否則職員會走去 debug 一個唔存在嘅設定問題）。
+      // featurePolicy 探測（Chromium 有）三個結果要分開處理：
+      //   false → 政策封鎖，肯定係嵌入設定問題
+      //   true  → 政策開放，NotAllowedError 就肯定係客人／瀏覽器層面拒絕
+      //   冇呢個 API（Safari/Firefox）→ 喺 iframe 入面先至含糊，要對沖字眼
+      // 唔用 navigator.permissions.query：舊 iOS Safari 冇，而且係 async。
       const framed = typeof window !== 'undefined' && window.parent !== window;
-      const fp = (document as Document & {
+      const policyAllows = (document as Document & {
         featurePolicy?: { allowsFeature?: (f: string) => boolean };
-      }).featurePolicy;
-      const policyBlocked = framed && fp?.allowsFeature?.('camera') === false;
+      }).featurePolicy?.allowsFeature?.('camera');
       onFallback(
         err.name === 'NotAllowedError'
-          ? policyBlocked
+          ? policyAllows === false
             ? '內嵌版面未開放相機權限'
-            : framed
+            : framed && policyAllows === undefined
               ? '開唔到相機（可能係內嵌版面未開放相機權限）'
               : '你拒絕咗相機權限'
           : err.name === 'NotFoundError'

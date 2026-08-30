@@ -24,10 +24,13 @@
 跟 [DEPLOY.md](./DEPLOY.md) 嘅 Cloudflare 部分（你個網域本身喺 Cloudflare，
 同一個 dashboard 搞掂）。完成之後你會有 `https://ai.drtimeless.com`。
 
-如果打算做第 3 步（嵌入），記得喺 `wrangler.jsonc` 嘅 `vars` 加：
+如果打算做第 3 步（嵌入），記得喺 `wrangler.jsonc` 嘅 `vars` 入面加
+（JSONC 格式，`wrangler.jsonc` 有現成註釋範本，解開就得）：
 
-```
-EMBED_ALLOWED_ORIGINS=https://www.drtimeless.com,https://drtimeless.com
+```jsonc
+"vars": {
+  "EMBED_ALLOWED_ORIGINS": "https://www.drtimeless.com,https://drtimeless.com"
+}
 ```
 
 冇呢個，個 widget 貼咗落官網都唔會顯示（預設唔准任何外部網站嵌入 ——
@@ -71,7 +74,8 @@ EMBED_ALLOWED_ORIGINS=https://www.drtimeless.com,https://drtimeless.com
 3. 官網唔可以送 `Permissions-Policy: camera=()` 呢類封鎖 header
    （有啲 security plugin 會靜靜加）
 
-就算相機開唔到，客人都仲可以揀相簿相 —— 工具照用得，只係冇即時自拍。
+就算頁面內相機開唔到，客人都仲可以撳掣用系統選擇器揀相簿相或者影相
+（系統相機唔受呢啲權限限制）—— 工具照用得。
 貼完之後開 `https://ai.drtimeless.com/embed/setup`（要職員密碼），
 嗰版會即場檢查允許清單設咗未。
 
@@ -126,8 +130,9 @@ AI 免費面部分析
 分析結果由 AI 根據相片產生，屬初步參考，並非醫學診斷，
 亦唔可以取代註冊醫生嘅面對面檢查。光線、角度同化妝都會影響判斷。
 
-喺香港，注射（肉毒、透明質酸）及高能量儀器（激光、射頻、聚焦超聲波）
-療程，均須由註冊醫生評估及施行。
+喺香港，注射類療程（肉毒、透明質酸等）須由註冊醫生施行；
+所有療程（包括激光、射頻、聚焦超聲波等儀器療程）喺進行之前，
+均須經註冊醫生評估。
 
 如發現任何可疑皮膚病變，請盡快諮詢皮膚科醫生。
 ```

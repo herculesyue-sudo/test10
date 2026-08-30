@@ -128,8 +128,8 @@ export default function SetupPage() {
             唔可以俾平台再包一層自己嘅 iframe（例如 Wix 嘅「嵌入 HTML」）——
             相機權限要一層一層傳落嚟，斷咗一層就開唔到，個 widget 甚至可能成個唔顯示；
             ③官網唔可以送 <code>Permissions-Policy: camera=()</code> 呢類封鎖 header
-            （有啲 security plugin 會靜靜加）。就算相機開唔到，客人都仲可以揀相簿相 ——
-            工具照用得，只係冇即時自拍。
+            （有啲 security plugin 會靜靜加）。就算頁面內相機開唔到，客人都仲可以撳掣
+            用系統選擇器揀相簿相或者影相 —— 工具照用得。
           </li>
           <li>
             <b>相片唔會經你個官網。</b>客人張相由 widget 直接送去分析，唔會存落任何伺服器，

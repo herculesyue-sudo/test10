@@ -173,9 +173,10 @@ localhost** —— 個 QR 係跟「你開緊邊條網址」砌嘅。
 
 ---
 
-## 正式部署（用 terminal 嘅話）
+## 正式部署去 Vercel（如果唔用 Cloudflare 先睇呢節）
 
-用 Vercel（免費額度夠一間診所用），大約 15 分鐘。
+主要部署路徑係最上面嘅 Cloudflare —— 你個網域本身喺嗰度。
+以下係 Vercel 版流程（免費額度夠一間診所用），大約 15 分鐘。
 
 ---
 
@@ -295,6 +296,7 @@ MVP（`/`）固定行最平模式，**約 HK$0.05 一次**。
 三重保護：`RATE_LIMIT_PER_IP`（每個 IP 每個鐘）、`RATE_LIMIT_DAILY_TOTAL`
 （全站每日，最壞情況嘅硬上限）、Anthropic console 嘅每月上限（最後一道）。
 
-Vercel 免費額度對呢個用量係夠嘅。要留意嘅係 **Hobby 方案 function 上限 60 秒** ——
-夠 MVP 用（最平模式一次約 20–30 秒），但 `/pro` 開 `max` 模式或者多次共識就
-要升 Pro（300 秒）。
+行 Cloudflare（主要路徑）嘅話，上面 Workers Paid US$5/月已包 30 秒 CPU，
+呢個用量完全冇問題。行 Vercel 嘅話免費額度亦夠，但 **Hobby 方案 function
+上限 60 秒** —— 夠 MVP 用（最平模式一次約 20–30 秒），`/pro` 開 `max` 模式
+或者多次共識就要升 Pro（300 秒）。
