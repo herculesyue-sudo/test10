@@ -448,10 +448,16 @@ console.log('\n── 區域網位址（喺本機用手機試）──');
   const u = lanUrl('3000');
   if (addrs.length) {
     check('砌到區域網網址', u === `http://${addrs[0]}:3000`, String(u));
+    // 呢個斷言講嘅係「靠 Host 判斷」嗰條路 —— 但設咗 NEXT_PUBLIC_SITE_URL
+    // 嘅環境（例如 CI）resolvePublicUrl 會刻意唔理 Host（另有測試專門驗），
+    // 所以要暫時清走佢先測到本意
+    const savedSiteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+    delete process.env.NEXT_PUBLIC_SITE_URL;
     check(
       '區域網位址唔會被當成可印海報',
       resolvePublicUrl(new Headers({ host: `${addrs[0]}:3000` }), 'x').printable === false,
     );
+    if (savedSiteUrl !== undefined) process.env.NEXT_PUBLIC_SITE_URL = savedSiteUrl;
     check('冇 port 時唔會多咗個冒號', lanUrl('') === `http://${addrs[0]}`, String(lanUrl('')));
   } else {
     // 攞唔到就要老實回 null，唔可以亂猜個 IP 出嚟俾人掃
