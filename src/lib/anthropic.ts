@@ -61,7 +61,7 @@ export const USD_TO_HKD = 7.8;
 /** 只用到 messages 資源，所以三隻 client（直連 / AWS / Bedrock）都收窄到呢個型別。 */
 type ClaudeClient = Pick<Anthropic, 'messages'>;
 
-/** 設咗就行 Amazon Bedrock（值用 "global"，行全球端點，冇 10% 區域加價）。 */
+/** 設咗就行 Amazon Bedrock。值要係實際區域（如 us-west-2）——"global" 主機名唔存在。 */
 export const bedrockMode = () => !!process.env.ANTHROPIC_BEDROCK_REGION;
 
 let _client: ClaudeClient | null = null;

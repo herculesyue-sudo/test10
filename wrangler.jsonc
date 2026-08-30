@@ -24,8 +24,9 @@
   "vars": {
     // 行 Amazon Bedrock 通道（香港 AWS 帳戶用到；ANTHROPIC_API_KEY 放
     // AWS Console → Bedrock → API keys 出嘅 long-term key）。
-    // "global" = 全球端點，冇單一區域嘅 10% 加價。刪走呢行就轉返直連 Anthropic。
-    "ANTHROPIC_BEDROCK_REGION": "global",
+    // 注意：冇 "global" 呢個主機名（bedrock-mantle.global.api.aws 唔存在，
+    // 2026-08 實測 DNS 解唔到），一定要指定實際區域。刪走呢行就轉返直連。
+    "ANTHROPIC_BEDROCK_REGION": "us-west-2",
     "NEXT_PUBLIC_CLINIC_NAME": "Dr Timeless",
     "NEXT_PUBLIC_WHATSAPP": "85264843111",
     "NEXT_PUBLIC_SITE_URL": "https://ai.drtimeless.com",
