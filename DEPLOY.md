@@ -44,13 +44,16 @@ npx wrangler secret put STAFF_TOKEN
 npx wrangler secret put FUNNEL_TOKEN
 ```
 
-> **冇外國信用卡？** 可以唔用 console.anthropic.com，改行 **Claude Platform on AWS**
-> （帳單經 AWS Marketplace 收，AWS 收香港卡；model、格式、牌價同直連一樣）：
-> 喺 AWS Console 開通「Claude Platform on AWS」→ 建 workspace → API keys 出一條 key。
-> 然後喺 `wrangler.jsonc` 嘅 `vars` 加 `ANTHROPIC_AWS_WORKSPACE_ID`（`wrkspc_...`）
-> 同 `ANTHROPIC_AWS_REGION`（workspace 嘅 region），再將嗰條 AWS key
-> `secret put` 入 `ANTHROPIC_API_KEY`。兩個 vars 一設，app 就自動行 AWS 通道
-> （見 `src/lib/anthropic.ts` 嘅 `client()`）。
+> **冇外國信用卡？** 可以唔用 console.anthropic.com，改行 **Amazon Bedrock**
+> （AWS 原生服務，香港 AWS 帳戶用到，帳單經 AWS 收）。做法：
+> ① Bedrock console → Model catalog → 提交一次 Anthropic 用途表格；
+> ② Bedrock → API keys → Generate **long-term** API key（`ABSK` 開頭）；
+> ③ 將條 key `secret put` 入 `ANTHROPIC_API_KEY`；
+> ④ `wrangler.jsonc` 嘅 `vars` 保持 `ANTHROPIC_BEDROCK_REGION: "global"`。
+> 注意 Bedrock 唔支援 structured outputs，`src/lib/anthropic.ts` 嘅
+> `analyzeOnce` 有專門分支（JSON Schema 入 prompt + 本地 Zod 驗證）處理。
+> （另一條 AWS 通道 Claude Platform on AWS 香港帳戶暫時買唔到 ——
+> Marketplace 會話 not available in your current region，2026-08 實測。）
 
 **非秘密** —— 加喺 `wrangler.jsonc` 個 `vars` 入面：
 

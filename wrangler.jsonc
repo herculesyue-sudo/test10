@@ -22,6 +22,10 @@
   // NEXT_PUBLIC_* 同時要喺 build 時見到 —— CI（.github/workflows/deploy.yml）
   // 會喺 build 步驟 export 同一啲值，兩邊要保持一致。
   "vars": {
+    // 行 Amazon Bedrock 通道（香港 AWS 帳戶用到；ANTHROPIC_API_KEY 放
+    // AWS Console → Bedrock → API keys 出嘅 long-term key）。
+    // "global" = 全球端點，冇單一區域嘅 10% 加價。刪走呢行就轉返直連 Anthropic。
+    "ANTHROPIC_BEDROCK_REGION": "global",
     "NEXT_PUBLIC_CLINIC_NAME": "Dr Timeless",
     "NEXT_PUBLIC_WHATSAPP": "85264843111",
     "NEXT_PUBLIC_SITE_URL": "https://ai.drtimeless.com",

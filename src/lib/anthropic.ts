@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { AnthropicAws } from '@anthropic-ai/aws-sdk';
+import { AnthropicBedrockMantle } from '@anthropic-ai/bedrock-sdk';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { AnalysisSchema, type Analysis } from './schema';
 import { SYSTEM_PROMPT, buildUserPrompt } from './prompt';
@@ -57,24 +58,38 @@ export const TIERS: Record<Tier, TierConfig> = {
 
 export const USD_TO_HKD = 7.8;
 
-let _client: Anthropic | null = null;
-export function client(): Anthropic {
+/** 只用到 messages 資源，所以三隻 client（直連 / AWS / Bedrock）都收窄到呢個型別。 */
+type ClaudeClient = Pick<Anthropic, 'messages'>;
+
+/** 設咗就行 Amazon Bedrock（值用 "global"，行全球端點，冇 10% 區域加價）。 */
+export const bedrockMode = () => !!process.env.ANTHROPIC_BEDROCK_REGION;
+
+let _client: ClaudeClient | null = null;
+export function client(): ClaudeClient {
   if (!_client) {
     if (!process.env.ANTHROPIC_API_KEY) {
       throw new Error('未設定 ANTHROPIC_API_KEY。請複製 .env.example 做 .env 並填入 API key。');
     }
-    // 兩條付款通道，二揀一（香港冇外國卡嘅話行 AWS 嗰條）：
-    //  - 設咗 ANTHROPIC_AWS_WORKSPACE_ID → Claude Platform on AWS，
-    //    ANTHROPIC_API_KEY 要用 AWS Console（Claude Platform on AWS → API keys）出嗰條，
-    //    帳單經 AWS Marketplace；model 名、請求格式、價錢同直連完全一樣。
-    //  - 冇設 → 直連 Anthropic，ANTHROPIC_API_KEY 用 console.anthropic.com 出嗰條。
-    _client = process.env.ANTHROPIC_AWS_WORKSPACE_ID
-      ? new AnthropicAws({
+    // 三條付款通道，按環境變數揀（香港冇外國卡 → Bedrock 嗰條）：
+    //  - ANTHROPIC_BEDROCK_REGION 已設 → Amazon Bedrock（bedrock-mantle 端點），
+    //    ANTHROPIC_API_KEY 放 AWS Console（Bedrock → API keys）出嘅 long-term key。
+    //    香港 AWS 帳戶用到；帳單經 AWS。注意 Bedrock 唔支援 structured outputs，
+    //    analyzeOnce 有專門分支處理。
+    //  - ANTHROPIC_AWS_WORKSPACE_ID 已設 → Claude Platform on AWS（Marketplace 訂閱；
+    //    香港帳戶暫時買唔到，留返做備用通道）。
+    //  - 兩樣都冇 → 直連 Anthropic，key 用 console.anthropic.com 出嗰條。
+    _client = process.env.ANTHROPIC_BEDROCK_REGION
+      ? new AnthropicBedrockMantle({
           apiKey: process.env.ANTHROPIC_API_KEY,
-          awsRegion: process.env.ANTHROPIC_AWS_REGION,
-          workspaceId: process.env.ANTHROPIC_AWS_WORKSPACE_ID,
+          awsRegion: process.env.ANTHROPIC_BEDROCK_REGION,
         })
-      : new Anthropic();
+      : process.env.ANTHROPIC_AWS_WORKSPACE_ID
+        ? new AnthropicAws({
+            apiKey: process.env.ANTHROPIC_API_KEY,
+            awsRegion: process.env.ANTHROPIC_AWS_REGION,
+            workspaceId: process.env.ANTHROPIC_AWS_WORKSPACE_ID,
+          })
+        : new Anthropic();
   }
   return _client;
 }
@@ -130,33 +145,79 @@ export async function analyzeOnce(opts: AnalyzeOptions): Promise<AnalyzeResult> 
     text: buildUserPrompt({ goals: opts.goals, notes: opts.notes, age: opts.age, gender: opts.gender }),
   });
 
-  const params: Anthropic.MessageCreateParamsNonStreaming = {
-    model: cfg.model,
+  // 系統提示長期不變 → 設 cache breakpoint，重複請求慳約 90% input 成本
+  const base = {
     max_tokens: cfg.maxTokens,
-    // 系統提示長期不變 → 設 cache breakpoint，重複請求慳約 90% input 成本
-    system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
-    messages: [{ role: 'user', content }],
-    output_config: {
-      format: zodOutputFormat(AnalysisSchema),
-      ...(cfg.effort ? { effort: cfg.effort } : {}),
-    },
+    system: [{ type: 'text' as const, text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' as const } }],
     ...(cfg.adaptiveThinking ? { thinking: { type: 'adaptive' as const } } : {}),
   };
 
-  const msg = await client().messages.parse(params);
+  let msg: Anthropic.Message;
+  let output: Analysis;
 
-  if (msg.stop_reason === 'refusal') {
-    throw new Error('模型基於安全政策拒絕處理呢張相。請確認相片內容並重試。');
-  }
-  if (!msg.parsed_output) {
-    throw new Error('模型輸出未能解析成預期格式，請重試。');
+  if (bedrockMode()) {
+    // Bedrock Mantle 唔支援 structured outputs（output_config.format 會俾人拒）——
+    // 改為將 JSON Schema 附入 prompt 要求模型淨輸出 JSON，收到後用返同一個
+    // Zod schema 喺本地驗證，保證落到 postProcess 嘅嘢同直連版一樣嚴格。
+    // model 名喺 Bedrock 要加 anthropic. 前綴。
+    content.push({
+      type: 'text',
+      text:
+        '輸出要求：只輸出一個符合以下 JSON Schema 嘅 JSON object。' +
+        '唔好用 markdown code fence，唔好喺 JSON 前後加任何文字。\n' +
+        JSON.stringify(zodOutputFormat(AnalysisSchema).schema),
+    });
+    msg = await client().messages.create({
+      ...base,
+      model: `anthropic.${cfg.model}`,
+      messages: [{ role: 'user', content }],
+      ...(cfg.effort ? { output_config: { effort: cfg.effort } } : {}),
+    });
+    if (msg.stop_reason === 'refusal') {
+      throw new Error('模型基於安全政策拒絕處理呢張相。請確認相片內容並重試。');
+    }
+    const text = msg.content
+      .filter((b): b is Anthropic.TextBlock => b.type === 'text')
+      .map((b) => b.text)
+      .join('');
+    const start = text.indexOf('{');
+    const end = text.lastIndexOf('}');
+    if (start < 0 || end <= start) {
+      throw new Error('模型輸出未能解析成預期格式，請重試。');
+    }
+    try {
+      output = AnalysisSchema.parse(JSON.parse(text.slice(start, end + 1)));
+    } catch {
+      throw new Error('模型輸出未能解析成預期格式，請重試。');
+    }
+  } else {
+    const params: Anthropic.MessageCreateParamsNonStreaming = {
+      ...base,
+      model: cfg.model,
+      messages: [{ role: 'user', content }],
+      output_config: {
+        format: zodOutputFormat(AnalysisSchema),
+        ...(cfg.effort ? { effort: cfg.effort } : {}),
+      },
+    };
+
+    const parsed = await client().messages.parse(params);
+
+    if (parsed.stop_reason === 'refusal') {
+      throw new Error('模型基於安全政策拒絕處理呢張相。請確認相片內容並重試。');
+    }
+    if (!parsed.parsed_output) {
+      throw new Error('模型輸出未能解析成預期格式，請重試。');
+    }
+    msg = parsed;
+    output = parsed.parsed_output;
   }
 
   const inTok = msg.usage.input_tokens + (msg.usage.cache_creation_input_tokens ?? 0);
   const cacheRead = msg.usage.cache_read_input_tokens ?? 0;
 
   // 確定性後處理：prompt 求個模型跟嘅規則，喺呢度變成保證。
-  const { analysis, adjustments } = postProcess(msg.parsed_output);
+  const { analysis, adjustments } = postProcess(output);
   if (adjustments.length && process.env.NODE_ENV !== 'production') {
     console.log(`[postprocess] ${adjustments.length} 項修正：`, adjustments.map((x) => x.rule).join(', '));
   }
