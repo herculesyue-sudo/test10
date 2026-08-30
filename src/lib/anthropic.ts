@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { AnthropicAws } from '@anthropic-ai/aws-sdk';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { AnalysisSchema, type Analysis } from './schema';
 import { SYSTEM_PROMPT, buildUserPrompt } from './prompt';
@@ -62,7 +63,18 @@ export function client(): Anthropic {
     if (!process.env.ANTHROPIC_API_KEY) {
       throw new Error('未設定 ANTHROPIC_API_KEY。請複製 .env.example 做 .env 並填入 API key。');
     }
-    _client = new Anthropic();
+    // 兩條付款通道，二揀一（香港冇外國卡嘅話行 AWS 嗰條）：
+    //  - 設咗 ANTHROPIC_AWS_WORKSPACE_ID → Claude Platform on AWS，
+    //    ANTHROPIC_API_KEY 要用 AWS Console（Claude Platform on AWS → API keys）出嗰條，
+    //    帳單經 AWS Marketplace；model 名、請求格式、價錢同直連完全一樣。
+    //  - 冇設 → 直連 Anthropic，ANTHROPIC_API_KEY 用 console.anthropic.com 出嗰條。
+    _client = process.env.ANTHROPIC_AWS_WORKSPACE_ID
+      ? new AnthropicAws({
+          apiKey: process.env.ANTHROPIC_API_KEY,
+          awsRegion: process.env.ANTHROPIC_AWS_REGION,
+          workspaceId: process.env.ANTHROPIC_AWS_WORKSPACE_ID,
+        })
+      : new Anthropic();
   }
   return _client;
 }

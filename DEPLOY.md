@@ -44,6 +44,14 @@ npx wrangler secret put STAFF_TOKEN
 npx wrangler secret put FUNNEL_TOKEN
 ```
 
+> **冇外國信用卡？** 可以唔用 console.anthropic.com，改行 **Claude Platform on AWS**
+> （帳單經 AWS Marketplace 收，AWS 收香港卡；model、格式、牌價同直連一樣）：
+> 喺 AWS Console 開通「Claude Platform on AWS」→ 建 workspace → API keys 出一條 key。
+> 然後喺 `wrangler.jsonc` 嘅 `vars` 加 `ANTHROPIC_AWS_WORKSPACE_ID`（`wrkspc_...`）
+> 同 `ANTHROPIC_AWS_REGION`（workspace 嘅 region），再將嗰條 AWS key
+> `secret put` 入 `ANTHROPIC_API_KEY`。兩個 vars 一設，app 就自動行 AWS 通道
+> （見 `src/lib/anthropic.ts` 嘅 `client()`）。
+
 **非秘密** —— 加喺 `wrangler.jsonc` 個 `vars` 入面：
 
 ```jsonc

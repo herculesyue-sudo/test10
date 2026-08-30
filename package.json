@@ -20,6 +20,7 @@
     "report": "tsx scripts/report.ts"
   },
   "dependencies": {
+    "@anthropic-ai/aws-sdk": "^0.6.6",
     "@anthropic-ai/sdk": "^0.116.0",
     "next": "^15.5.4",
     "qrcode": "^1.5.4",
