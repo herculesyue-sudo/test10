@@ -2,6 +2,9 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "drtimeless-ai-consult",
   "main": ".open-next/worker.js",
+  "account_id": "26426ea61db233450b28d7229dc6ccfb",
+  // 部署時自動掛 subdomain（個 zone 喺同一帳戶，DNS 會自動加）
+  "routes": [{ "pattern": "ai.drtimeless.com", "custom_domain": true }],
   "compatibility_date": "2026-08-01",
 
   // nodejs_compat 一定要開：呢個 app 用咗 node:os、Buffer、
@@ -15,22 +18,24 @@
 
   "observability": { "enabled": true },
 
-  // 部署前解開呢塊，填返自己嘅值（點解要喺度而唔係 .env：見 DEPLOY.md ——
-  // Workers 唔讀 .env，而 NEXT_PUBLIC_* 係 build 時烘入前端嘅，唔可以用 secret）
-  // "vars": {
-  //   "NEXT_PUBLIC_CLINIC_NAME": "Dr Timeless",
-  //   "NEXT_PUBLIC_WHATSAPP": "852xxxxxxxx",
-  //   "NEXT_PUBLIC_SITE_URL": "https://ai.drtimeless.com",
-  //   "EMBED_ALLOWED_ORIGINS": "https://www.drtimeless.com,https://drtimeless.com",
-  //   "RATE_LIMIT_DAILY_TOTAL": "300"
-  // },
+  // 點解喺度而唔係 .env：Workers 唔讀 .env（見 DEPLOY.md）。
+  // NEXT_PUBLIC_* 同時要喺 build 時見到 —— CI（.github/workflows/deploy.yml）
+  // 會喺 build 步驟 export 同一啲值，兩邊要保持一致。
+  "vars": {
+    "NEXT_PUBLIC_CLINIC_NAME": "Dr Timeless",
+    "NEXT_PUBLIC_WHATSAPP": "85264843111",
+    "NEXT_PUBLIC_SITE_URL": "https://ai.drtimeless.com",
+    "EMBED_ALLOWED_ORIGINS": "https://www.drtimeless.com,https://drtimeless.com",
+    "RATE_LIMIT_DAILY_TOTAL": "300"
+  },
 
-  // 客人紀錄資料庫（可選）。未建立 D1 之前留住註解 —— app 會自動用記憶體
-  // 模式（唔會 crash），/records 會顯示「未接駁資料庫」警告。
-  // 建立步驟見 DEPLOY.md「客人紀錄資料庫」一節。
-  // "d1_databases": [
-  //   { "binding": "VISITS_DB", "database_name": "drtimeless-visits", "database_id": "＜wrangler d1 create 出嚟嗰個 id＞" }
-  // ],
+  // 客人紀錄資料庫。database_id 個 placeholder 由 CI 自動填
+  //（.github/workflows/deploy.yml 會 wrangler d1 list 攞真 id 再替換）。
+  // 喺自己電腦 deploy 嘅話：npx wrangler d1 list 搵 drtimeless-visits
+  // 個 uuid，貼住入嚟先好行 cf:deploy。
+  "d1_databases": [
+    { "binding": "VISITS_DB", "database_name": "drtimeless-visits", "database_id": "AUTO_FILLED_BY_CI" }
+  ],
 
   // 分析一次要等 Anthropic 回應 20–30 秒。喺 Workers，等 fetch 嘅時間
   // **唔計 CPU 時間**，所以呢個唔係問題 —— 但 CPU 上限仍然要調高少少，

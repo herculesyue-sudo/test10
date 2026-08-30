@@ -6,6 +6,20 @@ drtimeless.com 本身已經喺 Cloudflare（帳戶入面有 `drtimeless-claim-ap
 worker），所以部署去 Cloudflare 最順：同一個 dashboard、同一張帳單，
 仲可以直接掛個 subdomain，唔使搞跨供應商 DNS。
 
+### 🤖 自動部署（已設定，建議用呢個）
+
+`.github/workflows/deploy.yml` 會喺每次 push 上開發 branch 時自動：
+起 D1（冇先起）→ 行 schema → 同步 secrets → build → deploy →
+smoke test。一次過設定：GitHub repo → Settings → Secrets → Actions
+加 `CLOUDFLARE_API_TOKEN`（Cloudflare dashboard → My Profile →
+API Tokens → 「Edit Cloudflare Workers」template，account 揀自己、
+zone 揀 drtimeless.com）。`ANTHROPIC_API_KEY`／`STAFF_TOKEN`／
+`FUNNEL_TOKEN` 可以一併加做 GitHub secrets（會自動 `wrangler secret
+put`）；已經喺 Worker 上面設過嘅唔使再加。自訂網域 ai.drtimeless.com
+喺 `wrangler.jsonc` 嘅 `routes` 設咗，部署時自動掛。
+
+### 手動部署（如果想喺自己電腦行）
+
 專案已經配置好晒（`wrangler.jsonc` + `open-next.config.ts`），
 喺你部電腦行：
 

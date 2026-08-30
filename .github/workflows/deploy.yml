@@ -1,0 +1,102 @@
+# 部署去 Cloudflare Workers（drtimeless-ai-consult）
+#
+# 觸發：push 上開發 branch，或者喺 GitHub Actions 頁面撳「Run workflow」。
+# 唯一必需嘅 secret：CLOUDFLARE_API_TOKEN（Cloudflare dashboard → My Profile →
+# API Tokens → 「Edit Cloudflare Workers」template，account 揀自己、
+# zone 揀 drtimeless.com）。
+#
+# 可選 secrets（設咗先會同步上 Worker；wrangler deploy 唔會剷走 Worker 上面
+# 已有嘅 secrets，所以之前用 wrangler secret put 設過嘅會保留）：
+#   ANTHROPIC_API_KEY / STAFF_TOKEN / FUNNEL_TOKEN
+
+name: Deploy to Cloudflare Workers
+
+on:
+  push:
+    branches: [claude/video-facial-analysis-ai-hiv912]
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-cloudflare
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      # NEXT_PUBLIC_* 係 next build 時烘入前端 bundle 嘅，所以 build 環境
+      # 都要有；值要同 wrangler.jsonc 嘅 vars 一致。
+      NEXT_PUBLIC_CLINIC_NAME: Dr Timeless
+      NEXT_PUBLIC_WHATSAPP: "85264843111"
+      NEXT_PUBLIC_SITE_URL: https://ai.drtimeless.com
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Tests
+        run: npm run typecheck && npm run test:engine
+
+      # D1：冇就建，有就照用（create 對已存在嘅名會出錯，安全忽略）。
+      # 之後攞個真 database_id 填入 wrangler.jsonc 個 placeholder。
+      - name: Ensure D1 database
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        run: |
+          npx wrangler d1 create drtimeless-visits --location apac || echo "（已存在，照用）"
+          DB_ID=$(npx wrangler d1 list --json | node -e "
+            let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{
+              const db=JSON.parse(s).find(d=>d.name==='drtimeless-visits');
+              if(!db){console.error('搵唔到 drtimeless-visits');process.exit(1);}
+              console.log(db.uuid);
+            })")
+          echo "database_id: $DB_ID"
+          node -e "
+            const fs=require('fs');
+            const p='wrangler.jsonc';
+            const s=fs.readFileSync(p,'utf8');
+            if(!s.includes('AUTO_FILLED_BY_CI')){console.error('placeholder 唔見咗');process.exit(1);}
+            fs.writeFileSync(p,s.replace('AUTO_FILLED_BY_CI','$DB_ID'));
+          "
+
+      - name: Apply D1 schema
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        run: npx wrangler d1 execute drtimeless-visits --remote --file=./schema.sql -y
+
+      - name: Sync optional secrets to Worker
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        run: |
+          sync() {
+            if [ -n "$2" ]; then
+              printf '%s' "$2" | npx wrangler secret put "$1" && echo "✓ $1 已同步"
+            else
+              echo "· $1 冇喺 GitHub secrets（Worker 上面現有嘅唔受影響）"
+            fi
+          }
+          sync ANTHROPIC_API_KEY "${{ secrets.ANTHROPIC_API_KEY }}"
+          sync STAFF_TOKEN "${{ secrets.STAFF_TOKEN }}"
+          sync FUNNEL_TOKEN "${{ secrets.FUNNEL_TOKEN }}"
+
+      - name: Build and deploy
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        run: npm run cf:deploy
+
+      # 部署完由公網打真請求 —— runner 冇 sandbox 網絡限制
+      - name: Smoke test
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        run: |
+          sleep 10
+          code=$(curl -s -o /tmp/smoke.json -w '%{http_code}' https://ai.drtimeless.com/api/embed-status)
+          cat /tmp/smoke.json; echo
+          if [ "$code" != "200" ]; then
+            echo "::error::/api/embed-status 回 $code（自訂網域啱啱掛上 DNS 可能要等幾分鐘 —— 再 Run workflow 一次或者手動開網址驗證）"
+            exit 1
+          fi
+          echo "✓ https://ai.drtimeless.com 上線"
