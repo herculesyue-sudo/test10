@@ -1,0 +1,43 @@
+{
+  "name": "faceconsult-hk",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "eval": "tsx scripts/eval.ts",
+    "test:engine": "tsx scripts/test-engine.ts",
+    "check:catalogue": "tsx scripts/check-catalogue.ts",
+    "tunnel": "node scripts/tunnel.mjs",
+    "doctor": "node scripts/doctor.mjs",
+    "compare": "tsx scripts/compare-tiers.ts",
+    "cf:build": "opennextjs-cloudflare build",
+    "cf:preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "cf:deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "report": "tsx scripts/report.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/aws-sdk": "^0.6.6",
+    "@anthropic-ai/bedrock-sdk": "^0.33.3",
+    "@anthropic-ai/sdk": "^0.116.0",
+    "next": "^15.5.4",
+    "qrcode": "^1.5.4",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@opennextjs/cloudflare": "^1.20.2",
+    "@types/node": "^22.15.3",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "cloudflared": "^0.7.3",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3",
+    "wrangler": "^4.124.0"
+  }
+}

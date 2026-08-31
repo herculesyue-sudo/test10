@@ -1,0 +1,13 @@
+node_modules/
+.next/
+out/
+.env
+.env.local
+*.tsbuildinfo
+next-env.d.ts
+
+# Cloudflare Workers
+.open-next/
+.wrangler/
+# ⚠️ 本機用嘅 secrets，同 .env 一樣唔可以入 git
+.dev.vars

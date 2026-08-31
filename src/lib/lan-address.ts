@@ -1,0 +1,79 @@
+/**
+ * ⚠️ `node:os` 只喺真 Node 伺服器度有用。
+ *
+ * 喺 Cloudflare Workers（同其他 edge runtime）上面，就算開咗 nodejs_compat，
+ * `networkInterfaces()` 都唔存在或者會拋錯 —— 而呢個檔案係由 `/api/qr` 引用嘅，
+ * 即係話唔處理嘅話，個 QR endpoint 喺 Workers 上面會直接 500。
+ *
+ * 做法：靜態 import（Workers 開咗 nodejs_compat 就有呢個模組），但**包住個
+ * 呼叫**。攞唔到就當冇區域網位址 —— 本來就係咁：「喺本機用手機試」呢個
+ * 功能喺一部雲端伺服器上面本身就冇意義。
+ *
+ * 刻意唔用 `eval('require')`：嗰個瞞得過 bundler，但同時亦瞞過咗自己 ——
+ * 打包工具處理方式難以預測，而失敗係靜音嘅。
+ */
+import * as os from 'node:os';
+
+/**
+ * 搵部伺服器喺區域網嘅 IP。
+ *
+ * 用途：喺本機行嘅時候，同一個 Wi-Fi 嘅手機掃唔到 `localhost`，但掃到
+ * `192.168.x.x`。冇呢個，診所喺自己部電腦上面**根本冇辦法用手機試**個
+ * 流程 —— 要等部署咗先試得，而部署咗先發現問題係最貴嘅次序。
+ *
+ * ⚠️ 呢個係**測試用**，唔係印海報用。區域網位址出咗診所個 Wi-Fi 就冇效，
+ *    所以 /share 只會攞佢做「測試 QR」，正式海報仍然要求公開網址。
+ *
+ * 相機喺 http 之下嘅行為：頁面內即時相機用 getUserMedia，要 secure
+ * context —— 區域網 http 開唔到，會自動退去 `<input type="file">`
+ * 系統選擇器（揀相簿或者叫系統相機影）。即係流程照試得完，只係行嘅
+ * 係後備路，同時每次都會記一個 camera_fallback 漏斗事件（測試時見到
+ * 呢個數字唔使出奇）。要試埋頁面內相機就用 `npm run tunnel`（https）。
+ */
+
+/**
+ * 真正嘅私有網段，順序 = 家用 / 辦公室 Wi-Fi 最常見嗰啲行先。
+ *
+ * ⚠️ 一定要**只收呢三個網段**，唔可以「非 loopback 就當區域網」。
+ *    機器仲可以有一大堆其他位址：雲端容器嘅內部位址、TEST-NET
+ *    （192.0.2.x）、CGNAT（100.64.x）、docker bridge…… 佢哋全部都
+ *    唔係「同一個 Wi-Fi 嘅手機掃得到」，攞嚟砌 QR 就係再整多一個
+ *    掃到但去唔到嘅網址 —— 即係我哋一開始要修嗰個 bug。
+ */
+const PRIVATE_RANGES = [/^192\.168\./, /^10\./, /^172\.(1[6-9]|2\d|3[01])\./];
+
+export function lanAddresses(): string[] {
+  let ifaces: ReturnType<typeof os.networkInterfaces>;
+  try {
+    if (typeof os.networkInterfaces !== 'function') return [];
+    ifaces = os.networkInterfaces();
+  } catch {
+    return []; // edge runtime：冇呢個概念，唔係錯誤
+  }
+
+  const out: string[] = [];
+  for (const addrs of Object.values(ifaces)) {
+    for (const a of addrs ?? []) {
+      // Node 18+ 嘅 family 係 'IPv4'，舊版係 4 —— 兩樣都接受
+      const isV4 = a.family === 'IPv4' || (a.family as unknown as number) === 4;
+      if (!isV4 || a.internal) continue;
+      if (!PRIVATE_RANGES.some((re) => re.test(a.address))) continue;
+      out.push(a.address);
+    }
+  }
+  return out.sort((x, y) => rank(x) - rank(y));
+}
+
+function rank(ip: string): number {
+  const i = PRIVATE_RANGES.findIndex((re) => re.test(ip));
+  return i === -1 ? PRIVATE_RANGES.length : i;
+}
+
+/**
+ * 砌一條同一個 Wi-Fi 嘅手機開得到嘅網址。
+ * 攞唔到區域網位址（例如喺容器入面行）就回 null，唔好亂猜。
+ */
+export function lanUrl(port: string): string | null {
+  const ip = lanAddresses()[0];
+  return ip ? `http://${ip}${port ? ':' + port : ''}` : null;
+}
