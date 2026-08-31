@@ -22,11 +22,11 @@
   // NEXT_PUBLIC_* 同時要喺 build 時見到 —— CI（.github/workflows/deploy.yml）
   // 會喺 build 步驟 export 同一啲值，兩邊要保持一致。
   "vars": {
-    // 行 Amazon Bedrock 通道（香港 AWS 帳戶用到；ANTHROPIC_API_KEY 放
-    // AWS Console → Bedrock → API keys 出嘅 long-term key）。
-    // 注意：冇 "global" 呢個主機名（bedrock-mantle.global.api.aws 唔存在，
-    // 2026-08 實測 DNS 解唔到），一定要指定實際區域。刪走呢行就轉返直連。
-    "ANTHROPIC_BEDROCK_REGION": "us-west-2",
+    // 行 Google Vertex AI（Gemini）通道 —— Anthropic 唔支援香港（見 DEPLOY.md），
+    // 呢條係香港公司嘅正式出路。認證用 GCP_SERVICE_ACCOUNT_JSON secret。
+    // location 用 "global"（Vertex 官方 global endpoint，同 Bedrock 嗰單唔同，真係存在）。
+    "GEMINI_VERTEX_PROJECT": "ai-worker-474414",
+    "GEMINI_VERTEX_LOCATION": "global",
     "NEXT_PUBLIC_CLINIC_NAME": "Dr Timeless",
     "NEXT_PUBLIC_WHATSAPP": "85264843111",
     "NEXT_PUBLIC_SITE_URL": "https://ai.drtimeless.com",
