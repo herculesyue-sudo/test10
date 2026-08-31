@@ -32,8 +32,8 @@ const VERTEX_TIERS: Record<
   { model: string; usdPerMTok: { input: number; output: number }; maxTokens: number; deepThinking?: boolean }
 > = {
   budget: { model: 'gemini-3.7-flash', usdPerMTok: { input: 0.75, output: 3.75 }, maxTokens: 8000 },
-  balanced: { model: 'gemini-3.1-pro', usdPerMTok: { input: 2, output: 12 }, maxTokens: 16000 },
-  max: { model: 'gemini-3.1-pro', usdPerMTok: { input: 2, output: 12 }, maxTokens: 24000, deepThinking: true },
+  balanced: { model: 'gemini-3.1-pro-preview', usdPerMTok: { input: 2, output: 12 }, maxTokens: 16000 },
+  max: { model: 'gemini-3.1-pro-preview', usdPerMTok: { input: 2, output: 12 }, maxTokens: 24000, deepThinking: true },
 };
 
 // ── Service account → access token ──
