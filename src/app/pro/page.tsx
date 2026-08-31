@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import PhotoCapture, { DEFAULT_SHOTS, type Shot } from '@/components/PhotoCapture';
+import AnalysisProgress from '@/components/AnalysisProgress';
 import Report, { type ConsultResponse } from '@/components/Report';
 import { useDemoMode, DemoBanner, DemoCasePicker } from '@/components/DemoMode';
 import Consent from '@/components/Consent';
@@ -284,15 +285,7 @@ export default function Page() {
         </>
       )}
 
-      {step === 'loading' && (
-        <div className="card" style={{ textAlign: 'center', padding: '30px 18px' }}>
-          <div className="spinner" />
-          <b>AI 分析緊…</b>
-          <p style={{ color: 'var(--text-dim)', fontSize: '0.85rem', margin: '6px 0 0' }}>
-            正在逐項評估皮膚狀況同面部結構，通常需要 20–60 秒。
-          </p>
-        </div>
-      )}
+      {step === 'loading' && <AnalysisProgress demo={isDemo} />}
 
       {step === 'report' && data && (
         <>

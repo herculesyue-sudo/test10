@@ -44,6 +44,7 @@ import { analysePixels, THRESHOLDS } from '../src/lib/photo-check';
 import { allowedOrigins, frameAncestors } from '../src/lib/embed-config';
 import { checkStaff, isStaffPath } from '../src/lib/staff-auth';
 import { computeCategoryScores, partitionCheck, CATEGORIES, bandOf } from '../src/lib/categories';
+import { FACE_REGIONS, regionCoverageCheck, goalsFromFindings, buildConcernNotes } from '../src/lib/face-regions';
 import { normalizePhone, createMemoryVisitStore, type VisitRecord } from '../src/lib/visits';
 import { readFileSync } from 'node:fs';
 import { classifyHost, resolvePublicUrl } from '../src/lib/public-url';
@@ -759,6 +760,33 @@ console.log('\n── 前端埋點 ──');
 
   g.fetch = realFetch;
   delete g.window;
+}
+
+console.log('\n── 面圖區域映射 ──');
+{
+  // 面圖係多對多映射（一項問題可以屬幾個區），但 33 個 FindingKey
+  // 必須每個至少一個區 —— 唔係嘅話客人喺面圖就揀唔到嗰項嘢。
+  const cov = regionCoverageCheck();
+  check('全部 33 項特徵都揀得到', cov.missing.length === 0, cov.missing.join(', '));
+  check('冇空區域', cov.emptyRegions.length === 0, cov.emptyRegions.join(', '));
+  check('冇未知 FindingKey', cov.unknownKeys.length === 0, cov.unknownKeys.join(', '));
+  check('固定 12 區（面圖形狀對應）', FACE_REGIONS.length === 12, String(FACE_REGIONS.length));
+
+  const banned = /保證|永久|根治|最有效|100%|無風險|絕對|醫護/;
+  check('區域標籤冇禁用字眼', FACE_REGIONS.every((r) => !banned.test(r.label)));
+
+  // 反推目標：面圖揀嘅嘢要轉譯成 goal 先入到引擎
+  const g1 = goalsFromFindings(['nasolabial_fold']);
+  check('法令紋 → 撫平皺紋目標', g1.includes('smooth_lines'), g1.join(','));
+  const g2 = goalsFromFindings(['bunny_lines']);
+  check('GOALS 冇覆蓋嘅 key 有 fallback（鼻背紋）', g2.length > 0, g2.join(','));
+  const allKeys = Object.keys(FINDING_LABELS) as FindingKey[];
+  check('任何單一自選都反推到至少一個目標', allKeys.every((f) => goalsFromFindings([f]).length > 0));
+
+  const note = buildConcernNotes(['nasolabial_fold', 'dark_circles']);
+  check('notes 有帶防迎合句', !!note && note.includes('照直講'), note);
+  check('notes 冇禁用字眼', !!note && !banned.test(note));
+  check('冇自選 → 唔生成 notes', buildConcernNotes([]) === undefined);
 }
 
 console.log('\n── 8 大範疇評分 ──');

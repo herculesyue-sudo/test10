@@ -16,8 +16,11 @@ import Consent from '@/components/Consent';
 import CaptureGuide from '@/components/CaptureGuide';
 import QuickFacts, { ageFromBand } from '@/components/QuickFacts';
 import SaveRecordCard from '@/components/SaveRecordCard';
+import ConcernPicker from '@/components/ConcernPicker';
+import AnalysisProgress from '@/components/AnalysisProgress';
 import { normalizePhone } from '@/lib/visits';
-import { GOALS, type GoalKey } from '@/lib/treatments/types';
+import { type FindingKey, type GoalKey } from '@/lib/treatments/types';
+import { goalsFromFindings, buildConcernNotes } from '@/lib/face-regions';
 import { trackStep, resetTracking } from '@/lib/track-client';
 import { scrollParentToTop } from '@/lib/embed-client';
 
@@ -29,12 +32,14 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
 
   const [shots, setShots] = useState<Shot[]>(ONE_SHOT);
   const [goals, setGoals] = useState<GoalKey[]>([]);
+  const [selectedFindings, setSelectedFindings] = useState<FindingKey[]>([]);
   const [demoCaseId, setDemoCaseId] = useState<string | undefined>();
   const [consented, setConsented] = useState(false);
   const [ageBand, setAgeBand] = useState<string | null>(null);
   const [pregnant, setPregnant] = useState(false);
   const [recPhone, setRecPhone] = useState('');
   const [recConsent, setRecConsent] = useState(false);
+  const [showRecCard, setShowRecCard] = useState(false);
   const [busy, setBusy] = useState(false);
   const [data, setData] = useState<ConsultResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -44,8 +49,8 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
     if (shots[0]?.data) trackStep('photo_added');
   }, [shots]);
   useEffect(() => {
-    if (goals.length > 0) trackStep('goals_selected');
-  }, [goals]);
+    if (goals.length > 0 || selectedFindings.length > 0) trackStep('goals_selected');
+  }, [goals, selectedFindings]);
   useEffect(() => {
     if (consented) trackStep('consented');
   }, [consented]);
@@ -55,11 +60,14 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
   // 剔咗「儲存」但電話無效 → 擋住提交。靜靜雞唔儲一樣客人以為儲咗嘅嘢，
   // 係比擋一擋更差嘅結果。
   const recBlocked = recConsent && normalizePhone(recPhone) === null;
-  const ready = (isDemo || (hasPhoto && consented)) && goals.length > 0 && !recBlocked;
+  const hasConcern = goals.length > 0 || selectedFindings.length > 0;
+  const ready = (isDemo || (hasPhoto && consented)) && hasConcern && !recBlocked;
 
-  function toggle(g: GoalKey) {
-    setGoals((p) => (p.includes(g) ? p.filter((x) => x !== g) : [...p, g]));
-  }
+  /** 目標掣 + 面圖自選反推嘅目標，合併俾引擎（引擎以 goal 運作，唔使改）。 */
+  const effectiveGoals = () => {
+    const derived = goalsFromFindings(selectedFindings);
+    return [...goals, ...derived.filter((g) => !goals.includes(g))];
+  };
 
   async function submit() {
     setError(null);
@@ -73,7 +81,8 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
           images: hasPhoto
             ? [{ data: shots[0].data, mediaType: shots[0].mediaType, angle: '正面' }]
             : [],
-          goals,
+          goals: effectiveGoals(),
+          notes: buildConcernNotes(selectedFindings),
           tier: 'budget',
           age: ageFromBand(ageBand),
           // 安全閘：引擎會硬過濾所有懷孕禁忌療程
@@ -99,11 +108,13 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
     resetTracking();
     setShots(ONE_SHOT);
     setGoals([]);
+    setSelectedFindings([]);
     setConsented(false);
     setAgeBand(null);
     setPregnant(false);
     setRecPhone('');
     setRecConsent(false);
+    setShowRecCard(false);
     setData(null);
     setError(null);
     scrollParentToTop();
@@ -133,7 +144,13 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
             今次嘅評分紀錄儲存唔到{data.record.reason ? `（${data.record.reason}）` : ''}。你嘅分析結果唔受影響。
           </div>
         )}
-        <MvpResult data={data} goals={goals} onReset={reset} pregnant={pregnant} />
+        <MvpResult
+          data={data}
+          goals={effectiveGoals()}
+          selectedFindings={selectedFindings}
+          onReset={reset}
+          pregnant={pregnant}
+        />
       </>
     );
   }
@@ -170,20 +187,12 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
 
       <div className="card">
         <h2>2. 你最想改善邊方面？</h2>
-        <p className="sub">可以揀多過一項。</p>
-        <div className="goals">
-          {GOALS.map((g) => (
-            <button
-              key={g.key}
-              type="button"
-              className={`goal${goals.includes(g.key) ? ' on' : ''}`}
-              onClick={() => toggle(g.key)}
-            >
-              <b>{g.label}</b>
-              <span>{g.desc}</span>
-            </button>
-          ))}
-        </div>
+        <ConcernPicker
+          selected={selectedFindings}
+          onChange={setSelectedFindings}
+          goals={goals}
+          onGoals={setGoals}
+        />
       </div>
 
       <QuickFacts ageBand={ageBand} onAge={setAgeBand} pregnant={pregnant} onPregnant={setPregnant} />
@@ -194,25 +203,33 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
 
       {!isDemo && <Consent checked={consented} onChange={setConsented} />}
 
-      <SaveRecordCard phone={recPhone} onPhone={setRecPhone} consented={recConsent} onConsent={setRecConsent} />
+      {/* 儲存紀錄係可選項 —— 預設收埋，唔好喺 CTA 之前擺多一幅文字牆。
+          內文（法律同意句）一隻字都冇改，淨係包咗層 disclosure。 */}
+      {showRecCard || recConsent || recPhone ? (
+        <SaveRecordCard phone={recPhone} onPhone={setRecPhone} consented={recConsent} onConsent={setRecConsent} />
+      ) : (
+        <button type="button" className="card card-toggle" onClick={() => setShowRecCard(true)}>
+          想保存今次嘅分析紀錄？（可選）<span aria-hidden="true">▾</span>
+        </button>
+      )}
 
-      <button className="primary" disabled={!ready || busy} onClick={submit}>
-        {busy
-          ? isDemo
-            ? '產生示範結果…'
-            : '分析緊…（約 30 秒）'
-          : ready
+      {busy ? (
+        <AnalysisProgress demo={isDemo} />
+      ) : (
+        <button className="primary" disabled={!ready} onClick={submit}>
+          {ready
             ? isDemo
               ? '睇示範結果'
               : '免費分析'
             : !isDemo && !hasPhoto
               ? '請先影相'
-              : goals.length === 0
+              : !hasConcern
                 ? '請揀最少一項'
                 : recBlocked
                   ? '請輸入正確電話，或者取消儲存'
                   : '請先同意相片處理說明'}
-      </button>
+        </button>
+      )}
 
       <p style={{ fontSize: '0.74rem', color: 'var(--text-dim)', textAlign: 'center', marginTop: 14 }}>
         分析結果屬初步參考，並非醫學診斷，唔可以取代註冊醫生嘅面診。

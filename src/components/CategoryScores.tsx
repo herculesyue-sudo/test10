@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { computeCategoryScores } from '@/lib/categories';
 
 /**
@@ -24,18 +25,27 @@ const ring = (r: number) =>
 export default function CategoryScores({
   findings,
   compact = false,
+  collapsible = false,
 }: {
   findings: { key: string; severity: number; confidence: number }[];
   /** /records 嘅逐次卡用：唔出雷達，淨係 8 條分數列 */
   compact?: boolean;
+  /** 客人版報告用：預設淨係列出「可改善／建議關注」，其餘收埋（雷達照出）。
+      預設 false —— /pro /records 一個 pixel 都唔會變。 */
+  collapsible?: boolean;
 }) {
   const scores = computeCategoryScores(findings);
+  const [expanded, setExpanded] = useState(false);
   const poly = scores.map((s, i) => vertex(i, (s.score / 100) * 86).map((n) => n.toFixed(1)).join(',')).join(' ');
   const anyLow = scores.some((s) => s.lowConfidence);
 
+  const flagged = scores.filter((s) => s.band === 'improvable' || s.band === 'attention');
+  const collapsed = collapsible && !expanded && flagged.length > 0 && flagged.length < scores.length;
+  const shown = collapsed ? flagged : scores;
+
   const rows = (
     <div>
-      {scores.map((s) => (
+      {shown.map((s) => (
         <div className="finding" key={s.key}>
           <div className="top">
             <b>{s.label}</b>
@@ -60,6 +70,7 @@ export default function CategoryScores({
       <p className="sub">
         由相片觀察歸納做 8 個範疇，分數越高代表相中狀況越好。AI 相片估算，僅供參考，並非醫學診斷。
       </p>
+      {/* 雷達永遠畫足 8 軸 —— collapse 淨係影響下面嘅分數列 */}
       <svg className="radar" viewBox="0 0 220 220" role="img" aria-label="8 大範疇評分雷達圖">
         {[25, 50, 75, 100].map((p) => (
           <polygon key={p} points={ring((p / 100) * 86)} fill="none" stroke="var(--border)" strokeWidth="1" />
@@ -91,6 +102,11 @@ export default function CategoryScores({
         })}
       </svg>
       {rows}
+      {collapsible && flagged.length > 0 && flagged.length < scores.length && (
+        <button type="button" className="expand-toggle" onClick={() => setExpanded((v) => !v)}>
+          {expanded ? '收起 ▴' : `展開晒 ${scores.length} 項 ▾`}
+        </button>
+      )}
       {anyLow && (
         <p style={{ fontSize: '0.76rem', color: 'var(--text-dim)', margin: '10px 0 0' }}>
           有範疇因為光線 / 化妝等相片因素，信心較低 —— 呢啲分數面診時再確認會準確好多。

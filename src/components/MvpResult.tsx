@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import {
   FINDING_LABELS,
   CATEGORY_LABELS,
@@ -8,10 +9,18 @@ import {
   type GoalKey,
   type TreatmentCategory,
 } from '@/lib/treatments/types';
+import {
+  REGIONS_OF_FINDING,
+  REGION_LABEL,
+  primaryRegionOf,
+  type FaceRegionKey,
+} from '@/lib/face-regions';
 import { buildBookingUrl } from '@/lib/booking';
 import { trackStep } from '@/lib/track-client';
 import { CLINIC_POLICY, CLINIC_OTHER_SERVICES } from '@/lib/treatments/clinic';
 import CategoryScores from '@/components/CategoryScores';
+import FaceMap from '@/components/FaceMap';
+import TreatmentTimeline from '@/components/TreatmentTimeline';
 import type { ConsultResponse } from './Report';
 
 export type { ConsultResponse };
@@ -27,19 +36,52 @@ function downtimeText(d: [number, number]) {
   return `${d[0]}–${d[1]} 日`;
 }
 
+/** findings → 每區最高 severity，餵俾 FaceMap display 模式。 */
+function regionHighlights(findings: { key: string; severity: number }[]): Partial<Record<FaceRegionKey, number>> {
+  const out: Partial<Record<FaceRegionKey, number>> = {};
+  for (const f of findings) {
+    const key = f.key as FindingKey;
+    if (!(key in FINDING_LABELS)) continue;
+    for (const r of REGIONS_OF_FINDING[key] ?? []) {
+      out[r] = Math.max(out[r] ?? 0, f.severity);
+    }
+  }
+  return out;
+}
+
+/** 長觀察句預設兩行 clamp，撳先展開 —— 圖行先、字跟後。 */
+function ClampText({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+  const long = text.length > 42;
+  if (!long) return <p>{text}</p>;
+  return (
+    <p className={open ? '' : 'clamp2'} onClick={() => setOpen((v) => !v)} style={{ cursor: 'pointer' }}>
+      {text}
+      {!open && <span className="expand-hint"> 展開</span>}
+    </p>
+  );
+}
+
 export default function MvpResult({
   data,
   goals,
+  selectedFindings = [],
   onReset,
   pregnant = false,
 }: {
   data: ConsultResponse;
   goals: GoalKey[];
+  /** 客人喺面圖自選嘅問題 —— 用嚟講返「你揀咗但相中觀察唔到」嘅誠實一句 */
+  selectedFindings?: FindingKey[];
   onReset: () => void;
   /** 剔咗懷孕就會硬過濾所有禁忌療程 —— 一個建議都冇嘅時候要講返真正原因 */
   pregnant?: boolean;
 }) {
   const { analysis: a } = data;
+  const observedKeys = new Set(a.findings.map((f) => f.key));
+  const unobservedConcerns = selectedFindings.filter((f) => !observedKeys.has(f));
+  const highlights = regionHighlights(a.findings);
+  const hasHighlights = Object.values(highlights).some((v) => (v ?? 0) >= 25);
   const recs = data.recommendations.slice(0, TOP_N);
   const top = [...a.findings].sort((x, y) => y.severity - x.severity).slice(0, 4);
   const link = buildBookingUrl({
@@ -94,26 +136,63 @@ export default function MvpResult({
         )
       )}
 
+      {/* 面部觀察圖：成份報告嘅「一眼版」。放喺質素警示之後、分數之前。 */}
+      {hasHighlights && (
+        <div className="card">
+          <h2>面部觀察圖</h2>
+          <FaceMap mode="display" highlights={highlights} />
+          <div className="fm-legend" aria-hidden="true">
+            <span>
+              <i style={{ opacity: 0.18 }} />
+              輕微
+            </span>
+            <span>
+              <i style={{ opacity: 0.35 }} />
+              中度
+            </span>
+            <span>
+              <i style={{ opacity: 0.55 }} />
+              明顯
+            </span>
+          </div>
+          <p className="fm-caption">示意圖，唔係你嘅相片 · AI 相片估算，因人而異，並非診斷</p>
+          {unobservedConcerns.length > 0 && (
+            <p className="fm-caption" style={{ marginTop: 4 }}>
+              你自選嘅
+              <b>{unobservedConcerns.map((f) => FINDING_LABELS[f]).join('、')}</b>
+              喺呢張相入面觀察唔到明顯跡象 —— 如果你自己覺得有，面診時同醫生講清楚會準確好多。
+            </p>
+          )}
+        </div>
+      )}
+
       {/* 雷達放喺質素警示之後 —— 一份「呢張相唔多好」嘅警告上面
           唔可以擺一個睇落好肯定嘅分數版面 */}
-      <CategoryScores findings={a.findings} />
+      <CategoryScores findings={a.findings} collapsible />
 
       <div className="card">
         <h2>我哋睇到咩</h2>
-        <p style={{ margin: '0 0 14px', fontSize: '0.92rem' }}>{a.overallSummary}</p>
+        <ClampText text={a.overallSummary} />
         {top.length > 0 &&
-          top.map((f) => (
-            <div className="finding" key={f.key}>
-              <div className="top">
-                <b>{FINDING_LABELS[f.key as FindingKey] ?? f.key}</b>
-                <em>{f.severity >= 66 ? '明顯' : f.severity >= 41 ? '中度' : '輕微'}</em>
+          top.map((f) => {
+            const key = f.key as FindingKey;
+            const region = key in FINDING_LABELS ? primaryRegionOf(key) : null;
+            return (
+              <div className="finding" key={f.key}>
+                <div className="top">
+                  <b>
+                    {FINDING_LABELS[key] ?? f.key}
+                    {region && <span className="region-tag">{REGION_LABEL[region]}</span>}
+                  </b>
+                  <em>{f.severity >= 66 ? '明顯' : f.severity >= 41 ? '中度' : '輕微'}</em>
+                </div>
+                <div className="bar">
+                  <i style={{ width: `${f.severity}%` }} />
+                </div>
+                <ClampText text={f.observation} />
               </div>
-              <div className="bar">
-                <i style={{ width: `${f.severity}%` }} />
-              </div>
-              <p>{f.observation}</p>
-            </div>
-          ))}
+            );
+          })}
       </div>
 
       <div className="card">
@@ -175,7 +254,10 @@ export default function MvpResult({
             </p>
           ))}
 
-        {recs.map((r, i) => (
+        {recs.map((r, i) => {
+          const targetHl = regionHighlights(r.targets);
+          const showMini = Object.values(targetHl).some((v) => (v ?? 0) >= 25);
+          return (
           <div className="rec" key={r.treatment.id}>
             <div className="hd">
               <div>
@@ -186,6 +268,14 @@ export default function MvpResult({
                   {i + 1}. {r.treatment.name}
                 </b>
               </div>
+              {/* 一眼睇到「呢樣嘢做邊度」—— 合規重點：標示嘅係針對位置，
+                  唔係模擬效果 */}
+              {showMini && (
+                <div className="rec-mini">
+                  <FaceMap mode="display" mini highlights={targetHl} />
+                  <span>針對位置</span>
+                </div>
+              )}
             </div>
             <p>{r.rationale}</p>
             {/* 客人見到「Botox · Dysport · Xeomin」三個名而冇解釋，會當係含糊；
@@ -209,6 +299,7 @@ export default function MvpResult({
                 停工期：<b>{downtimeText(r.treatment.downtimeDays)}</b>
               </span>
             </div>
+            <TreatmentTimeline onset={r.treatment.onset} duration={r.treatment.duration} />
             {showPricing && (
             <div style={{ fontSize: '0.82rem', marginTop: 8 }}>
               價錢：
@@ -225,7 +316,14 @@ export default function MvpResult({
             </div>
             )}
           </div>
-        ))}
+          );
+        })}
+
+        {recs.length > 0 && (
+          <p style={{ fontSize: '0.74rem', color: 'var(--text-dim)', margin: '10px 0 0' }}>
+            效果出現時間因人而異，以醫生面診評估為準。
+          </p>
+        )}
 
         {showPricing && recs.length > 0 && totalMax > 0 && (
           <div
@@ -245,6 +343,41 @@ export default function MvpResult({
           </div>
         )}
       </div>
+
+      {/* 分階段路線圖：API 一直有計（打底 → 結構 → 塑形），以前客人版冇顯示。
+          有次序嘅方案先係「方案」—— 冇呢張圖，三個療程只係一張購物清單。 */}
+      {(data.plan?.length ?? 0) > 1 && (
+        <div className="card">
+          <h2>建議進行次序</h2>
+          <div className="roadmap">
+            {data.plan.map((p, i) => (
+              <div className="phase" key={p.phase}>
+                <div className="rail" aria-hidden="true">
+                  <span className="dot">{i + 1}</span>
+                  {i < data.plan.length - 1 && <span className="line" />}
+                </div>
+                <div className="body">
+                  <div className="hd">
+                    <b>{p.title}</b>
+                    <span className="timing">{p.timing}</span>
+                  </div>
+                  <div className="items">
+                    {p.items.map((it) => (
+                      <span className="pill" key={it.treatment.id}>
+                        {it.treatment.name}
+                        <em>{CATEGORY_LABELS[it.treatment.category as TreatmentCategory]}</em>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p style={{ fontSize: '0.74rem', color: 'var(--text-dim)', margin: '10px 0 0' }}>
+            建議次序屬參考，實際安排由醫生按你情況調整。
+          </p>
+        </div>
+      )}
 
       {CLINIC_OTHER_SERVICES.length > 0 && (
         <div className="card">

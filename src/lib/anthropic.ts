@@ -163,7 +163,7 @@ export async function analyzeOnce(opts: AnalyzeOptions): Promise<AnalyzeResult> 
   if (bedrockMode()) {
     // Bedrock Mantle 唔支援 structured outputs（output_config.format 會俾人拒）——
     // 改為將 JSON Schema 附入 prompt 要求模型淨輸出 JSON，收到後用返同一個
-    // Zod schema 喺本地驗證，保證落到 postProcess 嘅嘢同直連版一樣嚴格。
+    // Zod schema 喺本地驗證，確保落到 postProcess 嘅嘢同直連版一樣嚴格。
     // model 名喺 Bedrock 要加 anthropic. 前綴。
     content.push({
       type: 'text',
