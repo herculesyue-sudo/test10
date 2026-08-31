@@ -16,6 +16,7 @@ import Consent from '@/components/Consent';
 import CaptureGuide from '@/components/CaptureGuide';
 import QuickFacts, { ageFromBand } from '@/components/QuickFacts';
 import SaveRecordCard from '@/components/SaveRecordCard';
+import ContactCard from '@/components/ContactCard';
 import ConcernPicker from '@/components/ConcernPicker';
 import AnalysisProgress from '@/components/AnalysisProgress';
 import { normalizePhone } from '@/lib/visits';
@@ -37,6 +38,7 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
   const [consented, setConsented] = useState(false);
   const [ageBand, setAgeBand] = useState<string | null>(null);
   const [pregnant, setPregnant] = useState(false);
+  const [custName, setCustName] = useState('');
   const [recPhone, setRecPhone] = useState('');
   const [recConsent, setRecConsent] = useState(false);
   const [showRecCard, setShowRecCard] = useState(false);
@@ -59,9 +61,9 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
   // 測試模式冇真實相片，唔需要同意；正式模式一定要先同意先可以傳相
   // 剔咗「儲存」但電話無效 → 擋住提交。靜靜雞唔儲一樣客人以為儲咗嘅嘢，
   // 係比擋一擋更差嘅結果。
-  const recBlocked = recConsent && normalizePhone(recPhone) === null;
+  const phoneOk = normalizePhone(recPhone) !== null;
   const hasConcern = goals.length > 0 || selectedFindings.length > 0;
-  const ready = (isDemo || (hasPhoto && consented)) && hasConcern && !recBlocked;
+  const ready = (isDemo || (hasPhoto && consented && phoneOk)) && hasConcern;
 
   /** 目標掣 + 面圖自選反推嘅目標，合併俾引擎（引擎以 goal 運作，唔使改）。 */
   const effectiveGoals = () => {
@@ -83,6 +85,8 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
             : [],
           goals: effectiveGoals(),
           notes: buildConcernNotes(selectedFindings),
+          customerPhone: recPhone,
+          customerName: custName.trim() || undefined,
           tier: 'budget',
           age: ageFromBand(ageBand),
           // 安全閘：引擎會硬過濾所有懷孕禁忌療程
@@ -112,6 +116,7 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
     setConsented(false);
     setAgeBand(null);
     setPregnant(false);
+    setCustName('');
     setRecPhone('');
     setRecConsent(false);
     setShowRecCard(false);
@@ -149,7 +154,8 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
           goals={effectiveGoals()}
           selectedFindings={selectedFindings}
           photoPreview={shots[0]?.preview}
-          recordPhone={normalizePhone(recPhone) ?? undefined}
+          customerName={custName.trim() || undefined}
+          customerPhone={normalizePhone(recPhone) ?? undefined}
           onReset={reset}
           pregnant={pregnant}
         />
@@ -197,6 +203,8 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
         />
       </div>
 
+      {!isDemo && <ContactCard name={custName} onName={setCustName} phone={recPhone} onPhone={setRecPhone} />}
+
       <QuickFacts ageBand={ageBand} onAge={setAgeBand} pregnant={pregnant} onPregnant={setPregnant} />
 
       {isDemo && demo && (
@@ -227,8 +235,8 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
               ? '請先影相'
               : !hasConcern
                 ? '請揀最少一項'
-                : recBlocked
-                  ? '請輸入正確電話，或者取消儲存'
+                : !isDemo && !phoneOk
+                  ? '請輸入 8 位電話號碼'
                   : '請先同意相片處理說明'}
         </button>
       )}

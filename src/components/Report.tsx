@@ -72,6 +72,8 @@ export interface ConsultResponse {
     costHKD: number;
     /** 目錄有真實價錢先會 true；false 時所有價格版面都收起 */
     pricingEnabled?: boolean;
+    /** 客人版先有：呢個電話仲剩幾多次免費分析（職員／demo = undefined） */
+    remainingAnalyses?: number;
     /** 測試模式先會有 */
     demo?: boolean;
     demoCaseId?: string;

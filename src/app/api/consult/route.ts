@@ -16,6 +16,7 @@ import { checkRateLimit, recordUsage, usageSnapshot } from '@/lib/ratelimit';
 import { computeCategoryScores } from '@/lib/categories';
 import { getVisitStore, normalizePhone, type VisitRecord } from '@/lib/visits';
 import { checkStaff, STAFF_COOKIE } from '@/lib/staff-auth';
+import { getQuotaStore, phoneKey, FREE_ANALYSES_PER_PHONE } from '@/lib/phone-quota';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -50,6 +51,10 @@ interface Body {
   isPregnantOrNursing?: boolean;
   /** 測試模式：指定用邊個示範個案 */
   demoCaseId?: string;
+  /** 客人電話（必填，除非 demo / 職員）—— 用嚟計每電話 3 次免費額度，唔會以原文儲存 */
+  customerPhone?: string;
+  /** 客人稱呼（可選）—— 傳送報告嗰陣帶埋，方便診所跟進 */
+  customerName?: string;
   /** 自願儲存評分紀錄（SaveRecordCard）。冇 consent 或者冇 phone 就乜都唔會儲。 */
   record?: { phone?: string; consent?: boolean };
 }
@@ -254,6 +259,26 @@ export async function POST(req: Request) {
 
   const goalLabels = goals.map((g) => GOALS.find((x) => x.key === g)!.label);
 
+  // ── 每電話 3 次免費額度 ──
+  // 職員（/pro，有 staff cookie）唔受限 —— 佢哋喺舖頭代客做，唔應該俾
+  // 額度卡住。客人一定要有電話先做到；額度喺**分析成功之後**先扣，
+  // 失敗嘅請求唔應該燒客人條數。
+  const staffCookie = /(?:^|;\s*)drt_staff=([^;]+)/.exec(req.headers.get('cookie') ?? '')?.[1];
+  const isStaffReq = checkStaff(null, staffCookie ? decodeURIComponent(staffCookie) : undefined).action === 'allow';
+  let quotaKey: string | null = null;
+  if (!isStaffReq) {
+    const customerPhone = normalizePhone(body.customerPhone ?? '');
+    if (!customerPhone) return bad('請輸入 8 位香港電話號碼先可以開始分析');
+    quotaKey = phoneKey(customerPhone);
+    const usedSoFar = await getQuotaStore().used(quotaKey);
+    if (usedSoFar >= FREE_ANALYSES_PER_PHONE) {
+      return bad(
+        `呢個電話已經用晒 ${FREE_ANALYSES_PER_PHONE} 次免費分析。想深入啲，歡迎直接 WhatsApp 6484 3111 預約醫生面診 —— 面診先係最準嘅評估。`,
+        429,
+      );
+    }
+  }
+
   try {
     const result = await analyzeWithConsensus(
       {
@@ -288,6 +313,14 @@ export async function POST(req: Request) {
 
     const shown = presentable(scored);
     const record = await maybeSaveVisit(req, body, findings, goals);
+
+    // 分析成功先扣額度（失敗唔燒客人條數）
+    let remainingAnalyses: number | undefined;
+    if (quotaKey) {
+      const used = await getQuotaStore().increment(quotaKey);
+      remainingAnalyses = Math.max(0, FREE_ANALYSES_PER_PHONE - used);
+    }
+
     return NextResponse.json({
       analysis: result.analysis,
       record,
@@ -308,6 +341,8 @@ export async function POST(req: Request) {
         // 後處理改咗幾多嘢。持續唔係 0 代表個模型開始唔跟指示，
         // 應該去 eval 睇下係咪要調 prompt —— 唔會顯示俾客人。
         adjustments: result.adjustments.length,
+        // undefined = 職員／demo（冇額度概念）
+        remainingAnalyses,
       },
     });
   } catch (err) {

@@ -44,8 +44,12 @@ export function buildReportBookingUrl(opts: {
   findings: { key: string; label: string; severity: number }[];
   categories: { label: string; score: number }[];
   treatments: string[];
-  /** 客人有同意保存紀錄先會有 —— 俾職員喺後台用電話搵返成份紀錄 */
-  recordPhone?: string;
+  /** 客人稱呼（ContactCard，可選）—— 診所一睇就知係邊個 */
+  customerName?: string;
+  /** 客人電話（ContactCard，必填）—— 職員可以用嚟喺後台搵紀錄／回電 */
+  customerPhone?: string;
+  /** 有同意保存評分紀錄先 true —— 話俾職員知後台有嘢睇 */
+  recordSaved?: boolean;
 }): string | null {
   const phone = opts.phone?.replace(/[^0-9]/g, '');
   if (!phone) return null;
@@ -54,7 +58,7 @@ export function buildReportBookingUrl(opts: {
   const sevWord = (s: number) => (s >= 66 ? '明顯' : s >= 41 ? '中度' : '輕微');
 
   const msg = [
-    '你好，我啱啱完成咗 AI 面部分析，想傳送份報告摘要俾你哋跟進預約。',
+    `你好${opts.customerName ? `，我係${opts.customerName}` : ''}，啱啱完成咗 AI 面部分析，想傳送份報告摘要俾你哋跟進預約。`,
     '',
     '【AI 分析摘要】',
     goalLabels.length ? `想改善：${goalLabels.join('、')}` : null,
@@ -71,7 +75,7 @@ export function buildReportBookingUrl(opts: {
           .join('、')}`
       : null,
     opts.treatments.length ? `建議療程方向：${opts.treatments.join('、')}` : null,
-    opts.recordPhone ? `（我已同意喺系統保存分析紀錄，電話 ${opts.recordPhone}）` : null,
+    opts.customerPhone ? `我嘅電話：${opts.customerPhone}${opts.recordSaved ? '（已同意保存分析紀錄）' : ''}` : null,
     '',
     '請問幾時方便？',
   ]

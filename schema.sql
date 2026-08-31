@@ -13,3 +13,11 @@ CREATE TABLE IF NOT EXISTS visits (
   findings        TEXT NOT NULL                -- JSON: [{key,severity,confidence}]
 );
 CREATE INDEX IF NOT EXISTS idx_visits_phone ON visits (phone, created_at DESC);
+
+-- 每電話免費分析額度（phone-quota.ts 會喺首次使用時自動建表，呢份係人手行／對照用）
+-- phone_key 係 HMAC-SHA256(電話, FUNNEL_TOKEN) —— 唔儲原始號碼
+CREATE TABLE IF NOT EXISTS phone_quota (
+  phone_key  TEXT PRIMARY KEY,
+  used       INTEGER NOT NULL DEFAULT 0,
+  updated_at TEXT NOT NULL
+);

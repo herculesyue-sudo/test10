@@ -46,6 +46,7 @@ import { checkStaff, isStaffPath } from '../src/lib/staff-auth';
 import { computeCategoryScores, partitionCheck, CATEGORIES, bandOf } from '../src/lib/categories';
 import { FACE_REGIONS, regionCoverageCheck, goalsFromFindings, buildConcernNotes } from '../src/lib/face-regions';
 import { computeAlignment, applyMatrix, sanitizeLandmarks } from '../src/lib/face-align';
+import { createMemoryQuotaStore, phoneKey, FREE_ANALYSES_PER_PHONE } from '../src/lib/phone-quota';
 import { AnalysisSchema } from '../src/lib/schema';
 import { normalizePhone, createMemoryVisitStore, type VisitRecord } from '../src/lib/visits';
 import { readFileSync } from 'node:fs';
@@ -763,6 +764,22 @@ console.log('\n── 前端埋點 ──');
   g.fetch = realFetch;
   delete g.window;
 }
+
+console.log('\n── 每電話免費額度 ──');
+(async () => {
+  const store = createMemoryQuotaStore();
+  const k = phoneKey('91234567');
+  check('額度 key 唔係原始電話', !k.includes('91234567') && k.length === 64);
+  check('同一電話 key 穩定', phoneKey('91234567') === k);
+  check('唔同電話 key 唔同', phoneKey('98765432') !== k);
+  check('未用過 = 0', (await store.used(k)) === 0);
+  await store.increment(k); await store.increment(k);
+  check('用咗 2 次', (await store.used(k)) === 2);
+  const third = await store.increment(k);
+  check('第 3 次 increment 回 3', third === 3);
+  check('去到上限', (await store.used(k)) >= FREE_ANALYSES_PER_PHONE);
+  check('第二個電話唔受影響', (await store.used(phoneKey('98765432'))) === 0);
+})();
 
 console.log('\n── 面部對齊（真相版觀察圖）──');
 {

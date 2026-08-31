@@ -35,22 +35,31 @@ export default function SaveRecordCard({
         <span style={{ fontWeight: 400, fontSize: '0.8rem', color: 'var(--text-dim)' }}>（可選）</span>
       </h2>
       <p className="sub">
-        留唔留都唔影響今次結果。留低電話，下次再分析就可以對比 8 大範疇評分嘅變化。
+        留唔留都唔影響今次結果。同意嘅話，下次再分析就可以對比 8 大範疇評分嘅變化。
       </p>
-      <label className="f" htmlFor="rec-phone">
-        手機號碼（香港 8 位數字）
-      </label>
-      <input
-        id="rec-phone"
-        type="tel"
-        inputMode="numeric"
-        autoComplete="tel"
-        placeholder="9123 4567"
-        value={phone}
-        onChange={(e) => onPhone(e.target.value)}
-      />
-      {invalid && (
-        <p style={{ color: 'var(--danger)', fontSize: '0.8rem', margin: '5px 0 0' }}>請輸入 8 位香港電話號碼</p>
+      {staffMode ? (
+        <>
+          <label className="f" htmlFor="rec-phone">
+            手機號碼（香港 8 位數字）
+          </label>
+          <input
+            id="rec-phone"
+            type="tel"
+            inputMode="numeric"
+            autoComplete="tel"
+            placeholder="9123 4567"
+            value={phone}
+            onChange={(e) => onPhone(e.target.value)}
+          />
+          {invalid && (
+            <p style={{ color: 'var(--danger)', fontSize: '0.8rem', margin: '5px 0 0' }}>請輸入 8 位香港電話號碼</p>
+          )}
+        </>
+      ) : (
+        // 客人版：電話已經喺上面「聯絡資料」填咗，唔使入兩次
+        <p style={{ fontSize: '0.84rem', margin: '0 0 4px' }}>
+          會用你上面填嘅電話{phone.trim() ? <>：<b>{phone}</b></> : '（請先喺上面填電話）'}
+        </p>
       )}
       <label className="check">
         <input type="checkbox" checked={consented} onChange={(e) => onConsent(e.target.checked)} />

@@ -45,7 +45,7 @@ export default function QuickFacts({
 }) {
   return (
     <div className="card">
-      <h2>3. 兩條快問</h2>
+      <h2>4. 兩條快問</h2>
       <p className="sub">相片答唔到，但影響好大。撳一下就得。</p>
 
       <div className="qf-label">年齡（令建議準啲）</div>

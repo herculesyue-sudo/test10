@@ -72,7 +72,8 @@ export default function MvpResult({
   goals,
   selectedFindings = [],
   photoPreview,
-  recordPhone,
+  customerName,
+  customerPhone,
   onReset,
   pregnant = false,
 }: {
@@ -82,8 +83,10 @@ export default function MvpResult({
   selectedFindings?: FindingKey[];
   /** 客人張相（dataURL，只存在於瀏覽器狀態）—— 有埋 landmarks 先會出真相版觀察圖 */
   photoPreview?: string;
-  /** 客人有同意保存紀錄先傳入 —— 預約訊息會帶埋，方便職員後台搵返紀錄 */
-  recordPhone?: string;
+  /** 客人稱呼（可選）—— 預約訊息會帶埋 */
+  customerName?: string;
+  /** 客人電話（ContactCard 必填）—— 預約訊息會帶埋 */
+  customerPhone?: string;
   onReset: () => void;
   /** 剔咗懷孕就會硬過濾所有禁忌療程 —— 一個建議都冇嘅時候要講返真正原因 */
   pregnant?: boolean;
@@ -114,7 +117,9 @@ export default function MvpResult({
       .sort((x, y) => x.score - y.score)
       .map((c) => ({ label: c.label, score: c.score })),
     treatments: recs.map((r) => r.treatment.name),
-    recordPhone: data.record?.saved && data.record.persistent ? recordPhone : undefined,
+    customerName,
+    customerPhone,
+    recordSaved: Boolean(data.record?.saved && data.record.persistent),
   });
 
   const totalMin = recs.reduce((s, r) => s + r.estCostHKD.min, 0);
@@ -482,6 +487,13 @@ export default function MvpResult({
         <button className="ghost" onClick={onReset} style={{ marginTop: 12, width: '100%' }}>
           再分析一次
         </button>
+        {typeof data.meta.remainingAnalyses === 'number' && (
+          <p style={{ fontSize: '0.74rem', color: 'var(--text-dim)', margin: '10px 0 0' }}>
+            {data.meta.remainingAnalyses > 0
+              ? `你呢個電話仲有 ${data.meta.remainingAnalyses} 次免費分析。`
+              : '你嘅免費分析次數已經用晒 —— 想跟進就用上面個掣直接搵我哋啦。'}
+          </p>
+        )}
       </div>
 
       <div className="disclaimer">
