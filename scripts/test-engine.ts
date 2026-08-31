@@ -1095,6 +1095,22 @@ console.log('\n── 客人紀錄（記憶體 store）──');
     check('去到預算就擋', (await spend.month(m)).costHKD >= budget);
   }
 
+  console.log('\n── Prompt 證據式觀察 ──');
+  {
+    const { SYSTEM_PROMPT } = await import('../src/lib/prompt');
+    check('有「觀察要寫得有證據」一節', SYSTEM_PROMPT.includes('觀察要寫得有證據'));
+    check('明文禁止零資訊寫法', SYSTEM_PROMPT.includes('膚質有啲粗糙'));
+    check('誠實準則冇被改走', SYSTEM_PROMPT.includes('只寫你真係睇到嘅嘢'));
+  }
+
+  console.log('\n── 同意書接收方（PDPO 事實正確性）──');
+  {
+    const { readFileSync } = await import('node:fs');
+    const consent = readFileSync(new URL('../src/components/Consent.tsx', import.meta.url), 'utf8');
+    check('同意書唔再寫 Anthropic（實際係 Vertex）', !consent.includes('Anthropic'));
+    check('同意書寫明 Google（Vertex AI）', consent.includes('Google（Vertex AI'));
+  }
+
   console.log(failures === 0 ? '\n✅ 全部通過\n' : `\n❌ ${failures} 項失敗\n`);
   process.exit(failures === 0 ? 0 : 1);
 })();

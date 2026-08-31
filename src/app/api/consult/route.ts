@@ -318,8 +318,14 @@ export async function POST(req: Request) {
   recordUsage(req);
 
   // ── 驗證其他輸入 ──
-  const tier: Tier = body.tier && body.tier in TIERS ? body.tier : ((process.env.CONSULT_TIER as Tier) ?? 'balanced');
-  const passes = Math.min(Math.max(body.passes ?? Number(process.env.CONSULT_PASSES ?? 1), 1), 5);
+  // tier / passes 只准職員自選：呢兩個參數直接決定每次分析嘅成本，
+  // 公開俾人揀等於開個後門俾人用 max+5 passes 燒穿每月預算，令真客
+  // 全部見「名額用晒」。客人一律行伺服器設定（wrangler vars CONSULT_TIER）。
+  const isStaffReq = isStaffRequest(req);
+  const envTier: Tier = process.env.CONSULT_TIER && process.env.CONSULT_TIER in TIERS ? (process.env.CONSULT_TIER as Tier) : 'balanced';
+  const tier: Tier = isStaffReq && body.tier && body.tier in TIERS ? body.tier : envTier;
+  const envPasses = Math.min(Math.max(Number(process.env.CONSULT_PASSES ?? 1), 1), 5);
+  const passes = isStaffReq ? Math.min(Math.max(body.passes ?? envPasses, 1), 5) : envPasses;
 
   const goalLabels = goals.map((g) => GOALS.find((x) => x.key === g)!.label);
 
@@ -327,7 +333,6 @@ export async function POST(req: Request) {
   // 順序有講究：同意 → 手機格式（免費、即答）→ Turnstile（免費，擋機械人）
   // → 每電話 3 次額度 → 月度預算。全部過晒先准佢燒真錢。
   // 額度同使費都係**分析成功之後**先入帳 —— 失敗唔燒客人條數。
-  const isStaffReq = isStaffRequest(req);
   let quotaKey: string | null = null;
   let customerPhone: string | null = null;
   if (!isStaffReq) {

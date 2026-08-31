@@ -34,7 +34,10 @@
     "RATE_LIMIT_DAILY_TOTAL": "300",
     // 每月 AI 使費硬上限（HK$）：非職員分析去到呢個數自動暫停，下月自動恢復。
     // 想加額改呢度再 cf:deploy。權威帳單喺 console.cloud.google.com/billing。
-    "MONTHLY_AI_BUDGET_HKD": "200"
+    "MONTHLY_AI_BUDGET_HKD": "200",
+    // 客人分析用邊個模型層（budget / balanced / max）—— harris 2026-08-31 拍板升 balanced
+    //（「唔夠準」最直接嘅修正）。客人請求自帶嘅 tier 伺服器一律唔理，只有職員先可自選。
+    "CONSULT_TIER": "balanced"
     // Turnstile（機械人閘）：harris 喺 Cloudflare dashboard 建咗 site 之後，
     // 加 "NEXT_PUBLIC_TURNSTILE_SITE_KEY": "<site key>" 落嚟（同 CI build env 同步），
     // 再 wrangler secret put TURNSTILE_SECRET_KEY。未設定 = 功能熄咗，照行。

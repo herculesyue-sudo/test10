@@ -460,7 +460,8 @@ export default function MvpResult({
       <div className="card" style={{ textAlign: 'center' }}>
         <h2>想知邊個方案最啱你？</h2>
         <p className="sub" style={{ marginBottom: 16 }}>
-          相片分析有先天限制。註冊醫生面診先可以確認皮膚層次、彈性同病史，度身訂造方案。
+          份報告係初步方向 —— 邊樣先做、幾耐做一次、實際預算，醫生面診就可以幫你敲實。
+          全份報告關咗頁就睇唔返 —— 想留低，一撳傳去 WhatsApp。
         </p>
         {link ? (
           <>
@@ -472,11 +473,11 @@ export default function MvpResult({
               onClick={() => trackStep('booking_clicked')}
               style={{ display: 'block', textDecoration: 'none', marginTop: 0, boxSizing: 'border-box' }}
             >
-              📋 傳送報告俾 Dr Timeless 預約
+              📲 傳送報告去 WhatsApp（順便留返底）
             </a>
             <p style={{ fontSize: '0.72rem', color: 'var(--text-dim)', margin: '8px 0 0' }}>
-              會開 WhatsApp 並預先填好報告摘要（唔包相片）——你睇晒內容、撳「發送」先算真正送出。
-              送出之後，我哋會喺辦公時間內覆你安排時間。
+              份摘要會留喺你自己嘅 WhatsApp 對話入面，第時隨時翻睇（唔包相片）——你睇晒內容、撳「發送」先算送出。
+              我哋辦公時間覆你：解答問題定安排預約，你話事。
             </p>
           </>
         ) : (

@@ -7,7 +7,7 @@ import { CLINIC_POLICY } from '@/lib/treatments/clinic';
  * 相片使用同意。
  *
  * 客人嘅面部相片喺香港《個人資料（私隱）條例》下屬個人資料，而且會傳送去
- * 香港境外嘅第三方（Anthropic）處理。要事先講明用途、接收方、保留期，
+ * 第三方（Google Vertex AI，可能喺香港境外）處理。要事先講明用途、接收方、保留期，
  * 並取得明確同意 —— 一個預設剔咗嘅 checkbox 唔算明確同意，所以呢度預設係空。
  *
  * ⚠️ 呢段文字係按系統實際行為寫（相片即時轉發、唔寫入磁碟、唔入資料庫）。
@@ -61,7 +61,7 @@ export default function Consent({
           <p style={{ margin: '0 0 8px' }}>
             <b style={{ color: 'var(--text)' }}>會傳去邊</b>
             <br />
-            相片會經加密連線傳送俾 AI 服務供應商 Anthropic 處理。呢個處理過程喺香港境外進行。
+            相片會經加密連線傳送俾 AI 服務供應商 Google（Vertex AI 服務）作即時分析。處理過程可能喺香港境外進行。
           </p>
           <p style={{ margin: '0 0 8px' }}>
             <b style={{ color: 'var(--text)' }}>保留幾耐</b>

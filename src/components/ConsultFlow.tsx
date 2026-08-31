@@ -110,7 +110,7 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
           consent: leadConsent,
           turnstileToken: tsToken || undefined,
           utm,
-          tier: 'budget',
+          // tier 唔喺度指定 —— 由伺服器 CONSULT_TIER 決定（客人請求嘅 tier 伺服器一律唔理）
           age: ageFromBand(ageBand),
           // 安全閘：引擎會硬過濾所有懷孕禁忌療程
           isPregnantOrNursing: pregnant,
@@ -194,12 +194,24 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
       {!embedded && (
         <header className="site">
           <h1>AI 免費面部分析</h1>
-          <p>自拍一張相，30 秒睇到適合你嘅療程方向</p>
+          <p>影一張相，AI 幫你睇清塊面而家嘅狀態</p>
         </header>
       )}
 
       {isDemo && <DemoBanner />}
       {error && <div className="alert danger">{error}</div>}
+
+      {/* 價值帶：影相之前先話俾客人知會得到啲乜 —— 嵌入版（真客流路徑）
+          冇 header，呢條係佢唯一嘅開場白，所以 embedded 都一定要出。 */}
+      <div className="card" style={{ padding: '14px 16px' }}>
+        <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: 1.7 }}>
+          影一張相，AI 幫你做三樣嘢：
+          <br />✓ 8 大範疇皮膚評分　✓ 喺你張相上面標出觀察位置　✓ 配對啱你嘅療程方向
+        </p>
+        <p style={{ margin: '6px 0 0', fontSize: '0.78rem', color: 'var(--text-dim)' }}>
+          全程約 1 分鐘 · 免費 · 相片唔會被儲存
+        </p>
+      </div>
 
       <div className="card">
         <h2>
@@ -210,7 +222,9 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
             </span>
           )}
         </h2>
-        <p className="sub">相片只用嚟即時分析，唔會儲存。</p>
+        <p className="sub">
+          相片只用嚟即時分析，唔會儲存 —— 分析完成後，觀察位置會直接標返喺你呢張相上面（淨係你部機見到）。
+        </p>
         <CaptureGuide />
         <div style={{ maxWidth: 200, margin: '14px auto 0' }}>
           <PhotoCapture shots={shots} onChange={setShots} />
@@ -249,13 +263,13 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
       {!isDemo && <TurnstileWidget onToken={setTsToken} />}
 
       {busy ? (
-        <AnalysisProgress demo={isDemo} />
+        <AnalysisProgress demo={isDemo} photoPreview={shots[0]?.preview} />
       ) : (
         <button className="primary" disabled={!ready} onClick={submit}>
           {ready
             ? isDemo
               ? '睇示範結果'
-              : '免費分析'
+              : '免費睇我嘅分析結果'
             : !isDemo && !hasPhoto
               ? '請先影相'
               : !hasConcern

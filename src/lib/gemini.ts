@@ -117,11 +117,12 @@ interface GeminiResponse {
 
 /** 單次分析（Vertex 版）。同 anthropic.ts 嘅 analyzeOnce 回傳完全同構。 */
 export async function analyzeOnceGemini(opts: AnalyzeOptions): Promise<AnalyzeResult> {
-  const cfg = VERTEX_TIERS[opts.tier];
+  let cfg = VERTEX_TIERS[opts.tier];
   const project = process.env.GEMINI_VERTEX_PROJECT!;
   const location = process.env.GEMINI_VERTEX_LOCATION || 'global';
   const host = location === 'global' ? 'aiplatform.googleapis.com' : `${location}-aiplatform.googleapis.com`;
-  const url = `https://${host}/v1/projects/${project}/locations/${location}/publishers/google/models/${cfg.model}:generateContent`;
+  const urlFor = (model: string) =>
+    `https://${host}/v1/projects/${project}/locations/${location}/publishers/google/models/${model}:generateContent`;
 
   const parts: Record<string, unknown>[] = [];
   for (const img of opts.images) {
@@ -138,7 +139,7 @@ export async function analyzeOnceGemini(opts: AnalyzeOptions): Promise<AnalyzeRe
 
   const token = await accessToken();
   const call = (withThinking: boolean) =>
-    fetch(url, {
+    fetch(urlFor(cfg.model), {
       method: 'POST',
       headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
       body: JSON.stringify({
@@ -153,6 +154,13 @@ export async function analyzeOnceGemini(opts: AnalyzeOptions): Promise<AnalyzeRe
     });
 
   let res = await call(!!cfg.deepThinking);
+  // preview 型號名隨時被 Google 更替（gemini-3.1-pro-preview 呢類）——
+  // 404 就退一級去 flash 保底，成本按實際用嗰隻計。工具照出報告，好過死晒。
+  if (res.status === 404 && cfg.model !== VERTEX_TIERS.budget.model) {
+    console.error(`[gemini] ${cfg.model} 404 —— 退返 ${VERTEX_TIERS.budget.model}`);
+    cfg = VERTEX_TIERS.budget;
+    res = await call(false);
+  }
   if (!res.ok && cfg.deepThinking && res.status === 400) {
     // thinkingLevel 欄位隨 model 世代變動 —— 唔受落就退一步照行，唔好成個分析死掉。
     const errText = await res.text();

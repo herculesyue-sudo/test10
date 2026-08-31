@@ -18,7 +18,9 @@ export const FindingSchema = z.object({
     .min(0)
     .max(1)
     .describe('你對呢個判斷嘅信心 0-1。相片光線差、角度唔啱、解像度低都要調低信心'),
-  observation: z.string().describe('用廣東話具體描述你喺相片睇到咩，唔好用診斷術語落定論'),
+  observation: z
+    .string()
+    .describe('用廣東話具體描述你喺相片睇到咩：必須有具體位置（邊＋位）同至少一個可見屬性（顏色／邊界／範圍／深淺／對稱性）。唔好用診斷術語落定論，唔准「有啲粗糙」呢類零資訊寫法'),
   location: z.string().describe('大致位置，例如「左邊顴骨」「額頭正中」「雙側下頜」。無明確位置就寫「整體」'),
 });
 

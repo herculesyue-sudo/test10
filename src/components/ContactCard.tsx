@@ -37,7 +37,8 @@ export default function ContactCard({
     <div className="card">
       <h2>3. 你嘅聯絡資料</h2>
       <p className="sub">
-        每個電話有 {FREE_ANALYSES_PER_PHONE} 次免費分析。分析完成後，我哋會經 WhatsApp 跟進你嘅結果同安排預約。
+        留低電話有著數：份分析摘要會幫你保存（相片除外），第時對返、或者做多次分析對比變化都得；
+        有唔明嘅嘢，WhatsApp 直接問我哋。每個電話有 {FREE_ANALYSES_PER_PHONE} 次免費分析。
       </p>
       <label className="f" htmlFor="cust-name">
         稱呼（可選）

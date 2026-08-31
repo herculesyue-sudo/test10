@@ -77,7 +77,7 @@ export function buildReportBookingUrl(opts: {
     opts.treatments.length ? `建議療程方向：${opts.treatments.join('、')}` : null,
     opts.customerPhone ? `我嘅電話：${opts.customerPhone}${opts.recordSaved ? '（已同意保存分析紀錄）' : ''}` : null,
     '',
-    '請問幾時方便？',
+    '想了解多啲，麻煩你哋跟進。',
   ]
     .filter((x) => x !== null)
     .join('\n');
