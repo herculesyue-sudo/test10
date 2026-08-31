@@ -30,3 +30,53 @@ export function buildBookingUrl(opts: {
 
   return `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
 }
+
+/**
+ * 「傳送報告俾 Dr Timeless 預約」—— 預填埋一段報告摘要。
+ *
+ * 私隱設計：份「報告」係經客人自己嘅 WhatsApp 發送 —— 佢喺 WhatsApp
+ * 入面睇晒成段訊息先撳發送，冇任何嘢喺背後自動傳俾診所。
+ * 摘要刻意精簡（觀察 + 範疇分數 + 療程方向），唔包相片。
+ */
+export function buildReportBookingUrl(opts: {
+  phone: string | undefined;
+  goals: GoalKey[];
+  findings: { key: string; label: string; severity: number }[];
+  categories: { label: string; score: number }[];
+  treatments: string[];
+  /** 客人有同意保存紀錄先會有 —— 俾職員喺後台用電話搵返成份紀錄 */
+  recordPhone?: string;
+}): string | null {
+  const phone = opts.phone?.replace(/[^0-9]/g, '');
+  if (!phone) return null;
+
+  const goalLabels = opts.goals.map((g) => GOALS.find((x) => x.key === g)?.label).filter(Boolean);
+  const sevWord = (s: number) => (s >= 66 ? '明顯' : s >= 41 ? '中度' : '輕微');
+
+  const msg = [
+    '你好，我啱啱完成咗 AI 面部分析，想傳送份報告摘要俾你哋跟進預約。',
+    '',
+    '【AI 分析摘要】',
+    goalLabels.length ? `想改善：${goalLabels.join('、')}` : null,
+    opts.findings.length
+      ? `主要觀察：${opts.findings
+          .slice(0, 4)
+          .map((f) => `${f.label}（${sevWord(f.severity)}）`)
+          .join('、')}`
+      : null,
+    opts.categories.length
+      ? `較需關注範疇：${opts.categories
+          .slice(0, 3)
+          .map((c) => `${c.label} ${c.score}/100`)
+          .join('、')}`
+      : null,
+    opts.treatments.length ? `建議療程方向：${opts.treatments.join('、')}` : null,
+    opts.recordPhone ? `（我已同意喺系統保存分析紀錄，電話 ${opts.recordPhone}）` : null,
+    '',
+    '請問幾時方便？',
+  ]
+    .filter((x) => x !== null)
+    .join('\n');
+
+  return `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+}

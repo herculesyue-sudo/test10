@@ -15,7 +15,8 @@ import {
   primaryRegionOf,
   type FaceRegionKey,
 } from '@/lib/face-regions';
-import { buildBookingUrl } from '@/lib/booking';
+import { buildReportBookingUrl } from '@/lib/booking';
+import { computeCategoryScores } from '@/lib/categories';
 import { trackStep } from '@/lib/track-client';
 import { CLINIC_POLICY, CLINIC_OTHER_SERVICES } from '@/lib/treatments/clinic';
 import CategoryScores from '@/components/CategoryScores';
@@ -71,6 +72,7 @@ export default function MvpResult({
   goals,
   selectedFindings = [],
   photoPreview,
+  recordPhone,
   onReset,
   pregnant = false,
 }: {
@@ -80,6 +82,8 @@ export default function MvpResult({
   selectedFindings?: FindingKey[];
   /** 客人張相（dataURL，只存在於瀏覽器狀態）—— 有埋 landmarks 先會出真相版觀察圖 */
   photoPreview?: string;
+  /** 客人有同意保存紀錄先傳入 —— 預約訊息會帶埋，方便職員後台搵返紀錄 */
+  recordPhone?: string;
   onReset: () => void;
   /** 剔咗懷孕就會硬過濾所有禁忌療程 —— 一個建議都冇嘅時候要講返真正原因 */
   pregnant?: boolean;
@@ -99,10 +103,18 @@ export default function MvpResult({
   const overallVal = highlights.overall_skin ?? 0;
   const recs = data.recommendations.slice(0, TOP_N);
   const top = [...a.findings].sort((x, y) => y.severity - x.severity).slice(0, 4);
-  const link = buildBookingUrl({
+  const link = buildReportBookingUrl({
     phone: process.env.NEXT_PUBLIC_WHATSAPP,
     goals,
+    findings: top
+      .filter((f) => f.key in FINDING_LABELS)
+      .map((f) => ({ key: f.key, label: FINDING_LABELS[f.key as FindingKey], severity: f.severity })),
+    categories: computeCategoryScores(a.findings)
+      .filter((c) => c.band === 'improvable' || c.band === 'attention')
+      .sort((x, y) => x.score - y.score)
+      .map((c) => ({ label: c.label, score: c.score })),
     treatments: recs.map((r) => r.treatment.name),
+    recordPhone: data.record?.saved && data.record.persistent ? recordPhone : undefined,
   });
 
   const totalMin = recs.reduce((s, r) => s + r.estCostHKD.min, 0);
@@ -446,16 +458,21 @@ export default function MvpResult({
           相片分析有先天限制。註冊醫生面診先可以確認皮膚層次、彈性同病史，度身訂造方案。
         </p>
         {link ? (
-          <a
-            href={link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="primary"
-            onClick={() => trackStep('booking_clicked')}
-            style={{ display: 'block', textDecoration: 'none', marginTop: 0, boxSizing: 'border-box' }}
-          >
-            WhatsApp 預約免費諮詢
-          </a>
+          <>
+            <a
+              href={link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="primary"
+              onClick={() => trackStep('booking_clicked')}
+              style={{ display: 'block', textDecoration: 'none', marginTop: 0, boxSizing: 'border-box' }}
+            >
+              📋 傳送報告俾 Dr Timeless 預約
+            </a>
+            <p style={{ fontSize: '0.72rem', color: 'var(--text-dim)', margin: '8px 0 0' }}>
+              會開 WhatsApp 並預先填好報告摘要（唔包相片）——你睇晒內容、撳「發送」先算真正送出。
+            </p>
+          </>
         ) : (
           <div className="alert warn" style={{ textAlign: 'left', marginBottom: 0 }}>
             未設定 <code>NEXT_PUBLIC_WHATSAPP</code>，預約按鈕唔會顯示。喺 <code>.env</code> 填入診所 WhatsApp
