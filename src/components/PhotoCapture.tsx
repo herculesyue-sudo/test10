@@ -144,10 +144,12 @@ export default function PhotoCapture({
               <span>處理中…</span>
             ) : (
               <>
-                <span style={{ fontSize: '1.5rem', lineHeight: 1 }}>＋</span>
+                <span style={{ fontSize: '1.5rem', lineHeight: 1 }}>{singleShot && camFallback ? '📷' : '＋'}</span>
                 <span className={s.required ? 'req' : undefined}>
-                  {s.label}
-                  {s.required ? ' *' : ''}
+                  {/* 後備狀態要講到明呢個掣就係出路 —— 頁面內相機開唔到嘅客人
+                      唔會自己估到「個灰格仔」先係影相掣 */}
+                  {singleShot && camFallback ? '撳呢度影相 / 揀相' : s.label}
+                  {s.required && !(singleShot && camFallback) ? ' *' : ''}
                 </span>
               </>
             )}
