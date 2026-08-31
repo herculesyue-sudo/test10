@@ -17,6 +17,13 @@ export interface ConsultResponse {
     findings: { key: string; severity: number; confidence: number; observation: string; location: string }[];
     overallSummary: string;
     redFlags: string[];
+    /** 面部定位點（0-1 相片比例；postProcess 已消毒）—— 真相版觀察圖用 */
+    landmarks?: {
+      leftEye: { x: number; y: number };
+      rightEye: { x: number; y: number };
+      mouthCenter: { x: number; y: number };
+      chin?: { x: number; y: number };
+    };
   };
   recommendations: {
     treatment: {

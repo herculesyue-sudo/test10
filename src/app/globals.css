@@ -560,3 +560,25 @@ button.ghost {
   font-size: 0.88rem; color: var(--text-dim); text-align: left;
 }
 .card-toggle span { color: var(--accent); }
+
+/* —— 真相版面部觀察圖 —— */
+.pfm {
+  position: relative; max-width: 300px; margin: 6px auto 0;
+  border-radius: 12px; overflow: hidden;
+}
+.pfm img { display: block; width: 100%; height: auto; border-radius: 12px; }
+.pfm-overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+
+/* —— 觀察圖模式切換 —— */
+.fm-toggle {
+  display: flex; justify-content: center; gap: 6px; margin: 2px 0 4px;
+}
+.fm-toggle button {
+  min-height: 36px; padding: 4px 16px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--surface);
+  font-size: 0.8rem; color: var(--text-dim); cursor: pointer;
+}
+.fm-toggle button[aria-pressed='true'] {
+  background: var(--accent-soft); border-color: var(--accent);
+  color: var(--text); font-weight: 600;
+}

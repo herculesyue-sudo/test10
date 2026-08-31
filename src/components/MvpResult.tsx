@@ -20,6 +20,7 @@ import { trackStep } from '@/lib/track-client';
 import { CLINIC_POLICY, CLINIC_OTHER_SERVICES } from '@/lib/treatments/clinic';
 import CategoryScores from '@/components/CategoryScores';
 import FaceMap from '@/components/FaceMap';
+import PhotoFaceMap from '@/components/PhotoFaceMap';
 import TreatmentTimeline from '@/components/TreatmentTimeline';
 import type { ConsultResponse } from './Report';
 
@@ -49,6 +50,9 @@ function regionHighlights(findings: { key: string; severity: number }[]): Partia
   return out;
 }
 
+/** overall_skin 有冇去到值得交代嘅程度（同 intensityOf 嘅 25 下限一致）。 */
+const intensityOfOverall = (v: number) => v >= 25;
+
 /** 長觀察句預設兩行 clamp，撳先展開 —— 圖行先、字跟後。 */
 function ClampText({ text }: { text: string }) {
   const [open, setOpen] = useState(false);
@@ -66,6 +70,7 @@ export default function MvpResult({
   data,
   goals,
   selectedFindings = [],
+  photoPreview,
   onReset,
   pregnant = false,
 }: {
@@ -73,6 +78,8 @@ export default function MvpResult({
   goals: GoalKey[];
   /** 客人喺面圖自選嘅問題 —— 用嚟講返「你揀咗但相中觀察唔到」嘅誠實一句 */
   selectedFindings?: FindingKey[];
+  /** 客人張相（dataURL，只存在於瀏覽器狀態）—— 有埋 landmarks 先會出真相版觀察圖 */
+  photoPreview?: string;
   onReset: () => void;
   /** 剔咗懷孕就會硬過濾所有禁忌療程 —— 一個建議都冇嘅時候要講返真正原因 */
   pregnant?: boolean;
@@ -82,6 +89,14 @@ export default function MvpResult({
   const unobservedConcerns = selectedFindings.filter((f) => !observedKeys.has(f));
   const highlights = regionHighlights(a.findings);
   const hasHighlights = Object.values(highlights).some((v) => (v ?? 0) >= 25);
+
+  // 真相版觀察圖：要有相 + 有（消毒過嘅）定位點 + 幾何合格先出；
+  // 任何一樣唔齊就靜默用示意圖，唔好同客人講「對唔準」。
+  const [photoFailed, setPhotoFailed] = useState(false);
+  const [view, setView] = useState<'photo' | 'map'>('photo');
+  const canPhoto = !!photoPreview && !!a.landmarks && !photoFailed;
+  const showPhoto = canPhoto && view === 'photo';
+  const overallVal = highlights.overall_skin ?? 0;
   const recs = data.recommendations.slice(0, TOP_N);
   const top = [...a.findings].sort((x, y) => y.severity - x.severity).slice(0, 4);
   const link = buildBookingUrl({
@@ -140,22 +155,52 @@ export default function MvpResult({
       {hasHighlights && (
         <div className="card">
           <h2>面部觀察圖</h2>
-          <FaceMap mode="display" highlights={highlights} />
+          {canPhoto && (
+            <div className="fm-toggle" role="group" aria-label="切換觀察圖顯示方式">
+              <button type="button" aria-pressed={view === 'photo'} onClick={() => setView('photo')}>
+                你嘅相片
+              </button>
+              <button type="button" aria-pressed={view === 'map'} onClick={() => setView('map')}>
+                示意圖
+              </button>
+            </div>
+          )}
+          {showPhoto && photoPreview && a.landmarks ? (
+            <PhotoFaceMap
+              preview={photoPreview}
+              landmarks={a.landmarks}
+              highlights={highlights}
+              onFallback={() => setPhotoFailed(true)}
+            />
+          ) : (
+            <FaceMap mode="display" highlights={highlights} />
+          )}
           <div className="fm-legend" aria-hidden="true">
+            {/* 圖例透明度跟當前模式 —— 圖例同幅圖唔一致就係呃人 */}
             <span>
-              <i style={{ opacity: 0.18 }} />
+              <i style={{ opacity: showPhoto ? 0.1 : 0.18 }} />
               輕微
             </span>
             <span>
-              <i style={{ opacity: 0.35 }} />
+              <i style={{ opacity: showPhoto ? 0.19 : 0.35 }} />
               中度
             </span>
             <span>
-              <i style={{ opacity: 0.55 }} />
+              <i style={{ opacity: showPhoto ? 0.3 : 0.55 }} />
               明顯
             </span>
           </div>
-          <p className="fm-caption">示意圖，唔係你嘅相片 · AI 相片估算，因人而異，並非診斷</p>
+          {/* 真相版唔畫全面 wash（似「成塊面有事」）—— overall_skin 用文字交代 */}
+          {showPhoto && intensityOfOverall(overallVal) && (
+            <p className="fm-caption" style={{ marginTop: 4 }}>
+              整體膚質：{overallVal >= 66 ? '明顯' : overallVal >= 41 ? '中度' : '輕微'}（全面性觀察，唔標喺單一位置）
+            </p>
+          )}
+          <p className="fm-caption">
+            {showPhoto
+              ? '呢張相只會喺你部機顯示，分析完成後唔會上傳或儲存 · 標示係觀察位置，唔係模擬效果 · AI 相片估算，因人而異，並非診斷'
+              : '示意圖，唔係你嘅相片 · AI 相片估算，因人而異，並非診斷'}
+          </p>
           {unobservedConcerns.length > 0 && (
             <p className="fm-caption" style={{ marginTop: 4 }}>
               你自選嘅

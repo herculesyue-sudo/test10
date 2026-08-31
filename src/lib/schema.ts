@@ -43,9 +43,32 @@ export const FacialStructureSchema = z.object({
     .describe('Fitzpatrick 皮膚類型；影響激光參數同反黑風險'),
 });
 
+/**
+ * 面部定位點：報告用嚟將高亮畫返上客人自己張相。
+ * ⚠️ 座標刻意唔落 .min(0).max(1) —— Gemini/Bedrock 條 JSON-in-prompt 路
+ * 係 AnalysisSchema.parse 失敗就成份報告死；模型回傳 1.02 唔應該炸咗
+ * 客人份分析。範圍驗證喺 postProcess 做（prompt 係請求，code 先係保證）。
+ */
+const AnchorSchema = z.object({
+  x: z.number().describe('水平座標：相片最左 = 0，最右 = 1'),
+  y: z.number().describe('垂直座標：相片最頂 = 0，最底 = 1'),
+});
+
+export const FaceLandmarksSchema = z.object({
+  leftEye: AnchorSchema.describe('喺相入面偏左（x 較細）嗰隻眼嘅眼球中心。以相片座標為準，唔係解剖學左右'),
+  rightEye: AnchorSchema.describe('喺相入面偏右嗰隻眼嘅眼球中心'),
+  mouthCenter: AnchorSchema.describe('上下唇之間嗰條縫嘅正中央（唔係下唇底）'),
+  chin: AnchorSchema.optional().describe('面部輪廓最低點（下巴尖）；見唔清就唔好填'),
+});
+export type FaceLandmarks = z.infer<typeof FaceLandmarksSchema>;
+
 export const AnalysisSchema = z.object({
   imageQuality: ImageQualitySchema,
   structure: FacialStructureSchema,
+  landmarks: FaceLandmarksSchema.optional().describe(
+    '面部定位點，全部係相對整張相嘅 0-1 比例座標。有多過一張相嘅話，只可以描述第一張（正面）嗰張。' +
+      '面唔係大致正面、雙眼或者嘴被遮、或者你唔肯定 —— 就成個 landmarks 欄位唔好填：錯嘅定位點比冇更差',
+  ),
   findings: z.array(FindingSchema).describe('所有觀察到嘅特徵。冇觀察到嘅特徵唔好放入去，唔好夾硬砌夠數'),
   overallSummary: z.string().describe('用廣東話寫 2-3 句總結，寫俾客人睇，語氣專業但親切'),
   redFlags: z

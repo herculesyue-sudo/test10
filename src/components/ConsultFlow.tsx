@@ -148,6 +148,7 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
           data={data}
           goals={effectiveGoals()}
           selectedFindings={selectedFindings}
+          photoPreview={shots[0]?.preview}
           onReset={reset}
           pregnant={pregnant}
         />

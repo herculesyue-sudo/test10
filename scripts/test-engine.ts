@@ -45,6 +45,8 @@ import { allowedOrigins, frameAncestors } from '../src/lib/embed-config';
 import { checkStaff, isStaffPath } from '../src/lib/staff-auth';
 import { computeCategoryScores, partitionCheck, CATEGORIES, bandOf } from '../src/lib/categories';
 import { FACE_REGIONS, regionCoverageCheck, goalsFromFindings, buildConcernNotes } from '../src/lib/face-regions';
+import { computeAlignment, applyMatrix, sanitizeLandmarks } from '../src/lib/face-align';
+import { AnalysisSchema } from '../src/lib/schema';
 import { normalizePhone, createMemoryVisitStore, type VisitRecord } from '../src/lib/visits';
 import { readFileSync } from 'node:fs';
 import { classifyHost, resolvePublicUrl } from '../src/lib/public-url';
@@ -760,6 +762,110 @@ console.log('\n── 前端埋點 ──');
 
   g.fetch = realFetch;
   delete g.window;
+}
+
+console.log('\n── 面部對齊（真相版觀察圖）──');
+{
+  const W = 1000;
+  const H = 1300;
+  // 標準比例個案：眼距 200px，嘴喺眼中點下 63×(200/58)≈217px
+  const sx = 200 / 58;
+  const mouthY = 0.4 + (63 * sx) / H;
+  const lm = {
+    leftEye: { x: 0.4, y: 0.4 },
+    rightEye: { x: 0.6, y: 0.4 },
+    mouthCenter: { x: 0.5, y: mouthY },
+  };
+
+  const near = (p: { x: number; y: number }, x: number, y: number, tol = 1) =>
+    Math.abs(p.x - x) <= tol && Math.abs(p.y - y) <= tol;
+
+  const m1 = computeAlignment(lm, W, H);
+  check('標準個案有 matrix', m1 !== null);
+  if (m1) {
+    check('左眼錨點恆等式 T(71,102)=左眼', near(applyMatrix(m1, 71, 102), 400, 520));
+    check('右眼錨點恆等式 T(129,102)=右眼', near(applyMatrix(m1, 129, 102), 600, 520));
+    check('嘴錨點恆等式 T(100,165)=嘴', near(applyMatrix(m1, 100, 165), 500, 0.4 * H + 63 * sx));
+  }
+
+  // 側頭 15°：旋轉眼嘴三點，眼依然要對得正
+  const rot = (p: { x: number; y: number }, deg: number) => {
+    const rad = (deg * Math.PI) / 180;
+    const cx = 0.5 * W;
+    const cy = 0.4 * H;
+    const px = p.x * W - cx;
+    const py = p.y * H - cy;
+    return {
+      x: (cx + px * Math.cos(rad) - py * Math.sin(rad)) / W,
+      y: (cy + px * Math.sin(rad) + py * Math.cos(rad)) / H,
+    };
+  };
+  const tilt15 = {
+    leftEye: rot(lm.leftEye, 15),
+    rightEye: rot(lm.rightEye, 15),
+    mouthCenter: rot(lm.mouthCenter, 15),
+  };
+  const m2 = computeAlignment(tilt15, W, H);
+  check('側頭 15° 照畫', m2 !== null);
+  if (m2) {
+    const le = tilt15.leftEye;
+    check('側頭 15° 眼照對得正', near(applyMatrix(m2, 71, 102), le.x * W, le.y * H, 1.5));
+  }
+  const tilt30 = {
+    leftEye: rot(lm.leftEye, 30),
+    rightEye: rot(lm.rightEye, 30),
+    mouthCenter: rot(lm.mouthCenter, 30),
+  };
+  check('側頭 30° → 退返示意圖', computeAlignment(tilt30, W, H) === null);
+
+  // 眼距得 5% 相寬 → 塊面太細，唔可信
+  check(
+    '眼距 5% 相寬 → 退返示意圖',
+    computeAlignment(
+      { leftEye: { x: 0.475, y: 0.4 }, rightEye: { x: 0.525, y: 0.4 }, mouthCenter: { x: 0.5, y: 0.5 } },
+      W,
+      H,
+    ) === null,
+  );
+  // 嘴喺眼上面 → 幾何唔通
+  check(
+    '嘴喺眼上面 → 退返示意圖',
+    computeAlignment({ ...lm, mouthCenter: { x: 0.5, y: 0.3 } }, W, H) === null,
+  );
+
+  // 長面：嘴距 1.5×，C5 內但超 clamp 上限 1.35 → clamp 生效
+  const longFace = { ...lm, mouthCenter: { x: 0.5, y: 0.4 + (63 * sx * 1.5) / H } };
+  const m3 = computeAlignment(longFace, W, H);
+  check('長面照畫（clamp 生效）', m3 !== null);
+  if (m3) {
+    const mouthMapped = applyMatrix(m3, 100, 165);
+    check(
+      '長面嘴位被 clamp（畫喺真嘴之上、1.35 倍處）',
+      Math.abs(mouthMapped.y - (0.4 * H + 63 * sx * 1.35)) <= 1,
+    );
+  }
+
+  // 消毒
+  const swapped = sanitizeLandmarks({
+    leftEye: { x: 0.6, y: 0.4 },
+    rightEye: { x: 0.4, y: 0.4 },
+    mouthCenter: { x: 0.5, y: mouthY },
+  });
+  check('左右眼調轉 → 自動交換', swapped.rule === 'landmarks-swapped' && !!swapped.landmarks);
+  check('交換後 leftEye 喺左邊', (swapped.landmarks?.leftEye.x ?? 1) < (swapped.landmarks?.rightEye.x ?? 0));
+  const oob = sanitizeLandmarks({
+    leftEye: { x: -0.1, y: 0.4 },
+    rightEye: { x: 0.6, y: 0.4 },
+    mouthCenter: { x: 0.5, y: mouthY },
+  });
+  check('超界定位點 → 剷走並記 adjustment', oob.rule === 'landmarks-out-of-range' && !oob.landmarks);
+  check('冇 landmarks → 乜都唔做', sanitizeLandmarks(undefined).rule === undefined);
+
+  // schema：demo 個案（冇 landmarks）照 parse 得過；有 landmarks 都得
+  const demoOk = DEMO_CASES.every((c) => AnalysisSchema.safeParse(c.analysis).success);
+  check('DEMO_CASES 全部照 parse 得過（landmarks optional）', demoOk);
+  const withLm = AnalysisSchema.safeParse({ ...DEMO_CASES[0].analysis, landmarks: lm });
+  check('帶 landmarks 嘅分析 parse 得過', withLm.success);
 }
 
 console.log('\n── 面圖區域映射 ──');

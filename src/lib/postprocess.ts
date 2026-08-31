@@ -1,5 +1,6 @@
 import type { Analysis, AnalysisFinding } from './schema';
 import type { FindingKey } from './treatments/types';
+import { sanitizeLandmarks } from './face-align';
 
 /**
  * ══════════════════════════════════════════════════════════════════
@@ -72,6 +73,20 @@ const weight = (f: AnalysisFinding) => f.severity * f.confidence;
 export function postProcess(a: Analysis): PostProcessResult {
   const adjustments: Adjustment[] = [];
   const q = a.imageQuality;
+
+  // ── 0. 面部定位點消毒 ──
+  // schema 刻意冇落座標範圍（parse 失敗會炸成份報告），所以喺呢度
+  // 剷走壞定位點／自動交換左右眼；壞咗淨係冇「真相版觀察圖」，報告照出。
+  const lmResult = sanitizeLandmarks(a.landmarks);
+  if (lmResult.rule) {
+    adjustments.push({
+      rule: lmResult.rule,
+      detail: lmResult.landmarks
+        ? '模型用咗解剖學左右，已自動交換兩眼'
+        : '面部定位點唔合格已剷走，報告會用示意圖',
+    });
+  }
+  a = { ...a, landmarks: lmResult.landmarks };
 
   // ── 1. 同一個 key 出現多過一次 ──
   // schema 攔唔到重複。唔處理嘅話，配對引擎會將同一個問題計兩次，
