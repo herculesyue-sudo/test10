@@ -12,11 +12,14 @@ import {
   type ScoredTreatment,
 } from '@/lib/treatments';
 import { pickDemoCase, DEMO_CASES } from '@/lib/demo';
-import { checkRateLimit, recordUsage, usageSnapshot } from '@/lib/ratelimit';
+import { checkRateLimit, recordUsage, usageSnapshot, clientIp } from '@/lib/ratelimit';
 import { computeCategoryScores } from '@/lib/categories';
-import { getVisitStore, normalizePhone, type VisitRecord } from '@/lib/visits';
+import { getVisitStore, normalizePhone, normalizeHKMobile, type VisitRecord } from '@/lib/visits';
 import { checkStaff, STAFF_COOKIE } from '@/lib/staff-auth';
 import { getQuotaStore, phoneKey, FREE_ANALYSES_PER_PHONE } from '@/lib/phone-quota';
+import { getLeadStore, type LeadRecord } from '@/lib/leads';
+import { getSpendStore, monthKey, monthlyBudgetHKD } from '@/lib/ai-budget';
+import { verifyTurnstile } from '@/lib/turnstile';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -24,13 +27,36 @@ export const maxDuration = 300;
 /** 測試模式：唔呼叫 API、唔使 key、零成本。喺 .env 設 DEMO_MODE=1 開啟。 */
 const DEMO = process.env.DEMO_MODE === '1' || process.env.DEMO_MODE === 'true';
 
+function isStaffRequest(req: Request): boolean {
+  const cookie = /(?:^|;\s*)drt_staff=([^;]+)/.exec(req.headers.get('cookie') ?? '')?.[1];
+  void STAFF_COOKIE; // cookie 名同 staff-auth 一致（regex 內冇辦法用常量）
+  return checkStaff(null, cookie ? decodeURIComponent(cookie) : undefined).action === 'allow';
+}
+
 /** 前端用嚟知道而家係咪測試模式（顯示橫額、跳過影相、揀個案）。 */
-export async function GET() {
-  return NextResponse.json({
+export async function GET(req: Request) {
+  const base: Record<string, unknown> = {
     demo: DEMO,
     cases: DEMO ? DEMO_CASES.map((c) => ({ id: c.id, label: c.label })) : [],
     usage: usageSnapshot(),
-  });
+  };
+
+  // 本月使費只俾職員睇（BudgetBanner）—— 預算數字唔應該公開俾客人端
+  if (isStaffRequest(req)) {
+    try {
+      const s = await getSpendStore().month(monthKey());
+      const budgetHKD = monthlyBudgetHKD();
+      base.budget = {
+        monthSpentHKD: Number(s.costHKD.toFixed(2)),
+        budgetHKD,
+        analyses: s.analyses,
+        pctUsed: Number(((s.costHKD / budgetHKD) * 100).toFixed(1)),
+      };
+    } catch {
+      /* 資料庫暫時攞唔到就唔出橫額，唔好整死成個 GET */
+    }
+  }
+  return NextResponse.json(base);
 }
 
 const MAX_IMAGES = 4;
@@ -51,11 +77,15 @@ interface Body {
   isPregnantOrNursing?: boolean;
   /** 測試模式：指定用邊個示範個案 */
   demoCaseId?: string;
-  /** 客人電話（必填，除非 demo / 職員）—— 用嚟計每電話 3 次免費額度，唔會以原文儲存 */
+  /** 客人電話（必填，除非 demo / 職員）—— 計每電話 3 次額度；剔咗同意先會以原文入跟進名單 */
   customerPhone?: string;
-  /** 客人稱呼（可選）—— 傳送報告嗰陣帶埋，方便診所跟進 */
+  /** 客人稱呼（可選）—— 入跟進名單＋傳送報告嗰陣帶埋 */
   customerName?: string;
-  /** 自願儲存評分紀錄（SaveRecordCard）。冇 consent 或者冇 phone 就乜都唔會儲。 */
+  /** 客人必須同意（保存分析摘要＋WhatsApp 跟進）先可以分析 —— ContactCard 嘅必剔方格 */
+  consent?: boolean;
+  /** Cloudflare Turnstile token（伺服器設定咗 TURNSTILE_SECRET_KEY 先會查） */
+  turnstileToken?: string;
+  /** 職員 /pro 嘅自願儲存流程（SaveRecordCard staffMode）。客人流程唔再用呢個 —— 改行必須同意自動儲。 */
   record?: { phone?: string; consent?: boolean };
 }
 
@@ -101,31 +131,29 @@ function goalCoverage(goals: GoalKey[], shown: ScoredTreatment[]) {
 }
 
 /**
- * 客人自願同意先至儲；一切由 server 自己計自己寫 —— 冇公開寫入口。
+ * 有同意先至儲；一切由 server 自己計自己寫 —— 冇公開寫入口。
  *
- * source 由 server 判斷（有有效 drt_staff cookie = 職員喺 /pro 代做），
- * 唔信 client 自報。findings 喺呢個邊界剝走 observation / location ——
- * 同 stripInternal 同一個原則：唔想儲嘅嘢就唔好俾佢入到 store。
+ * 客人流程：ContactCard 嘅必剔同意（consent + customerPhone）；
+ * 職員 /pro：SaveRecordCard 嘅自願流程（body.record）。source 由 server
+ * 判斷（staff cookie），唔信 client 自報。findings 喺呢個邊界剝走
+ * observation / location —— 同 stripInternal 同一個原則。
  */
 async function maybeSaveVisit(
-  req: Request,
+  recordReq: { phone?: string; consent?: boolean } | undefined,
+  isStaff: boolean,
   body: Body,
   findings: Finding[],
   goals: GoalKey[],
 ): Promise<{ saved: boolean; persistent: boolean; reason?: string } | undefined> {
-  if (!body.record?.consent || !body.record.phone) return undefined; // 冇要求過 = 乜都唔儲（現狀）
+  if (!recordReq?.consent || !recordReq.phone) return undefined; // 冇同意 = 乜都唔儲
 
   let persistent = false;
   try {
     const store = await getVisitStore();
     persistent = store.persistent;
 
-    const phone = normalizePhone(body.record.phone);
+    const phone = normalizePhone(recordReq.phone);
     if (!phone) return { saved: false, persistent, reason: '電話號碼格式唔啱' };
-
-    const cookie = /(?:^|;\s*)drt_staff=([^;]+)/.exec(req.headers.get('cookie') ?? '')?.[1];
-    const isStaff = checkStaff(null, cookie ? decodeURIComponent(cookie) : undefined).action === 'allow';
-    void STAFF_COOKIE; // cookie 名同 staff-auth 一致（regex 內冇辦法用常量）
 
     const ageBand =
       body.age !== undefined
@@ -150,6 +178,33 @@ async function maybeSaveVisit(
     return { saved: true, persistent };
   } catch {
     return { saved: false, persistent, reason: '儲存失敗' };
+  }
+}
+
+/**
+ * 跟進名單寫入（拉新客漏斗嘅落點）—— 客人剔咗必須同意先會行到呢度。
+ * 寫入失敗唔可以整死個報告：分析結果照出，lead 冇咗一筆係損失，
+ * 但客人白等 30 秒先係災難。
+ */
+async function saveLead(phone: string, name: string | undefined, goals: GoalKey[], findings: Finding[]): Promise<void> {
+  try {
+    const top = [...findings]
+      .sort((a, b) => b.severity - a.severity)
+      .slice(0, 3)
+      .map((f) => ({ key: f.key, severity: f.severity }));
+    const lead: LeadRecord = {
+      id: crypto.randomUUID(),
+      phone,
+      name: name?.trim() || undefined,
+      createdAt: new Date().toISOString(),
+      goals,
+      topFindings: top,
+      status: 'new',
+      source: 'customer',
+    };
+    await getLeadStore().add(lead);
+  } catch (err) {
+    console.error('[consult] lead 寫入失敗:', (err as Error).message);
   }
 }
 
@@ -195,8 +250,8 @@ export async function POST(req: Request) {
 
     const demoShown = presentable(scored);
     // demo 都行真嘅儲存流程（記憶體 store）—— 成個「儲存→/records 搜尋」
-    // 喺未部署之前就測試得到
-    const demoRecord = await maybeSaveVisit(req, body, findings, goals);
+    // 喺未部署之前就測試得到（demo 冇 ContactCard，行職員 record 流程）
+    const demoRecord = await maybeSaveVisit(body.record, isStaffRequest(req), body, findings, goals);
     return NextResponse.json({
       analysis: demoAnalysis,
       record: demoRecord,
@@ -259,16 +314,25 @@ export async function POST(req: Request) {
 
   const goalLabels = goals.map((g) => GOALS.find((x) => x.key === g)!.label);
 
-  // ── 每電話 3 次免費額度 ──
-  // 職員（/pro，有 staff cookie）唔受限 —— 佢哋喺舖頭代客做，唔應該俾
-  // 額度卡住。客人一定要有電話先做到；額度喺**分析成功之後**先扣，
-  // 失敗嘅請求唔應該燒客人條數。
-  const staffCookie = /(?:^|;\s*)drt_staff=([^;]+)/.exec(req.headers.get('cookie') ?? '')?.[1];
-  const isStaffReq = checkStaff(null, staffCookie ? decodeURIComponent(staffCookie) : undefined).action === 'allow';
+  // ── 客人閘（職員 /pro 有 staff cookie，全部豁免）──
+  // 順序有講究：同意 → 手機格式（免費、即答）→ Turnstile（免費，擋機械人）
+  // → 每電話 3 次額度 → 月度預算。全部過晒先准佢燒真錢。
+  // 額度同使費都係**分析成功之後**先入帳 —— 失敗唔燒客人條數。
+  const isStaffReq = isStaffRequest(req);
   let quotaKey: string | null = null;
+  let customerPhone: string | null = null;
   if (!isStaffReq) {
-    const customerPhone = normalizePhone(body.customerPhone ?? '');
-    if (!customerPhone) return bad('請輸入 8 位香港電話號碼先可以開始分析');
+    if (!body.consent) {
+      return bad('請先剔「同意保存分析紀錄同 WhatsApp 跟進」先可以開始分析');
+    }
+    customerPhone = normalizeHKMobile(body.customerPhone ?? '');
+    if (!customerPhone) {
+      return bad('請輸入香港手機號碼（4、5、6、7、9 字頭嘅 8 位數字）先可以開始分析');
+    }
+
+    const ts = await verifyTurnstile(body.turnstileToken, clientIp(req));
+    if (!ts.ok) return bad(ts.reason ?? '安全驗證失敗，請重試。', 403);
+
     quotaKey = phoneKey(customerPhone);
     const usedSoFar = await getQuotaStore().used(quotaKey);
     if (usedSoFar >= FREE_ANALYSES_PER_PHONE) {
@@ -276,6 +340,21 @@ export async function POST(req: Request) {
         `呢個電話已經用晒 ${FREE_ANALYSES_PER_PHONE} 次免費分析。想深入啲，歡迎直接 WhatsApp 6484 3111 預約醫生面診 —— 面診先係最準嘅評估。`,
         429,
       );
+    }
+
+    // ── 月度預算硬上限 ──「最壞情況蝕幾多」由呢層鎖死（記憶體
+    // ratelimit 喺 Workers 每個 isolate 會重置，靠唔住）。讀唔到預算
+    // 唔擋客 —— 呢層係保護傘，唔係命脈。
+    try {
+      const spent = (await getSpendStore().month(monthKey())).costHKD;
+      if (spent >= monthlyBudgetHKD()) {
+        return bad(
+          '今個月嘅免費分析名額已經用晒。想評估膚況，歡迎 WhatsApp 6484 3111 直接預約 —— 醫生面診先係最準嘅評估。',
+          503,
+        );
+      }
+    } catch {
+      /* fail-open */
     }
   }
 
@@ -312,7 +391,21 @@ export async function POST(req: Request) {
     const plan = buildPhasedPlan(scored);
 
     const shown = presentable(scored);
-    const record = await maybeSaveVisit(req, body, findings, goals);
+
+    // ── 使費入帳（職員都計 —— 條數一樣係錢）──
+    try {
+      await getSpendStore().add(monthKey(), result.costHKD, result.usage.inputTokens, result.usage.outputTokens);
+    } catch (err) {
+      console.error('[consult] 使費入帳失敗:', (err as Error).message);
+    }
+
+    // 客人：必須同意已喺入口驗過 → 自動儲 visit（評分對比）＋ lead（跟進名單）
+    // 職員：照舊行 SaveRecordCard 嘅自願 record 流程
+    const recordReq = isStaffReq ? body.record : { phone: customerPhone ?? undefined, consent: true };
+    const record = await maybeSaveVisit(recordReq, isStaffReq, body, findings, goals);
+    if (!isStaffReq && customerPhone) {
+      await saveLead(customerPhone, body.customerName, goals, findings);
+    }
 
     // 分析成功先扣額度（失敗唔燒客人條數）
     let remainingAnalyses: number | undefined;

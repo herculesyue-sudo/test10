@@ -5,6 +5,7 @@ import PhotoCapture, { DEFAULT_SHOTS, type Shot } from '@/components/PhotoCaptur
 import AnalysisProgress from '@/components/AnalysisProgress';
 import Report, { type ConsultResponse } from '@/components/Report';
 import { useDemoMode, DemoBanner, DemoCasePicker } from '@/components/DemoMode';
+import BudgetBanner from '@/components/BudgetBanner';
 import Consent from '@/components/Consent';
 import SaveRecordCard from '@/components/SaveRecordCard';
 import { GOALS, type GoalKey } from '@/lib/treatments/types';
@@ -105,6 +106,8 @@ export default function Page() {
           </a>
         </p>
       </header>
+
+      <BudgetBanner />
 
       {isDemo && step !== 'report' && <DemoBanner />}
 

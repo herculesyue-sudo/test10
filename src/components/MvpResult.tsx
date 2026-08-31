@@ -476,6 +476,7 @@ export default function MvpResult({
             </a>
             <p style={{ fontSize: '0.72rem', color: 'var(--text-dim)', margin: '8px 0 0' }}>
               會開 WhatsApp 並預先填好報告摘要（唔包相片）——你睇晒內容、撳「發送」先算真正送出。
+              送出之後，我哋會喺辦公時間內覆你安排時間。
             </p>
           </>
         ) : (

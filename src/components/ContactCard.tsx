@@ -1,34 +1,43 @@
 'use client';
 
-import { normalizePhone } from '@/lib/visits';
+import { normalizeHKMobile, RETENTION_MONTHS } from '@/lib/visits';
+import { CLINIC_POLICY } from '@/lib/treatments/clinic';
 import { FREE_ANALYSES_PER_PHONE } from '@/lib/quota-config';
 
 /**
- * 客人聯絡資料 —— 電話必填（每個電話 {FREE_ANALYSES_PER_PHONE} 次免費分析），
- * 稱呼可選（傳送報告嗰陣帶埋，方便診所跟進）。
+ * 客人聯絡資料 —— 拉新客漏斗嘅入口。
  *
- * 私隱：講到明電話唔會以原文儲存 —— 佢喺伺服器嗰邊會變成不可還原嘅
- * 編碼先入資料庫，淨係用嚟計免費次數（phone-quota.ts）。想儲低評分
- * 紀錄嚟對比，係下面另一張卡另一份同意。
+ * 電話必填（只收香港手機字頭 4/5/6/7/9，固網同亂噏嘅號段擋走），
+ * 稱呼可選，加一個**必須剔**嘅同意：保存分析摘要＋WhatsApp 跟進。
+ * 剔咗呢個，分析完成後客人資料自動入診所後台跟進名單 —— 唔使等
+ * 佢自己撳「傳送報告」。
+ *
+ * ⚠️ 同意文字寫明用途（跟進今次分析＋預約）、保留期、刪除渠道。
+ * 呢份同意唔覆蓋日後嘅推廣訊息（direct marketing）—— 想用呢個名單
+ * 賣廣告要另攞 opt-in，唔好偷雞。
  */
 export default function ContactCard({
   name,
   onName,
   phone,
   onPhone,
+  consent,
+  onConsent,
 }: {
   name: string;
   onName: (v: string) => void;
   phone: string;
   onPhone: (v: string) => void;
+  consent: boolean;
+  onConsent: (v: boolean) => void;
 }) {
-  const invalid = phone.trim() !== '' && normalizePhone(phone) === null;
+  const invalid = phone.trim() !== '' && normalizeHKMobile(phone) === null;
 
   return (
     <div className="card">
       <h2>3. 你嘅聯絡資料</h2>
       <p className="sub">
-        每個電話有 {FREE_ANALYSES_PER_PHONE} 次免費分析。分析完成後，可以一個掣將報告經 WhatsApp 傳俾我哋跟進。
+        每個電話有 {FREE_ANALYSES_PER_PHONE} 次免費分析。分析完成後，我哋會經 WhatsApp 跟進你嘅結果同安排預約。
       </p>
       <label className="f" htmlFor="cust-name">
         稱呼（可選）
@@ -42,7 +51,7 @@ export default function ContactCard({
         onChange={(e) => onName(e.target.value)}
       />
       <label className="f" htmlFor="cust-phone" style={{ marginTop: 10 }}>
-        手機號碼（香港 8 位數字）*
+        手機號碼（香港手機，8 位數字）*
       </label>
       <input
         id="cust-phone"
@@ -54,10 +63,20 @@ export default function ContactCard({
         onChange={(e) => onPhone(e.target.value)}
       />
       {invalid && (
-        <p style={{ color: 'var(--danger)', fontSize: '0.8rem', margin: '5px 0 0' }}>請輸入 8 位香港電話號碼</p>
+        <p style={{ color: 'var(--danger)', fontSize: '0.8rem', margin: '5px 0 0' }}>
+          請輸入香港手機號碼（4、5、6、7、9 字頭嘅 8 位數字）
+        </p>
       )}
+      <label className="check" style={{ marginTop: 12 }}>
+        <input type="checkbox" checked={consent} onChange={(e) => onConsent(e.target.checked)} />
+        <span>
+          我同意 {CLINIC_POLICY.name} 保存我嘅分析摘要（8 大範疇評分、觀察項目編號、改善目標）同聯絡資料（稱呼、電話），
+          保留期最長 {RETENTION_MONTHS} 個月，用途係經 WhatsApp 跟進今次分析結果同安排預約，以及下次分析時對比變化。
+          我可以隨時 WhatsApp 6484 3111 要求刪除呢啲紀錄。*
+        </span>
+      </label>
       <p style={{ fontSize: '0.74rem', color: 'var(--text-dim)', margin: '10px 0 0' }}>
-        電話唔會以原文儲存 —— 只會轉成不可還原嘅編碼，用嚟計免費分析次數。
+        唔會儲存你嘅相片；相片只用嚟即時分析。
       </p>
     </div>
   );

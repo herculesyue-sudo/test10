@@ -11,9 +11,11 @@
 
 import { useEffect, useState } from 'react';
 import CategoryScores from '@/components/CategoryScores';
+import BudgetBanner from '@/components/BudgetBanner';
 import { CATEGORIES } from '@/lib/categories';
 import { normalizePhone, type VisitRecord } from '@/lib/visits';
-import { GOALS } from '@/lib/treatments/types';
+import { GOALS, FINDING_LABELS, type FindingKey } from '@/lib/treatments/types';
+import { LEAD_STATUSES, LEAD_STATUS_LABELS, type LeadRecord, type LeadStatus } from '@/lib/leads-shared';
 
 /** 一個範疇跨次嘅分數線。y 軸固定 0–100，唔同範疇先可以互相比較。 */
 function Sparkline({ values }: { values: number[] }) {
@@ -33,6 +35,106 @@ function Sparkline({ values }: { values: number[] }) {
 }
 
 const goalLabel = (k: string) => GOALS.find((g) => g.key === k)?.label ?? k;
+const findingLabel = (k: string) => (k in FINDING_LABELS ? FINDING_LABELS[k as FindingKey] : k);
+
+/**
+ * 跟進名單 —— 拉新客漏斗嘅職員端。每個做完分析嘅客都喺度（佢哋剔咗
+ * 同意先分析得），有撳「傳送報告」嘅客你哋 WhatsApp 度會另外收到訊息
+ * （熱 lead）；冇撳嘅就喺呢度等回電。狀態欄記低跟進去到邊。
+ */
+function LeadsSection() {
+  const [leads, setLeads] = useState<LeadRecord[] | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function load() {
+    try {
+      const res = await fetch('/api/leads');
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? '載入失敗');
+      setLeads(json.leads);
+      setErr(null);
+    } catch (e) {
+      setErr((e as Error).message);
+    }
+  }
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  async function setStatus(id: string, status: LeadStatus) {
+    // 樂觀更新 —— 職員一撳就見到，失敗先彈返轉頭
+    const prev = leads;
+    setLeads((ls) => ls?.map((l) => (l.id === id ? { ...l, status } : l)) ?? null);
+    try {
+      const res = await fetch('/api/leads', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setLeads(prev ?? null);
+      setErr('狀態更新失敗，請再試');
+    }
+  }
+
+  const pending = leads?.filter((l) => l.status === 'new').length ?? 0;
+
+  return (
+    <div className="card">
+      <h2>
+        跟進名單
+        {leads && (
+          <span style={{ fontWeight: 400, fontSize: '0.8rem', color: 'var(--text-dim)' }}>
+            （{pending} 個未跟進 / 共 {leads.length}）
+          </span>
+        )}
+      </h2>
+      <p className="sub">
+        每個完成分析嘅客人自動入呢度（佢同意咗 WhatsApp 跟進）。撳個電話直接開 WhatsApp。
+      </p>
+      {err && <div className="alert danger">{err}</div>}
+      {leads === null && !err && <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)' }}>載入緊…</p>}
+      {leads !== null && leads.length === 0 && (
+        <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-dim)' }}>暫時未有客人完成分析。</p>
+      )}
+      {leads?.map((l) => (
+        <div className="finding" key={l.id} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <b style={{ fontSize: '0.92rem' }}>
+              {l.name || '未留稱呼'} ·{' '}
+              <a href={`https://wa.me/852${l.phone}`} target="_blank" rel="noreferrer">
+                {l.phone}
+              </a>
+            </b>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: 2 }}>
+              {new Date(l.createdAt).toLocaleString('zh-HK', { dateStyle: 'short', timeStyle: 'short' })}
+              {l.goals.length > 0 && <> · 想改善：{l.goals.map(goalLabel).join('、')}</>}
+            </div>
+            {l.topFindings.length > 0 && (
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: 2 }}>
+                主要觀察：{l.topFindings.map((f) => findingLabel(f.key)).join('、')}
+              </div>
+            )}
+          </div>
+          <select
+            value={l.status}
+            onChange={(e) => setStatus(l.id, e.target.value as LeadStatus)}
+            style={{ flexShrink: 0, fontSize: '0.82rem' }}
+            aria-label={`${l.phone} 跟進狀態`}
+          >
+            {LEAD_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {LEAD_STATUS_LABELS[s]}
+              </option>
+            ))}
+          </select>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function RecordsPage() {
   const [persistent, setPersistent] = useState<boolean | null>(null);
@@ -79,7 +181,9 @@ export default function RecordsPage() {
       const res = await fetch(`/api/records?phone=${encodeURIComponent(searched)}`, { method: 'DELETE' });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? '刪除失敗');
-      setMsg(`已刪除 ${json.deleted} 筆紀錄。`);
+      setMsg(
+        `已刪除 ${json.deleted} 筆評分紀錄${json.leadsDeleted ? `＋跟進名單 ${json.leadsDeleted} 筆` : ''}。名單顯示可能要重新整理先更新。`,
+      );
       setVisits([]);
       setConfirmPhone('');
     } catch (e) {
@@ -107,8 +211,10 @@ export default function RecordsPage() {
     <div className="wrap">
       <header className="site">
         <h1>客人紀錄</h1>
-        <p>搜電話，睇 8 大範疇評分嘅變化</p>
+        <p>跟進名單＋逐個電話睇 8 大範疇評分變化</p>
       </header>
+
+      <BudgetBanner />
 
       {persistent === false && (
         <div className="alert warn">
@@ -118,6 +224,8 @@ export default function RecordsPage() {
       )}
       {error && <div className="alert danger">{error}</div>}
       {msg && <div className="alert" style={{ background: 'var(--accent-soft)' }}>{msg}</div>}
+
+      <LeadsSection />
 
       <div className="card">
         <h2>搜尋</h2>

@@ -21,3 +21,29 @@ CREATE TABLE IF NOT EXISTS phone_quota (
   used       INTEGER NOT NULL DEFAULT 0,
   updated_at TEXT NOT NULL
 );
+
+-- 跟進名單（leads.ts 自動建表，呢份係對照用）
+-- 客人剔咗「同意保存＋WhatsApp 跟進」先會有一行；PDPO 刪除同 visits 一齊刪
+CREATE TABLE IF NOT EXISTS leads (
+  id           TEXT PRIMARY KEY,
+  phone        TEXT NOT NULL,
+  name         TEXT,
+  created_at   TEXT NOT NULL,
+  goals        TEXT NOT NULL DEFAULT '[]',
+  top_findings TEXT NOT NULL DEFAULT '[]',
+  status       TEXT NOT NULL DEFAULT 'new',
+  source       TEXT NOT NULL DEFAULT 'customer'
+);
+CREATE INDEX IF NOT EXISTS idx_leads_created ON leads (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_leads_phone ON leads (phone);
+
+-- 每月 AI 使費計量（ai-budget.ts 自動建表，呢份係對照用）
+-- 每次真實分析按回傳 token 數累加；月 key = UTC YYYY-MM
+CREATE TABLE IF NOT EXISTS ai_spend (
+  month         TEXT PRIMARY KEY,
+  cost_hkd      REAL NOT NULL DEFAULT 0,
+  analyses      INTEGER NOT NULL DEFAULT 0,
+  input_tokens  INTEGER NOT NULL DEFAULT 0,
+  output_tokens INTEGER NOT NULL DEFAULT 0,
+  updated_at    TEXT NOT NULL
+);

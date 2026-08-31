@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getVisitStore, normalizePhone } from '@/lib/visits';
+import { getLeadStore } from '@/lib/leads';
 
 export const runtime = 'nodejs';
 
@@ -39,7 +40,7 @@ export async function GET(req: Request) {
   }
 }
 
-/** PDPO 刪除請求：刪晒一個號碼嘅全部紀錄，回覆刪咗幾多筆。 */
+/** PDPO 刪除請求：visits ＋ leads 一齊刪（唔可以剩低半份 PII），回覆刪咗幾多筆。 */
 export async function DELETE(req: Request) {
   const rawPhone = new URL(req.url).searchParams.get('phone');
   const phone = rawPhone ? normalizePhone(rawPhone) : null;
@@ -49,7 +50,8 @@ export async function DELETE(req: Request) {
   try {
     const store = await getVisitStore();
     const deleted = await store.deleteByPhone(phone);
-    return NextResponse.json({ deleted });
+    const leadsDeleted = await getLeadStore().deleteByPhone(phone);
+    return NextResponse.json({ deleted, leadsDeleted });
   } catch {
     return NextResponse.json({ error: '資料庫暫時有問題，請再試' }, { status: 500 });
   }

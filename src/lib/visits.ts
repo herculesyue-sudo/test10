@@ -33,6 +33,17 @@ export function normalizePhone(raw: string): string | null {
   return /^[2-9]\d{7}$/.test(d) ? d : null;
 }
 
+/**
+ * 香港手機號碼 —— 客人自助流程用嘅窄版：只收 4/5/6/7/9 字頭。
+ * 固網（2/3 字頭）唔係手機，WhatsApp 跟進唔到；求其打 8 位數過骨嘅
+ * 假號碼都會俾呢度擋走一批。records 搜尋照用 normalizePhone（職員
+ * 可能真係想搵一個舊固網紀錄）。
+ */
+export function normalizeHKMobile(raw: string): string | null {
+  const p = normalizePhone(raw);
+  return p && /^[45679]/.test(p) ? p : null;
+}
+
 /** 唔包 observation / location —— 邊界上剝走，同 stripInternal 同一個原則。 */
 export interface VisitFinding {
   key: string;

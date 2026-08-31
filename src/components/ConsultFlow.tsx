@@ -15,11 +15,11 @@ import { useDemoMode, DemoBanner, DemoCasePicker } from '@/components/DemoMode';
 import Consent from '@/components/Consent';
 import CaptureGuide from '@/components/CaptureGuide';
 import QuickFacts, { ageFromBand } from '@/components/QuickFacts';
-import SaveRecordCard from '@/components/SaveRecordCard';
 import ContactCard from '@/components/ContactCard';
 import ConcernPicker from '@/components/ConcernPicker';
 import AnalysisProgress from '@/components/AnalysisProgress';
-import { normalizePhone } from '@/lib/visits';
+import TurnstileWidget, { resetTurnstile, TURNSTILE_CONFIGURED } from '@/components/TurnstileWidget';
+import { normalizeHKMobile } from '@/lib/visits';
 import { type FindingKey, type GoalKey } from '@/lib/treatments/types';
 import { goalsFromFindings, buildConcernNotes } from '@/lib/face-regions';
 import { trackStep, resetTracking } from '@/lib/track-client';
@@ -40,8 +40,8 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
   const [pregnant, setPregnant] = useState(false);
   const [custName, setCustName] = useState('');
   const [recPhone, setRecPhone] = useState('');
-  const [recConsent, setRecConsent] = useState(false);
-  const [showRecCard, setShowRecCard] = useState(false);
+  const [leadConsent, setLeadConsent] = useState(false);
+  const [tsToken, setTsToken] = useState('');
   const [busy, setBusy] = useState(false);
   const [data, setData] = useState<ConsultResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -58,12 +58,13 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
   }, [consented]);
 
   const hasPhoto = Boolean(shots[0]?.data);
-  // 測試模式冇真實相片，唔需要同意；正式模式一定要先同意先可以傳相
-  // 剔咗「儲存」但電話無效 → 擋住提交。靜靜雞唔儲一樣客人以為儲咗嘅嘢，
-  // 係比擋一擋更差嘅結果。
-  const phoneOk = normalizePhone(recPhone) !== null;
+  // 測試模式冇真實相片，唔需要同意；正式模式：相片同意＋跟進同意＋
+  // 香港手機號碼齊晒先可以提交。Turnstile 有設定嘅話仲要等 token 返嚟
+  //（正常客人一秒內、隱形），咁先唔會撞 server 嗰邊嘅安全驗證。
+  const phoneOk = normalizeHKMobile(recPhone) !== null;
+  const tsOk = !TURNSTILE_CONFIGURED || tsToken !== '';
   const hasConcern = goals.length > 0 || selectedFindings.length > 0;
-  const ready = (isDemo || (hasPhoto && consented && phoneOk)) && hasConcern;
+  const ready = (isDemo || (hasPhoto && consented && phoneOk && leadConsent && tsOk)) && hasConcern;
 
   /** 目標掣 + 面圖自選反推嘅目標，合併俾引擎（引擎以 goal 運作，唔使改）。 */
   const effectiveGoals = () => {
@@ -87,12 +88,13 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
           notes: buildConcernNotes(selectedFindings),
           customerPhone: recPhone,
           customerName: custName.trim() || undefined,
+          consent: leadConsent,
+          turnstileToken: tsToken || undefined,
           tier: 'budget',
           age: ageFromBand(ageBand),
           // 安全閘：引擎會硬過濾所有懷孕禁忌療程
           isPregnantOrNursing: pregnant,
           demoCaseId,
-          record: recConsent && recPhone ? { phone: recPhone, consent: true } : undefined,
         }),
       });
       const json = await res.json();
@@ -103,6 +105,9 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
     } catch (e) {
       trackStep('analyze_failed');
       setError((e as Error).message);
+      // Turnstile token 係一次性 —— 失敗重試要個新嘅
+      resetTurnstile();
+      setTsToken('');
     } finally {
       setBusy(false);
     }
@@ -118,8 +123,7 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
     setPregnant(false);
     setCustName('');
     setRecPhone('');
-    setRecConsent(false);
-    setShowRecCard(false);
+    setLeadConsent(false);
     setData(null);
     setError(null);
     scrollParentToTop();
@@ -155,7 +159,7 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
           selectedFindings={selectedFindings}
           photoPreview={shots[0]?.preview}
           customerName={custName.trim() || undefined}
-          customerPhone={normalizePhone(recPhone) ?? undefined}
+          customerPhone={normalizeHKMobile(recPhone) ?? undefined}
           onReset={reset}
           pregnant={pregnant}
         />
@@ -203,7 +207,16 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
         />
       </div>
 
-      {!isDemo && <ContactCard name={custName} onName={setCustName} phone={recPhone} onPhone={setRecPhone} />}
+      {!isDemo && (
+        <ContactCard
+          name={custName}
+          onName={setCustName}
+          phone={recPhone}
+          onPhone={setRecPhone}
+          consent={leadConsent}
+          onConsent={setLeadConsent}
+        />
+      )}
 
       <QuickFacts ageBand={ageBand} onAge={setAgeBand} pregnant={pregnant} onPregnant={setPregnant} />
 
@@ -213,15 +226,7 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
 
       {!isDemo && <Consent checked={consented} onChange={setConsented} />}
 
-      {/* 儲存紀錄係可選項 —— 預設收埋，唔好喺 CTA 之前擺多一幅文字牆。
-          內文（法律同意句）一隻字都冇改，淨係包咗層 disclosure。 */}
-      {showRecCard || recConsent || recPhone ? (
-        <SaveRecordCard phone={recPhone} onPhone={setRecPhone} consented={recConsent} onConsent={setRecConsent} />
-      ) : (
-        <button type="button" className="card card-toggle" onClick={() => setShowRecCard(true)}>
-          想保存今次嘅分析紀錄？（可選）<span aria-hidden="true">▾</span>
-        </button>
-      )}
+      {!isDemo && <TurnstileWidget onToken={setTsToken} />}
 
       {busy ? (
         <AnalysisProgress demo={isDemo} />
@@ -236,8 +241,12 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
               : !hasConcern
                 ? '請揀最少一項'
                 : !isDemo && !phoneOk
-                  ? '請輸入 8 位電話號碼'
-                  : '請先同意相片處理說明'}
+                  ? '請輸入香港手機號碼'
+                  : !isDemo && !leadConsent
+                    ? '請同意保存紀錄同跟進安排'
+                    : !isDemo && !consented
+                      ? '請先同意相片處理說明'
+                      : '安全驗證載入緊…'}
         </button>
       )}
 

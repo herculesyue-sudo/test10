@@ -31,7 +31,13 @@
     "NEXT_PUBLIC_WHATSAPP": "85264843111",
     "NEXT_PUBLIC_SITE_URL": "https://ai.drtimeless.com",
     "EMBED_ALLOWED_ORIGINS": "https://www.drtimeless.com,https://drtimeless.com",
-    "RATE_LIMIT_DAILY_TOTAL": "300"
+    "RATE_LIMIT_DAILY_TOTAL": "300",
+    // 每月 AI 使費硬上限（HK$）：非職員分析去到呢個數自動暫停，下月自動恢復。
+    // 想加額改呢度再 cf:deploy。權威帳單喺 console.cloud.google.com/billing。
+    "MONTHLY_AI_BUDGET_HKD": "200"
+    // Turnstile（機械人閘）：harris 喺 Cloudflare dashboard 建咗 site 之後，
+    // 加 "NEXT_PUBLIC_TURNSTILE_SITE_KEY": "<site key>" 落嚟（同 CI build env 同步），
+    // 再 wrangler secret put TURNSTILE_SECRET_KEY。未設定 = 功能熄咗，照行。
   },
 
   // 客人紀錄資料庫。database_id 個 placeholder 由 CI 自動填

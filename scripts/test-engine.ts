@@ -48,7 +48,10 @@ import { FACE_REGIONS, regionCoverageCheck, goalsFromFindings, buildConcernNotes
 import { computeAlignment, applyMatrix, sanitizeLandmarks } from '../src/lib/face-align';
 import { createMemoryQuotaStore, phoneKey, FREE_ANALYSES_PER_PHONE } from '../src/lib/phone-quota';
 import { AnalysisSchema } from '../src/lib/schema';
-import { normalizePhone, createMemoryVisitStore, type VisitRecord } from '../src/lib/visits';
+import { normalizePhone, normalizeHKMobile, createMemoryVisitStore, type VisitRecord } from '../src/lib/visits';
+import { createMemoryLeadStore } from '../src/lib/leads';
+import { createMemorySpendStore, monthKey, monthlyBudgetHKD } from '../src/lib/ai-budget';
+import type { LeadRecord } from '../src/lib/leads-shared';
 import { readFileSync } from 'node:fs';
 import { classifyHost, resolvePublicUrl } from '../src/lib/public-url';
 import { lanAddresses, lanUrl } from '../src/lib/lan-address';
@@ -1022,6 +1025,72 @@ console.log('\n── 客人紀錄（記憶體 store）──');
   check('刪除覆到實數（PDPO 回覆要講到刪咗幾多）', deleted === 2, String(deleted));
   check('刪完真係冇晒', (await store.listByPhone('91234567')).length === 0);
   check('刪一個人唔會累到第二個', (await store.listByPhone('21234567')).length === 1);
+
+  console.log('\n── 香港手機字頭（拉新客漏斗把關）──');
+  check('手機 9 字頭過', normalizeHKMobile('9123 4567') === '91234567');
+  check('手機 6 字頭過', normalizeHKMobile('64843111') === '64843111');
+  check('+852 前綴照過', normalizeHKMobile('+852 5123 4567') === '51234567');
+  check('固網 2 字頭唔過（WhatsApp 跟進唔到）', normalizeHKMobile('21234567') === null);
+  check('固網 3 字頭唔過', normalizeHKMobile('31014897') === null);
+  check('8 字頭特殊號段唔過', normalizeHKMobile('81234567') === null);
+  check('亂噏 7 位數唔過', normalizeHKMobile('9123456') === null);
+  check('records 搜尋嘅寬版照收固網', normalizePhone('21234567') === '21234567');
+
+  console.log('\n── 跟進名單（leads store）──');
+  {
+    const leads = createMemoryLeadStore();
+    const mk = (id: string, phone: string, createdAt: string): LeadRecord => ({
+      id,
+      phone,
+      createdAt,
+      goals: ['smooth_lines'],
+      topFindings: [{ key: 'forehead_lines', severity: 2 }],
+      status: 'new',
+      source: 'customer',
+    });
+    await leads.add(mk('a', '91234567', '2026-08-01T10:00:00.000Z'));
+    await leads.add(mk('b', '98765432', '2026-08-20T10:00:00.000Z'));
+    await leads.add(mk('c', '91234567', '2026-08-10T10:00:00.000Z'));
+
+    const list = await leads.listRecent(10);
+    check('名單齊三筆', list.length === 3, String(list.length));
+    check('新到舊排（最新 lead 排最頂）', list[0]?.id === 'b');
+    check('limit 生效', (await leads.listRecent(2)).length === 2);
+
+    check('更新狀態成功', await leads.setStatus('b', 'contacted'));
+    check('狀態真係改咗', (await leads.listRecent(10)).find((l) => l.id === 'b')?.status === 'contacted');
+    check('唔存在嘅 id 回 false', !(await leads.setStatus('zzz', 'booked')));
+
+    // PDPO 刪除鏈：一個電話全部 lead 一齊走
+    check('刪除覆到實數', (await leads.deleteByPhone('91234567')) === 2);
+    check('刪完淨返第二個人', (await leads.listRecent(10)).every((l) => l.phone === '98765432'));
+  }
+
+  console.log('\n── 每月 AI 使費（budget store）──');
+  {
+    const spend = createMemorySpendStore();
+    const m = monthKey(new Date('2026-08-15T00:00:00Z'));
+    check('月 key 係 YYYY-MM', m === '2026-08');
+    check('未用過 = 0', (await spend.month(m)).costHKD === 0);
+
+    await spend.add(m, 0.35, 2000, 900);
+    await spend.add(m, 0.65, 3000, 1100);
+    const s = await spend.month(m);
+    check('使費累加啱數', Math.abs(s.costHKD - 1.0) < 1e-9, String(s.costHKD));
+    check('分析次數累加', s.analyses === 2);
+    check('token 累加', s.inputTokens === 5000 && s.outputTokens === 2000);
+
+    // 月轉 = 自動恢復：新月份由零開始
+    const m2 = monthKey(new Date('2026-09-01T00:00:00Z'));
+    check('9 月係另一行', (await spend.month(m2)).costHKD === 0);
+
+    // 上限判斷（route 嘅 gate 就係呢條式）
+    const budget = monthlyBudgetHKD();
+    check('預算係正數（冇設定就 200）', budget > 0);
+    check('未到預算唔擋', !(s.costHKD >= budget));
+    await spend.add(m, budget, 10, 10);
+    check('去到預算就擋', (await spend.month(m)).costHKD >= budget);
+  }
 
   console.log(failures === 0 ? '\n✅ 全部通過\n' : `\n❌ ${failures} 項失敗\n`);
   process.exit(failures === 0 ? 0 : 1);

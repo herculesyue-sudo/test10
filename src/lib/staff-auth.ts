@@ -22,7 +22,7 @@
 export const STAFF_COOKIE = 'drt_staff';
 
 /** 要密碼先入得嘅路徑。 */
-export const STAFF_PATHS = ['/pro', '/share', '/embed/setup', '/records', '/api/records'];
+export const STAFF_PATHS = ['/pro', '/share', '/embed/setup', '/records', '/api/records', '/api/leads'];
 
 export function isStaffPath(pathname: string): boolean {
   return STAFF_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'));
