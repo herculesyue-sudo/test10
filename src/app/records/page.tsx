@@ -110,6 +110,7 @@ function LeadsSection() {
             </b>
             <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: 2 }}>
               {new Date(l.createdAt).toLocaleString('zh-HK', { dateStyle: 'short', timeStyle: 'short' })}
+              {l.utm && <> · 廣告來源：{l.utm}</>}
               {l.goals.length > 0 && <> · 想改善：{l.goals.map(goalLabel).join('、')}</>}
             </div>
             {l.topFindings.length > 0 && (

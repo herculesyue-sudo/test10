@@ -85,6 +85,8 @@ interface Body {
   consent?: boolean;
   /** Cloudflare Turnstile token（伺服器設定咗 TURNSTILE_SECRET_KEY 先會查） */
   turnstileToken?: string;
+  /** 廣告來源標記（前端由 URL 攞）—— server 會消毒先落 lead */
+  utm?: string;
   /** 職員 /pro 嘅自願儲存流程（SaveRecordCard staffMode）。客人流程唔再用呢個 —— 改行必須同意自動儲。 */
   record?: { phone?: string; consent?: boolean };
 }
@@ -186,7 +188,13 @@ async function maybeSaveVisit(
  * 寫入失敗唔可以整死個報告：分析結果照出，lead 冇咗一筆係損失，
  * 但客人白等 30 秒先係災難。
  */
-async function saveLead(phone: string, name: string | undefined, goals: GoalKey[], findings: Finding[]): Promise<void> {
+async function saveLead(
+  phone: string,
+  name: string | undefined,
+  goals: GoalKey[],
+  findings: Finding[],
+  utm: string | undefined,
+): Promise<void> {
   try {
     const top = [...findings]
       .sort((a, b) => b.severity - a.severity)
@@ -201,6 +209,7 @@ async function saveLead(phone: string, name: string | undefined, goals: GoalKey[
       topFindings: top,
       status: 'new',
       source: 'customer',
+      utm,
     };
     await getLeadStore().add(lead);
   } catch (err) {
@@ -404,7 +413,9 @@ export async function POST(req: Request) {
     const recordReq = isStaffReq ? body.record : { phone: customerPhone ?? undefined, consent: true };
     const record = await maybeSaveVisit(recordReq, isStaffReq, body, findings, goals);
     if (!isStaffReq && customerPhone) {
-      await saveLead(customerPhone, body.customerName, goals, findings);
+      // utm 消毒：只留字母數字同 -_/.，最多 64 字元 —— 呢個值會喺後台顯示，唔好俾人塞嘢入嚟
+      const utm = (body.utm ?? '').replace(/[^\w\-\/.]/g, '').slice(0, 64) || undefined;
+      await saveLead(customerPhone, body.customerName, goals, findings, utm);
     }
 
     // 分析成功先扣額度（失敗唔燒客人條數）

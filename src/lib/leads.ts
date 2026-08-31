@@ -55,6 +55,7 @@ interface LeadRow {
   top_findings: string;
   status: string;
   source: string;
+  utm: string | null;
 }
 
 function fromRow(r: LeadRow): LeadRecord {
@@ -67,6 +68,7 @@ function fromRow(r: LeadRow): LeadRecord {
     topFindings: safeParse(r.top_findings, []),
     status: (LEAD_STATUSES as readonly string[]).includes(r.status) ? (r.status as LeadStatus) : 'new',
     source: r.source === 'pro' ? 'pro' : 'customer',
+    utm: r.utm ?? undefined,
   };
 }
 
@@ -89,7 +91,15 @@ class D1LeadStore implements LeadStore {
       this.ready = DDL.reduce(
         (p, stmt) => p.then(() => this.db.prepare(stmt).run().then(() => undefined)),
         Promise.resolve(),
-      );
+      ).then(async () => {
+        // 遷移：utm 係後加嘅欄（CREATE IF NOT EXISTS 唔會補欄）。
+        // 已存在就會 throw「duplicate column」，吞咗佢就係冪等。
+        try {
+          await this.db.prepare(`ALTER TABLE leads ADD COLUMN utm TEXT`).run();
+        } catch {
+          /* 欄已存在 */
+        }
+      });
     }
     return this.ready;
   }
@@ -97,7 +107,9 @@ class D1LeadStore implements LeadStore {
   async add(lead: LeadRecord): Promise<void> {
     await this.ensure();
     await this.db
-      .prepare(`INSERT INTO leads (id, phone, name, created_at, goals, top_findings, status, source) VALUES (?,?,?,?,?,?,?,?)`)
+      .prepare(
+        `INSERT INTO leads (id, phone, name, created_at, goals, top_findings, status, source, utm) VALUES (?,?,?,?,?,?,?,?,?)`,
+      )
       .bind(
         lead.id,
         lead.phone,
@@ -107,6 +119,7 @@ class D1LeadStore implements LeadStore {
         JSON.stringify(lead.topFindings),
         lead.status,
         lead.source,
+        lead.utm ?? null,
       )
       .run();
   }

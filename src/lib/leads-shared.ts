@@ -26,4 +26,6 @@ export interface LeadRecord {
   topFindings: { key: string; severity: number }[];
   status: LeadStatus;
   source: 'customer' | 'pro';
+  /** 廣告來源標記（utm_campaign/utm_source，server 已消毒）—— 度 Meta 廣告邊條路值錢 */
+  utm?: string;
 }

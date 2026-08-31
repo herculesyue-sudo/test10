@@ -1047,6 +1047,7 @@ console.log('\n── 客人紀錄（記憶體 store）──');
       topFindings: [{ key: 'forehead_lines', severity: 2 }],
       status: 'new',
       source: 'customer',
+      utm: id === 'b' ? 'meta_ctwa_aug' : undefined,
     });
     await leads.add(mk('a', '91234567', '2026-08-01T10:00:00.000Z'));
     await leads.add(mk('b', '98765432', '2026-08-20T10:00:00.000Z'));
@@ -1057,6 +1058,8 @@ console.log('\n── 客人紀錄（記憶體 store）──');
     check('新到舊排（最新 lead 排最頂）', list[0]?.id === 'b');
     check('limit 生效', (await leads.listRecent(2)).length === 2);
 
+    check('utm 標記跟得住 lead', list.find((l) => l.id === 'b')?.utm === 'meta_ctwa_aug');
+    check('冇 utm 嘅 lead 唔會屈個值出嚟', list.find((l) => l.id === 'a')?.utm === undefined);
     check('更新狀態成功', await leads.setStatus('b', 'contacted'));
     check('狀態真係改咗', (await leads.listRecent(10)).find((l) => l.id === 'b')?.status === 'contacted');
     check('唔存在嘅 id 回 false', !(await leads.setStatus('zzz', 'booked')));

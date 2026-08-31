@@ -32,7 +32,8 @@ CREATE TABLE IF NOT EXISTS leads (
   goals        TEXT NOT NULL DEFAULT '[]',
   top_findings TEXT NOT NULL DEFAULT '[]',
   status       TEXT NOT NULL DEFAULT 'new',
-  source       TEXT NOT NULL DEFAULT 'customer'
+  source       TEXT NOT NULL DEFAULT 'customer',
+  utm          TEXT  -- 廣告來源標記（後加欄：leads.ts ensure() 會對舊表自動 ALTER）
 );
 CREATE INDEX IF NOT EXISTS idx_leads_created ON leads (created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_leads_phone ON leads (phone);

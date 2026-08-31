@@ -45,8 +45,27 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
   const [busy, setBusy] = useState(false);
   const [data, setData] = useState<ConsultResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [utm, setUtm] = useState<string | undefined>();
 
   useEffect(() => trackStep('page_view'), []);
+  // 廣告來源標記：落地帶 ?utm_campaign=...（Meta 廣告直落 ai.drtimeless.com 本體），
+  // 存 sessionStorage 等客人喺流程入面行嚟行去都唔甩；分析提交時帶俾 server 落 lead。
+  useEffect(() => {
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      const raw = sp.get('utm_campaign') || sp.get('utm_source');
+      if (raw) {
+        const v = raw.slice(0, 64);
+        sessionStorage.setItem('drt_utm', v);
+        setUtm(v);
+      } else {
+        const saved = sessionStorage.getItem('drt_utm');
+        if (saved) setUtm(saved);
+      }
+    } catch {
+      /* sessionStorage 唔可用（私隱模式等）—— 冇 utm 咪冇囉 */
+    }
+  }, []);
   useEffect(() => {
     if (shots[0]?.data) trackStep('photo_added');
   }, [shots]);
@@ -90,6 +109,7 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
           customerName: custName.trim() || undefined,
           consent: leadConsent,
           turnstileToken: tsToken || undefined,
+          utm,
           tier: 'budget',
           age: ageFromBand(ageBand),
           // 安全閘：引擎會硬過濾所有懷孕禁忌療程
