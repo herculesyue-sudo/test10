@@ -92,7 +92,15 @@ class D1PendingStore implements PendingReportStore {
 
 class MemoryPendingStore implements PendingReportStore {
   readonly persistent = false;
-  private data = new Map<string, PendingReportPayload>();
+
+  // globalThis 單例：`next dev` 每個 route 有獨立 module graph，
+  // 普通 module-level Map 會令「consult 寫、save-report 讀」
+  // 喺本地 dev 搵唔返（production 係單一 bundle＋D1，冇呢個問題）。
+  private get data(): Map<string, PendingReportPayload> {
+    const g = globalThis as { __drtPending?: Map<string, PendingReportPayload> };
+    if (!g.__drtPending) g.__drtPending = new Map();
+    return g.__drtPending;
+  }
 
   async put(id: string, payload: PendingReportPayload) {
     if (this.data.size > 1000) this.data.clear();

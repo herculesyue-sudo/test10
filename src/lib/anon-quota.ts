@@ -33,10 +33,17 @@ function anonKey(ip: string): string {
   return createHmac('sha256', pepper).update(`anon:${dayKey()}:${ip}`).digest('hex');
 }
 
-const counts = new Map<string, number>();
+// globalThis 單例：原因同 pending-reports.ts —— `next dev` 每個 route
+// 有獨立 module graph，普通 module-level Map 跨唔到 route。
+function countsMap(): Map<string, number> {
+  const g = globalThis as { __drtAnonQuota?: Map<string, number> };
+  if (!g.__drtAnonQuota) g.__drtAnonQuota = new Map();
+  return g.__drtAnonQuota;
+}
 
 /** 用咗幾多次（今日）。 */
 export function anonUsed(ip: string): number {
+  const counts = countsMap();
   // 懶清理：map 大過一個合理水位就全清 —— key 本身帶日期，
   // 清走舊 key 唔影響今日嘅計數。
   if (counts.size > 5000) counts.clear();
@@ -45,6 +52,7 @@ export function anonUsed(ip: string): number {
 
 /** 記一次，回傳新嘅已用次數。 */
 export function anonIncrement(ip: string): number {
+  const counts = countsMap();
   const k = anonKey(ip);
   const n = (counts.get(k) ?? 0) + 1;
   counts.set(k, n);
@@ -53,5 +61,5 @@ export function anonIncrement(ip: string): number {
 
 /** 測試用：清零。 */
 export function _resetAnonQuota() {
-  counts.clear();
+  countsMap().clear();
 }
