@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { normalizeHKMobile, RETENTION_MONTHS } from '@/lib/visits';
+import { normalizeHKCNMobile, normalizeWechatId, RETENTION_MONTHS } from '@/lib/visits';
 import { CLINIC_POLICY } from '@/lib/treatments/clinic';
 import TurnstileWidget, { resetTurnstile, TURNSTILE_CONFIGURED } from '@/components/TurnstileWidget';
 import { trackStep } from '@/lib/track-client';
@@ -23,6 +23,7 @@ import { trackStep } from '@/lib/track-client';
 export default function SaveReportCard({ reportId }: { reportId?: string }) {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [wechat, setWechat] = useState('');
   const [saveConsent, setSaveConsent] = useState(false);
   const [marketingConsent, setMarketingConsent] = useState(false);
   const [tsToken, setTsToken] = useState('');
@@ -33,10 +34,11 @@ export default function SaveReportCard({ reportId }: { reportId?: string }) {
   // 冇 reportId（暫存失敗／demo）→ 成張卡唔出，唔好俾人一個儲唔到嘅假希望
   if (!reportId) return null;
 
-  const phoneOk = normalizeHKMobile(phone) !== null;
+  const phoneOk = normalizeHKCNMobile(phone) !== null;
   const invalid = phone.trim() !== '' && !phoneOk;
+  const wechatInvalid = wechat.trim() !== '' && normalizeWechatId(wechat) === null;
   const tsOk = !TURNSTILE_CONFIGURED || tsToken !== '';
-  const ready = phoneOk && saveConsent && tsOk && !busy;
+  const ready = phoneOk && !wechatInvalid && saveConsent && tsOk && !busy;
 
   async function submit() {
     setBusy(true);
@@ -49,6 +51,7 @@ export default function SaveReportCard({ reportId }: { reportId?: string }) {
           reportId,
           phone,
           name: name.trim() || undefined,
+          wechat: wechat.trim() || undefined,
           saveConsent,
           marketingConsent,
           turnstileToken: tsToken || undefined,
@@ -88,7 +91,7 @@ export default function SaveReportCard({ reportId }: { reportId?: string }) {
       <b style={{ fontSize: '0.95rem' }}>📌 留電話，幫你保存呢份報告</b>
       <p style={{ fontSize: '0.82rem', color: 'var(--text-dim)', margin: '6px 0 10px', lineHeight: 1.7 }}>
         報告關咗頁就睇唔返。留低電話，我哋幫你保存摘要（8 大範疇評分＋觀察重點＋改善目標，<b>唔包相片</b>），
-        第時再分析可以對比變化；有嘢唔明，職員可以經 WhatsApp 跟進今次分析。
+        第時再分析可以對比變化；有嘢唔明，職員可以經 WhatsApp 或 WeChat 跟進今次分析。
       </p>
 
       <label className="f" htmlFor="save-name">
@@ -103,20 +106,35 @@ export default function SaveReportCard({ reportId }: { reportId?: string }) {
         onChange={(e) => setName(e.target.value)}
       />
       <label className="f" htmlFor="save-phone" style={{ marginTop: 10 }}>
-        手機號碼（香港手機，8 位數字）
+        手機號碼（香港 8 位 / 內地 11 位）
       </label>
       <input
         id="save-phone"
         type="tel"
         inputMode="numeric"
         autoComplete="tel"
-        placeholder="9123 4567"
+        placeholder="9123 4567 / 138 0013 8000"
         value={phone}
         onChange={(e) => setPhone(e.target.value)}
       />
       {invalid && (
         <p style={{ color: 'var(--danger)', fontSize: '0.8rem', margin: '5px 0 0' }}>
-          請輸入香港手機號碼（4、5、6、7、9 字頭嘅 8 位數字）
+          請輸入香港手機（8 位）或內地手機（11 位，1 字頭）
+        </p>
+      )}
+      <label className="f" htmlFor="save-wechat" style={{ marginTop: 10 }}>
+        WeChat ID（可選 —— 冇 WhatsApp 嘅話我哋經 WeChat 跟進）
+      </label>
+      <input
+        id="save-wechat"
+        type="text"
+        placeholder="例如：timeless_hk2026"
+        value={wechat}
+        onChange={(e) => setWechat(e.target.value)}
+      />
+      {wechatInvalid && (
+        <p style={{ color: 'var(--danger)', fontSize: '0.8rem', margin: '5px 0 0' }}>
+          WeChat ID 格式唔啱（6–20 位，字母開頭）
         </p>
       )}
 
@@ -124,7 +142,8 @@ export default function SaveReportCard({ reportId }: { reportId?: string }) {
         <input type="checkbox" checked={saveConsent} onChange={(e) => setSaveConsent(e.target.checked)} />
         <span>
           我同意 {CLINIC_POLICY.name} 保存我嘅分析摘要同聯絡資料，保留期最長 {RETENTION_MONTHS} 個月，
-          用途係跟進今次分析結果、安排預約，以及下次分析時對比變化。我可以隨時 WhatsApp 6484 3111 要求刪除。
+          用途係經 WhatsApp 或 WeChat 跟進今次分析結果、安排預約，以及下次分析時對比變化。
+          我可以隨時 WhatsApp 6484 3111 要求刪除。
         </span>
       </label>
 
@@ -142,7 +161,7 @@ export default function SaveReportCard({ reportId }: { reportId?: string }) {
       {error && <div className="alert danger" style={{ marginTop: 8 }}>{error}</div>}
 
       <button className="primary" disabled={!ready} onClick={submit} style={{ marginTop: 10, width: '100%' }}>
-        {busy ? '儲存緊…' : ready ? '保存我嘅報告摘要' : !phoneOk ? '請輸入香港手機號碼' : !saveConsent ? '請先剔同意保存' : '安全驗證載入緊…'}
+        {busy ? '儲存緊…' : ready ? '保存我嘅報告摘要' : !phoneOk ? '請輸入手機號碼' : !saveConsent ? '請先剔同意保存' : '安全驗證載入緊…'}
       </button>
       <p style={{ fontSize: '0.72rem', color: 'var(--text-dim)', margin: '8px 0 0' }}>
         唔留電話都照樣睇到晒上面嘅報告。唔會儲存你嘅相片。

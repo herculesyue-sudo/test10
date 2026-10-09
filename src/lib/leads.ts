@@ -57,6 +57,7 @@ interface LeadRow {
   source: string;
   utm: string | null;
   marketing_opt_in?: number | null;
+  wechat?: string | null;
 }
 
 function fromRow(r: LeadRow): LeadRecord {
@@ -71,6 +72,7 @@ function fromRow(r: LeadRow): LeadRecord {
     source: r.source === 'pro' ? 'pro' : 'customer',
     utm: r.utm ?? undefined,
     marketingOptIn: r.marketing_opt_in === 1,
+    wechat: r.wechat ?? undefined,
   };
 }
 
@@ -108,6 +110,13 @@ class D1LeadStore implements LeadStore {
         } catch {
           /* 欄已存在 */
         }
+        // 遷移：WeChat ID（2026-10 加）—— 內地客好多冇 WhatsApp，
+        // 職員用人手加 WeChat 跟進。
+        try {
+          await this.db.prepare(`ALTER TABLE leads ADD COLUMN wechat TEXT`).run();
+        } catch {
+          /* 欄已存在 */
+        }
       });
     }
     return this.ready;
@@ -117,7 +126,7 @@ class D1LeadStore implements LeadStore {
     await this.ensure();
     await this.db
       .prepare(
-        `INSERT INTO leads (id, phone, name, created_at, goals, top_findings, status, source, utm, marketing_opt_in) VALUES (?,?,?,?,?,?,?,?,?,?)`,
+        `INSERT INTO leads (id, phone, name, created_at, goals, top_findings, status, source, utm, marketing_opt_in, wechat) VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
       )
       .bind(
         lead.id,
@@ -130,6 +139,7 @@ class D1LeadStore implements LeadStore {
         lead.source,
         lead.utm ?? null,
         lead.marketingOptIn ? 1 : 0,
+        lead.wechat ?? null,
       )
       .run();
   }

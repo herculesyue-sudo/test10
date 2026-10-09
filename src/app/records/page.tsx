@@ -13,7 +13,7 @@ import { useEffect, useState } from 'react';
 import CategoryScores from '@/components/CategoryScores';
 import BudgetBanner from '@/components/BudgetBanner';
 import { CATEGORIES } from '@/lib/categories';
-import { normalizePhone, type VisitRecord } from '@/lib/visits';
+import { normalizePhone, toIntlMobile, type VisitRecord } from '@/lib/visits';
 import { GOALS, FINDING_LABELS, type FindingKey } from '@/lib/treatments/types';
 import { LEAD_STATUSES, LEAD_STATUS_LABELS, type LeadRecord, type LeadStatus } from '@/lib/leads-shared';
 
@@ -104,9 +104,10 @@ function LeadsSection() {
           <div style={{ flex: 1, minWidth: 0 }}>
             <b style={{ fontSize: '0.92rem' }}>
               {l.name || '未留稱呼'} ·{' '}
-              <a href={`https://wa.me/852${l.phone}`} target="_blank" rel="noreferrer">
-                {l.phone}
+              <a href={`https://wa.me/${toIntlMobile(l.phone)}`} target="_blank" rel="noreferrer">
+                {l.phone.length === 8 ? l.phone : `+${l.phone}`}
               </a>
+              {l.wechat && <> · WeChat：{l.wechat}</>}
             </b>
             <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: 2 }}>
               {new Date(l.createdAt).toLocaleString('zh-HK', { dateStyle: 'short', timeStyle: 'short' })}

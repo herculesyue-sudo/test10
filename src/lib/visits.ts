@@ -28,12 +28,21 @@ export const RETENTION_MONTHS = 12;
  * 香港電話標準化 —— 搜尋同刪除都靠呢個做 key，
  * 所以「+852 9123 4567」同「91234567」一定要係同一個客人。
  * 接受 8 位、852 開頭 11 位、00852 開頭；首位要 2–9（香港號段）。
+ * 2026-10 起亦接受內地手機（11 位 1[3-9] 字頭，或 86 字頭 13 位），
+ * 統一儲「86＋11 位」— 同 save-report 嘅儲存格式一致，
+ * 否則內地 lead 喺後台會搜唔到、刪唔到。
  */
 export function normalizePhone(raw: string): string | null {
   let d = raw.replace(/\D/g, '');
   if (d.startsWith('00')) d = d.slice(2);
+  if (d.length === 13 && d.startsWith('86')) {
+    const cn = d.slice(2);
+    return /^1[3-9]\d{9}$/.test(cn) ? d : null;
+  }
   if (d.length === 11 && d.startsWith('852')) d = d.slice(3);
-  return /^[2-9]\d{7}$/.test(d) ? d : null;
+  if (/^[2-9]\d{7}$/.test(d)) return d;
+  if (/^1[3-9]\d{9}$/.test(d)) return '86' + d;
+  return null;
 }
 
 /**
@@ -45,6 +54,36 @@ export function normalizePhone(raw: string): string | null {
 export function normalizeHKMobile(raw: string): string | null {
   const p = normalizePhone(raw);
   return p && /^[45679]/.test(p) ? p : null;
+}
+
+/**
+ * 香港或內地手機（2026-10：內地客都要留得低聯絡方法）。
+ *
+ * 格式策略（同現有數據兼容）：
+ * - 香港：照舊儲 8 位（舊 lead 全部都係呢個格式）
+ * - 內地：儲「86＋11 位」（1[3-9] 字頭），冇 + 號 —— wa.me 直接用得
+ *
+ * 回傳 null = 兩邊都唔啱。
+ */
+export function normalizeHKCNMobile(raw: string): string | null {
+  const hk = normalizeHKMobile(raw);
+  if (hk) return hk;
+  let d = raw.replace(/\D/g, '');
+  if (d.startsWith('00')) d = d.slice(2);
+  if (d.startsWith('86') && d.length === 13) d = d.slice(2);
+  if (/^1[3-9]\d{9}$/.test(d)) return '86' + d;
+  return null;
+}
+
+/** wa.me 連結用嘅完整號碼（香港 8 位補返 852 字頭，內地已帶 86）。 */
+export function toIntlMobile(normalized: string): string {
+  return normalized.length === 8 ? `852${normalized}` : normalized;
+}
+
+/** WeChat ID 格式：6–20 位，字母開頭，字母/數字/底線/減號。 */
+export function normalizeWechatId(raw: string): string | null {
+  const t = raw.trim();
+  return /^[A-Za-z][A-Za-z0-9_-]{5,19}$/.test(t) ? t : null;
 }
 
 /** 唔包 observation / location —— 邊界上剝走，同 stripInternal 同一個原則。 */

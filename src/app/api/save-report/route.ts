@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getVisitStore, normalizeHKMobile, type VisitRecord } from '@/lib/visits';
+import { getVisitStore, normalizeHKCNMobile, normalizeWechatId, type VisitRecord } from '@/lib/visits';
 import { getLeadStore, type LeadRecord } from '@/lib/leads';
 import { getPendingStore } from '@/lib/pending-reports';
 import { verifyTurnstile } from '@/lib/turnstile';
@@ -32,6 +32,8 @@ interface Body {
   reportId?: string;
   phone?: string;
   name?: string;
+  /** WeChat ID（可選，內地客用） */
+  wechat?: string;
   saveConsent?: boolean;
   marketingConsent?: boolean;
   turnstileToken?: string;
@@ -53,9 +55,13 @@ export async function POST(req: Request) {
     return bad('請先剔「同意保存分析摘要同跟進安排」先可以保存');
   }
 
-  const phone = normalizeHKMobile(body.phone ?? '');
+  const phone = normalizeHKCNMobile(body.phone ?? '');
   if (!phone) {
-    return bad('請輸入香港手機號碼（4、5、6、7、9 字頭嘅 8 位數字）');
+    return bad('請輸入香港（8 位）或內地（11 位，1 字頭）手機號碼');
+  }
+  const wechat = body.wechat?.trim() ? (normalizeWechatId(body.wechat!) ?? undefined) : undefined;
+  if (body.wechat?.trim() && !wechat) {
+    return bad('WeChat ID 格式唔啱（6–20 位，字母開頭，淨係字母／數字／底線／減號）');
   }
 
   const ts = await verifyTurnstile(body.turnstileToken, clientIp(req));
@@ -118,6 +124,7 @@ export async function POST(req: Request) {
         source: 'customer',
         utm: payload.utm,
         marketingOptIn: body.marketingConsent === true,
+        wechat,
       };
       await getLeadStore().add(lead);
       leadSaved = true;

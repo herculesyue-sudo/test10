@@ -34,4 +34,6 @@ export interface LeadRecord {
    * 跟進同推廣係兩個同意，唔好撈埋。
    */
   marketingOptIn?: boolean;
+  /** WeChat ID（可選，內地客好多冇 WhatsApp）—— 職員人手加佢跟進 */
+  wechat?: string;
 }

@@ -14,7 +14,7 @@ import {
 import { pickDemoCase, DEMO_CASES } from '@/lib/demo';
 import { checkRateLimit, recordUsage, usageSnapshot, clientIp } from '@/lib/ratelimit';
 import { computeCategoryScores } from '@/lib/categories';
-import { getVisitStore, normalizePhone, normalizeHKMobile, type VisitRecord } from '@/lib/visits';
+import { getVisitStore, normalizePhone, normalizeHKCNMobile, type VisitRecord } from '@/lib/visits';
 import { checkStaff, STAFF_COOKIE } from '@/lib/staff-auth';
 import { getQuotaStore, phoneKey, FREE_ANALYSES_PER_PHONE } from '@/lib/phone-quota';
 import { getSpendStore, monthKey, monthlyBudgetHKD } from '@/lib/ai-budget';
@@ -353,9 +353,9 @@ export async function POST(req: Request) {
     const rawPhone = (body.customerPhone ?? '').trim();
     if (rawPhone) {
       // 填咗電話但格式唔啱 → 即答，唔好燒佢一次分析先話佢知
-      customerPhone = normalizeHKMobile(rawPhone);
+      customerPhone = normalizeHKCNMobile(rawPhone);
       if (!customerPhone) {
-        return bad('電話號碼格式唔啱（香港手機係 4、5、6、7、9 字頭嘅 8 位數字）。你可以唔填電話，直接分析。');
+        return bad('電話號碼格式唔啱（香港 8 位／內地 11 位 1 字頭）。你可以唔填電話，直接分析。');
       }
       quotaKey = phoneKey(customerPhone);
       const usedSoFar = await getQuotaStore().used(quotaKey);
