@@ -28,4 +28,10 @@ export interface LeadRecord {
   source: 'customer' | 'pro';
   /** 廣告來源標記（utm_campaign/utm_source，server 已消毒）—— 度 Meta 廣告邊條路值錢 */
   utm?: string;
+  /**
+   * 日後推廣 opt-in（PDPO 直接促銷）：客人**另外剔**咗先係 true。
+   * 冇剔 / 冇呢個欄（舊紀錄）= 唔可以發推廣訊息，只可以跟進今次分析。
+   * 跟進同推廣係兩個同意，唔好撈埋。
+   */
+  marketingOptIn?: boolean;
 }

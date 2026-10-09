@@ -17,9 +17,11 @@ import { computeCategoryScores } from '@/lib/categories';
 import { getVisitStore, normalizePhone, normalizeHKMobile, type VisitRecord } from '@/lib/visits';
 import { checkStaff, STAFF_COOKIE } from '@/lib/staff-auth';
 import { getQuotaStore, phoneKey, FREE_ANALYSES_PER_PHONE } from '@/lib/phone-quota';
-import { getLeadStore, type LeadRecord } from '@/lib/leads';
 import { getSpendStore, monthKey, monthlyBudgetHKD } from '@/lib/ai-budget';
 import { verifyTurnstile } from '@/lib/turnstile';
+import { ANON_DAILY_PER_IP, anonUsed, anonIncrement } from '@/lib/anon-quota';
+import { getPendingStore, type PendingReportPayload } from '@/lib/pending-reports';
+import { AGE_ESTIMATE_ENABLED } from '@/lib/age-estimate-config';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -31,6 +33,12 @@ function isStaffRequest(req: Request): boolean {
   const cookie = /(?:^|;\s*)drt_staff=([^;]+)/.exec(req.headers.get('cookie') ?? '')?.[1];
   void STAFF_COOKIE; // cookie 名同 staff-auth 一致（regex 內冇辦法用常量）
   return checkStaff(null, cookie ? decodeURIComponent(cookie) : undefined).action === 'allow';
+}
+
+/** 真係帶住 staff cookie 嘅請求 —— demo 模式下 checkStaff 對冇 cookie 嘅客人都放行，
+ *  所以 demo 想分清「客人流程」定「職員流程」，要睇 cookie 本身喺唔喺度。 */
+function hasStaffCookie(req: Request): boolean {
+  return /(?:^|;\s*)drt_staff=/.test(req.headers.get('cookie') ?? '');
 }
 
 /** 前端用嚟知道而家係咪測試模式（顯示橫額、跳過影相、揀個案）。 */
@@ -77,11 +85,11 @@ interface Body {
   isPregnantOrNursing?: boolean;
   /** 測試模式：指定用邊個示範個案 */
   demoCaseId?: string;
-  /** 客人電話（必填，除非 demo / 職員）—— 計每電話 3 次額度；剔咗同意先會以原文入跟進名單 */
+  /** 客人電話（可選）—— 填咗先計每電話 3 次額度；唔填計匿名 IP 額度。正式嘅保存／跟進流程喺結果頁經 /api/save-report 做 */
   customerPhone?: string;
-  /** 客人稱呼（可選）—— 入跟進名單＋傳送報告嗰陣帶埋 */
+  /** 客人稱呼（可選）—— 而家主要由 /api/save-report 收 */
   customerName?: string;
-  /** 客人必須同意（保存分析摘要＋WhatsApp 跟進）先可以分析 —— ContactCard 嘅必剔方格 */
+  /** 舊版必填同意（已廢除）：基本分析唔再需要。職員 record 流程照用 body.record */
   consent?: boolean;
   /** Cloudflare Turnstile token（伺服器設定咗 TURNSTILE_SECRET_KEY 先會查） */
   turnstileToken?: string;
@@ -184,38 +192,10 @@ async function maybeSaveVisit(
 }
 
 /**
- * 跟進名單寫入（拉新客漏斗嘅落點）—— 客人剔咗必須同意先會行到呢度。
+ * 跟進名單寫入已搬去 /api/save-report（自願留資流程嘅落點）。
  * 寫入失敗唔可以整死個報告：分析結果照出，lead 冇咗一筆係損失，
- * 但客人白等 30 秒先係災難。
+ * 但客人白等 30 秒先係災難 —— save-report 嗰邊同一原則。
  */
-async function saveLead(
-  phone: string,
-  name: string | undefined,
-  goals: GoalKey[],
-  findings: Finding[],
-  utm: string | undefined,
-): Promise<void> {
-  try {
-    const top = [...findings]
-      .sort((a, b) => b.severity - a.severity)
-      .slice(0, 3)
-      .map((f) => ({ key: f.key, severity: f.severity }));
-    const lead: LeadRecord = {
-      id: crypto.randomUUID(),
-      phone,
-      name: name?.trim() || undefined,
-      createdAt: new Date().toISOString(),
-      goals,
-      topFindings: top,
-      status: 'new',
-      source: 'customer',
-      utm,
-    };
-    await getLeadStore().add(lead);
-  } catch (err) {
-    console.error('[consult] lead 寫入失敗:', (err as Error).message);
-  }
-}
 
 export async function POST(req: Request) {
   let body: Body;
@@ -261,6 +241,33 @@ export async function POST(req: Request) {
     // demo 都行真嘅儲存流程（記憶體 store）—— 成個「儲存→/records 搜尋」
     // 喺未部署之前就測試得到（demo 冇 ContactCard，行職員 record 流程）
     const demoRecord = await maybeSaveVisit(body.record, isStaffRequest(req), body, findings, goals);
+    // demo 都寫暫存報告 —— 否則「結果頁留電話保存」呢個新流程喺測試
+    // 模式試唔到（記憶體 store 本機 work，成個 分析→保存→/records 鏈
+    // 唔使部署就驗證到）。職員 demo 行舊 record 流程。
+    let demoReportId: string | undefined;
+    if (!hasStaffCookie(req)) {
+      try {
+        demoReportId = crypto.randomUUID();
+        await getPendingStore().put(demoReportId, {
+          createdAt: new Date().toISOString(),
+          goals,
+          findings: findings.map((f) => ({ key: f.key, severity: f.severity, confidence: f.confidence })),
+          categoryScores: computeCategoryScores(findings).map((c) => ({
+            key: c.key,
+            score: c.score,
+            lowConfidence: c.lowConfidence,
+          })),
+          topFindings: [...findings]
+            .sort((a, b) => b.severity - a.severity)
+            .slice(0, 3)
+            .map((f) => ({ key: f.key, severity: f.severity })),
+          utm: (body.utm ?? '').replace(/[^\w\-\/.]/g, '').slice(0, 64) || undefined,
+        });
+      } catch (err) {
+        console.error('[consult] demo 暫存失敗:', (err as Error)?.message);
+        demoReportId = undefined;
+      }
+    }
     return NextResponse.json({
       analysis: demoAnalysis,
       record: demoRecord,
@@ -276,6 +283,7 @@ export async function POST(req: Request) {
         usage: { inputTokens: 0, outputTokens: 0 },
         costHKD: 0,
         pricingEnabled: PRICING_ENABLED,
+        reportId: demoReportId,
         demo: true,
         demoCaseId: demoCase.id,
         demoCaseLabel: demoCase.label,
@@ -330,30 +338,42 @@ export async function POST(req: Request) {
   const goalLabels = goals.map((g) => GOALS.find((x) => x.key === g)!.label);
 
   // ── 客人閘（職員 /pro 有 staff cookie，全部豁免）──
-  // 順序有講究：同意 → 手機格式（免費、即答）→ Turnstile（免費，擋機械人）
-  // → 每電話 3 次額度 → 月度預算。全部過晒先准佢燒真錢。
+  // 2026-10 改版：基本分析**唔使留電話**。電話搬咗去結果頁做自願
+  // 保存／跟進（/api/save-report 憑 reportId 認返份結果）。
+  // 閘嘅順序有講究：Turnstile（免費，擋機械人）→ 額度（有電話計電話、
+  // 冇電話計匿名 IP）→ 月度預算。全部過晒先准佢燒真錢。
   // 額度同使費都係**分析成功之後**先入帳 —— 失敗唔燒客人條數。
   let quotaKey: string | null = null;
+  let anonIp: string | null = null;
   let customerPhone: string | null = null;
   if (!isStaffReq) {
-    if (!body.consent) {
-      return bad('請先剔「同意保存分析紀錄同 WhatsApp 跟進」先可以開始分析');
-    }
-    customerPhone = normalizeHKMobile(body.customerPhone ?? '');
-    if (!customerPhone) {
-      return bad('請輸入香港手機號碼（4、5、6、7、9 字頭嘅 8 位數字）先可以開始分析');
-    }
-
     const ts = await verifyTurnstile(body.turnstileToken, clientIp(req));
     if (!ts.ok) return bad(ts.reason ?? '安全驗證失敗，請重試。', 403);
 
-    quotaKey = phoneKey(customerPhone);
-    const usedSoFar = await getQuotaStore().used(quotaKey);
-    if (usedSoFar >= FREE_ANALYSES_PER_PHONE) {
-      return bad(
-        `呢個電話已經用晒 ${FREE_ANALYSES_PER_PHONE} 次免費分析。想深入啲，歡迎直接 WhatsApp 6484 3111 預約醫生面診 —— 面診先係最準嘅評估。`,
-        429,
-      );
+    const rawPhone = (body.customerPhone ?? '').trim();
+    if (rawPhone) {
+      // 填咗電話但格式唔啱 → 即答，唔好燒佢一次分析先話佢知
+      customerPhone = normalizeHKMobile(rawPhone);
+      if (!customerPhone) {
+        return bad('電話號碼格式唔啱（香港手機係 4、5、6、7、9 字頭嘅 8 位數字）。你可以唔填電話，直接分析。');
+      }
+      quotaKey = phoneKey(customerPhone);
+      const usedSoFar = await getQuotaStore().used(quotaKey);
+      if (usedSoFar >= FREE_ANALYSES_PER_PHONE) {
+        return bad(
+          `呢個電話已經用晒 ${FREE_ANALYSES_PER_PHONE} 次免費分析。想深入啲，歡迎直接 WhatsApp 6484 3111 預約醫生面診 —— 面診先係最準嘅評估。`,
+          429,
+        );
+      }
+    } else {
+      // 匿名客：每 IP 每日上限（記憶體，減少濫用；硬上限靠月度預算）
+      anonIp = clientIp(req);
+      if (anonUsed(anonIp) >= ANON_DAILY_PER_IP) {
+        return bad(
+          `你今日已經用咗 ${ANON_DAILY_PER_IP} 次免費分析。想深入啲，歡迎直接 WhatsApp 6484 3111 預約醫生面診 —— 面診先係最準嘅評估。`,
+          429,
+        );
+      }
     }
 
     // ── 月度預算硬上限 ──「最壞情況蝕幾多」由呢層鎖死（記憶體
@@ -373,17 +393,27 @@ export async function POST(req: Request) {
   }
 
   try {
+    // 估齡開咗嘅話，真實年齡**唔可以**入 prompt —— 否則個「估算」
+    // 只係將客人填嘅數加減幾歲，唔係估算。客人年齡照樣落入暫存
+    // payload（俾 visit 紀錄用），但模型永遠睇唔到。
     const result = await analyzeWithConsensus(
       {
         images,
         goals: goalLabels,
         notes: body.notes,
-        age: body.age,
+        age: AGE_ESTIMATE_ENABLED ? undefined : body.age,
         gender: body.gender,
         tier,
+        estimateAge: AGE_ESTIMATE_ENABLED,
       },
       passes,
     );
+
+    // 防禦性剝走：估齡 flag 冇開嘅話，就算模型自己作咗個 appearanceAge
+    // 出嚟都唔可以落去報告 —— 未驗證嘅數字唔可以見客。
+    if (!AGE_ESTIMATE_ENABLED && result.analysis.appearanceAge) {
+      delete result.analysis.appearanceAge;
+    }
 
     const findings: Finding[] = result.analysis.findings.map((f) => ({
       key: f.key as Finding['key'],
@@ -413,14 +443,42 @@ export async function POST(req: Request) {
       console.error('[consult] 使費入帳失敗:', (err as Error).message);
     }
 
-    // 客人：必須同意已喺入口驗過 → 自動儲 visit（評分對比）＋ lead（跟進名單）
-    // 職員：照舊行 SaveRecordCard 嘅自願 record 流程
-    const recordReq = isStaffReq ? body.record : { phone: customerPhone ?? undefined, consent: true };
-    const record = await maybeSaveVisit(recordReq, isStaffReq, body, findings, goals);
-    if (!isStaffReq && customerPhone) {
-      // utm 消毒：只留字母數字同 -_/.，最多 64 字元 —— 呢個值會喺後台顯示，唔好俾人塞嘢入嚟
-      const utm = (body.utm ?? '').replace(/[^\w\-\/.]/g, '').slice(0, 64) || undefined;
-      await saveLead(customerPhone, body.customerName, goals, findings, utm);
+    // 客人：寫一份**冇個人資料**嘅暫存（pending_reports），派 reportId
+    // 俾前端；客人喺結果頁自願留電話嗰陣，/api/save-report 憑 id 認返
+    // 呢份結果先寫正式 visit＋lead。暫存失敗唔可以整死份報告。
+    // 職員：照舊行 SaveRecordCard 嘅自願 record 流程。
+    let reportId: string | undefined;
+    let record: { saved: boolean; persistent: boolean; reason?: string } | undefined;
+    if (!isStaffReq) {
+      try {
+        reportId = crypto.randomUUID();
+        const utm = (body.utm ?? '').replace(/[^\w\-\/.]/g, '').slice(0, 64) || undefined;
+        const payload: PendingReportPayload = {
+          createdAt: new Date().toISOString(),
+          goals,
+          ageBand:
+            body.age !== undefined
+              ? body.age < 30 ? '20s' : body.age < 40 ? '30s' : body.age < 50 ? '40s' : body.age < 60 ? '50s' : '60+'
+              : undefined,
+          findings: findings.map((f) => ({ key: f.key, severity: f.severity, confidence: f.confidence })),
+          categoryScores: computeCategoryScores(findings).map((c) => ({
+            key: c.key,
+            score: c.score,
+            lowConfidence: c.lowConfidence,
+          })),
+          topFindings: [...findings]
+            .sort((a, b) => b.severity - a.severity)
+            .slice(0, 3)
+            .map((f) => ({ key: f.key, severity: f.severity })),
+          utm,
+        };
+        await getPendingStore().put(reportId, payload);
+      } catch (err) {
+        console.error('[consult] 暫存報告失敗:', (err as Error).message);
+        reportId = undefined;
+      }
+    } else {
+      record = await maybeSaveVisit(body.record, isStaffReq, body, findings, goals);
     }
 
     // 分析成功先扣額度（失敗唔燒客人條數）
@@ -428,6 +486,9 @@ export async function POST(req: Request) {
     if (quotaKey) {
       const used = await getQuotaStore().increment(quotaKey);
       remainingAnalyses = Math.max(0, FREE_ANALYSES_PER_PHONE - used);
+    } else if (anonIp) {
+      const used = anonIncrement(anonIp);
+      remainingAnalyses = Math.max(0, ANON_DAILY_PER_IP - used);
     }
 
     return NextResponse.json({
@@ -447,6 +508,11 @@ export async function POST(req: Request) {
         usage: result.usage,
         costHKD: Number(result.costHKD.toFixed(3)),
         pricingEnabled: PRICING_ENABLED,
+        // 自願留電話保存報告嘅一次性憑證（唔可估嘅 UUID，24 個鐘有效）
+        reportId,
+        // 估齡 flag 開咗先有呢個欄；模型冇把握嗰陣係 null（前端顯示
+        // 「未能可靠估算」）。flag 冇開就冇呢個欄，UI 完全唔會出估齡卡。
+        ...(AGE_ESTIMATE_ENABLED ? { ageEstimate: result.analysis.appearanceAge ?? null } : {}),
         // 後處理改咗幾多嘢。持續唔係 0 代表個模型開始唔跟指示，
         // 應該去 eval 睇下係咪要調 prompt —— 唔會顯示俾客人。
         adjustments: result.adjustments.length,

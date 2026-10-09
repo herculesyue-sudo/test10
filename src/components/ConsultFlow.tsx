@@ -15,11 +15,9 @@ import { useDemoMode, DemoBanner, DemoCasePicker } from '@/components/DemoMode';
 import Consent from '@/components/Consent';
 import CaptureGuide from '@/components/CaptureGuide';
 import QuickFacts, { ageFromBand } from '@/components/QuickFacts';
-import ContactCard from '@/components/ContactCard';
 import ConcernPicker from '@/components/ConcernPicker';
 import AnalysisProgress from '@/components/AnalysisProgress';
 import TurnstileWidget, { resetTurnstile, TURNSTILE_CONFIGURED } from '@/components/TurnstileWidget';
-import { normalizeHKMobile } from '@/lib/visits';
 import { type FindingKey, type GoalKey } from '@/lib/treatments/types';
 import { goalsFromFindings, buildConcernNotes } from '@/lib/face-regions';
 import { trackStep, resetTracking } from '@/lib/track-client';
@@ -38,9 +36,6 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
   const [consented, setConsented] = useState(false);
   const [ageBand, setAgeBand] = useState<string | null>(null);
   const [pregnant, setPregnant] = useState(false);
-  const [custName, setCustName] = useState('');
-  const [recPhone, setRecPhone] = useState('');
-  const [leadConsent, setLeadConsent] = useState(false);
   const [tsToken, setTsToken] = useState('');
   const [busy, setBusy] = useState(false);
   const [data, setData] = useState<ConsultResponse | null>(null);
@@ -77,13 +72,13 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
   }, [consented]);
 
   const hasPhoto = Boolean(shots[0]?.data);
-  // 測試模式冇真實相片，唔需要同意；正式模式：相片同意＋跟進同意＋
-  // 香港手機號碼齊晒先可以提交。Turnstile 有設定嘅話仲要等 token 返嚟
-  //（正常客人一秒內、隱形），咁先唔會撞 server 嗰邊嘅安全驗證。
-  const phoneOk = normalizeHKMobile(recPhone) !== null;
+  // 測試模式冇真實相片，唔需要同意；正式模式：相片＋相片處理同意就
+  // 可以提交 —— 電話唔再係入場券，搬咗去結果頁做自願保存。
+  // Turnstile 有設定嘅話仲要等 token 返嚟（正常客人一秒內、隱形），
+  // 咁先唔會撞 server 嗰邊嘅安全驗證。
   const tsOk = !TURNSTILE_CONFIGURED || tsToken !== '';
   const hasConcern = goals.length > 0 || selectedFindings.length > 0;
-  const ready = (isDemo || (hasPhoto && consented && phoneOk && leadConsent && tsOk)) && hasConcern;
+  const ready = (isDemo || (hasPhoto && consented && tsOk)) && hasConcern;
 
   /** 目標掣 + 面圖自選反推嘅目標，合併俾引擎（引擎以 goal 運作，唔使改）。 */
   const effectiveGoals = () => {
@@ -105,9 +100,6 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
             : [],
           goals: effectiveGoals(),
           notes: buildConcernNotes(selectedFindings),
-          customerPhone: recPhone,
-          customerName: custName.trim() || undefined,
-          consent: leadConsent,
           turnstileToken: tsToken || undefined,
           utm,
           // tier 唔喺度指定 —— 由伺服器 CONSULT_TIER 決定（客人請求嘅 tier 伺服器一律唔理）
@@ -141,9 +133,6 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
     setConsented(false);
     setAgeBand(null);
     setPregnant(false);
-    setCustName('');
-    setRecPhone('');
-    setLeadConsent(false);
     setData(null);
     setError(null);
     scrollParentToTop();
@@ -178,8 +167,6 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
           goals={effectiveGoals()}
           selectedFindings={selectedFindings}
           photoPreview={shots[0]?.preview}
-          customerName={custName.trim() || undefined}
-          customerPhone={normalizeHKMobile(recPhone) ?? undefined}
           onReset={reset}
           pregnant={pregnant}
         />
@@ -209,7 +196,7 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
           <br />✓ 8 大範疇皮膚評分　✓ 喺你張相上面標出觀察位置　✓ 配對啱你嘅療程方向
         </p>
         <p style={{ margin: '6px 0 0', fontSize: '0.78rem', color: 'var(--text-dim)' }}>
-          全程約 1 分鐘 · 免費 · 相片唔會被儲存
+          全程約 1 分鐘 · 免費 · 唔使留電話 · 相片唔會被儲存
         </p>
       </div>
 
@@ -233,24 +220,15 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
 
       <div className="card">
         <h2>2. 你最想改善邊方面？</h2>
+        <p className="sub">揀你最在意嘅 1–2 樣就得 —— 少啲先至準，報告會集中講嗰兩樣。</p>
         <ConcernPicker
           selected={selectedFindings}
           onChange={setSelectedFindings}
           goals={goals}
           onGoals={setGoals}
+          maxSelections={2}
         />
       </div>
-
-      {!isDemo && (
-        <ContactCard
-          name={custName}
-          onName={setCustName}
-          phone={recPhone}
-          onPhone={setRecPhone}
-          consent={leadConsent}
-          onConsent={setLeadConsent}
-        />
-      )}
 
       <QuickFacts ageBand={ageBand} onAge={setAgeBand} pregnant={pregnant} onPregnant={setPregnant} />
 
@@ -274,13 +252,9 @@ export default function ConsultFlow({ embedded = false }: { embedded?: boolean }
               ? '請先影相'
               : !hasConcern
                 ? '請揀最少一項'
-                : !isDemo && !phoneOk
-                  ? '請輸入香港手機號碼'
-                  : !isDemo && !leadConsent
-                    ? '請同意保存紀錄同跟進安排'
-                    : !isDemo && !consented
-                      ? '請先同意相片處理說明'
-                      : '安全驗證載入緊…'}
+                : !isDemo && !consented
+                  ? '請先同意相片處理說明'
+                  : '安全驗證載入緊…'}
         </button>
       )}
 

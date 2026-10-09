@@ -10,7 +10,10 @@ import type { CategoryKey } from './categories';
  *     文字描述係由相片衍生嘅個人資料 —— 唔儲就唔使管。
  *
  * ── 保留期 ──
- * 24 個月，同意文字寫明。冇 cron：讀取時過濾 + 寫入時懶清除。
+ * 12 個月，同意文字寫明（2026-10 由 24 個月收短：跟進一條 lead 嘅
+ * 實際周期係幾星期，對比變化一年內都够用；保留兩年冇業務理由，
+ * PDPO 保留期原則係「唔好長過需要」）。冇 cron：讀取時過濾 +
+ * 寫入時懶清除。
  *
  * ── Store seam ──
  * 同 ratelimit.ts / funnel.ts 一樣嘅款：interface + 記憶體實作 +
@@ -19,7 +22,7 @@ import type { CategoryKey } from './categories';
  * 係 ESM-only，test-engine（tsx CJS）同瀏覽器 bundle 都唔可以掂到佢。
  */
 
-export const RETENTION_MONTHS = 24;
+export const RETENTION_MONTHS = 12;
 
 /**
  * 香港電話標準化 —— 搜尋同刪除都靠呢個做 key，

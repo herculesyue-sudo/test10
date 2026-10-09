@@ -111,6 +111,12 @@ function LeadsSection() {
             <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: 2 }}>
               {new Date(l.createdAt).toLocaleString('zh-HK', { dateStyle: 'short', timeStyle: 'short' })}
               {l.utm && <> · 廣告來源：{l.utm}</>}
+              {/* 冇剔推廣同意嘅 lead 只可以跟進今次分析，唔可以發推廣訊息（PDPO 直接促銷） */}
+              {l.marketingOptIn ? (
+                <> · ✅ 同意收推廣</>
+              ) : (
+                <> · 只限跟進今次分析</>
+              )}
               {l.goals.length > 0 && <> · 想改善：{l.goals.map(goalLabel).join('、')}</>}
             </div>
             {l.topFindings.length > 0 && (

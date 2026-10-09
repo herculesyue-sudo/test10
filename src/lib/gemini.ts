@@ -131,7 +131,7 @@ export async function analyzeOnceGemini(opts: AnalyzeOptions): Promise<AnalyzeRe
   }
   parts.push({
     text:
-      buildUserPrompt({ goals: opts.goals, notes: opts.notes, age: opts.age, gender: opts.gender }) +
+      buildUserPrompt({ goals: opts.goals, notes: opts.notes, age: opts.age, gender: opts.gender, estimateAge: opts.estimateAge }) +
       '\n\n輸出要求：只輸出一個符合以下 JSON Schema 嘅 JSON object。' +
       '唔好用 markdown code fence，唔好喺 JSON 前後加任何文字。\n' +
       JSON.stringify(zodOutputFormat(AnalysisSchema).schema),

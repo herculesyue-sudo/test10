@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false }, { status: 400 });
   }
 
-  track(step as FunnelStep);
+  await track(step as FunnelStep);
   return NextResponse.json({ ok: true });
 }
 
@@ -45,7 +45,7 @@ export async function GET(req: Request) {
     );
   }
 
-  const snap = funnelSnapshot();
+  const snap = await funnelSnapshot();
   const days = Object.keys(snap);
   const total: Partial<Record<FunnelStep, number>> = {};
   for (const d of days) {
@@ -55,7 +55,7 @@ export async function GET(req: Request) {
   }
 
   return NextResponse.json({
-    note: '記憶體儲存，重啟即清零；serverless 多 instance 唔會加埋一齊。',
+    note: '有 D1 binding 就係跨 isolate 嘅持久數字；冇就係記憶體（重啟清零）。',
     byDay: snap,
     total,
     funnel: conversionRates(total),

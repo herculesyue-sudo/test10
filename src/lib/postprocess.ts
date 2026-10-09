@@ -139,10 +139,31 @@ export function postProcess(a: Analysis): PostProcessResult {
 
   findings.sort((x, y) => weight(y) - weight(x));
 
+  // ── 5. 外觀年齡估算嘅確定性守門 ──
+  // prompt 係請求，呢度係保證。產品誠實規則（Harris 拍板）：
+  // 範圍過闊 / 上限細過下限 / 整唔到整數 → 成個欄位棄用，
+  // UI 會顯示「未能可靠估算」+ 重拍建議，唔會出任何數字。
+  let appearanceAge = a.appearanceAge;
+  if (appearanceAge) {
+    const min = Math.round(appearanceAge.rangeMin);
+    const max = Math.round(appearanceAge.rangeMax);
+    if (min < 16 || max > 100 || min > max || max - min > 15) {
+      adjustments.push({
+        rule: 'age-estimate-drop',
+        detail: `外觀年齡範圍唔合格（${appearanceAge.rangeMin}–${appearanceAge.rangeMax}），已棄用`,
+      });
+      appearanceAge = undefined;
+    } else if (min !== appearanceAge.rangeMin || max !== appearanceAge.rangeMax) {
+      adjustments.push({ rule: 'age-estimate-round', detail: '外觀年齡出現小數，已取整' });
+      appearanceAge = { ...appearanceAge, rangeMin: min, rangeMax: max };
+    }
+  }
+
   return {
     analysis: {
       ...a,
       findings,
+      appearanceAge,
       // redFlags 永遠唔會被過濾。呢個係整個系統入面代價最高嘅錯誤 ——
       // 漏咗一粒可疑嘅痣，比推薦錯療程嚴重好多個量級。
       redFlags: a.redFlags,

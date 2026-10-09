@@ -5,6 +5,7 @@ import {
   FINDING_LABELS,
   CATEGORY_LABELS,
   CATEGORY_EXPLAIN,
+  GOALS,
   type FindingKey,
   type GoalKey,
   type TreatmentCategory,
@@ -15,7 +16,7 @@ import {
   primaryRegionOf,
   type FaceRegionKey,
 } from '@/lib/face-regions';
-import { buildReportBookingUrl } from '@/lib/booking';
+import { buildReportBookingUrl, buildDoctorBookingUrl, buildSkinCheckUrl } from '@/lib/booking';
 import { computeCategoryScores } from '@/lib/categories';
 import { trackStep } from '@/lib/track-client';
 import { CLINIC_POLICY, CLINIC_OTHER_SERVICES } from '@/lib/treatments/clinic';
@@ -23,12 +24,16 @@ import CategoryScores from '@/components/CategoryScores';
 import FaceMap from '@/components/FaceMap';
 import PhotoFaceMap from '@/components/PhotoFaceMap';
 import TreatmentTimeline from '@/components/TreatmentTimeline';
+import SaveReportCard from '@/components/SaveReportCard';
+import AgeEstimateCard from '@/components/AgeEstimateCard';
 import type { ConsultResponse } from './Report';
 
 export type { ConsultResponse };
 
-/** MVP 只展示頭 3 個建議 —— 揀太多等於冇揀。 */
-const TOP_N = 3;
+/** MVP 只展示頭 2 個建議 —— 揀太多等於冇揀，報告要有重點。 */
+const TOP_N = 2;
+/** 主要觀察最多 2 項，其餘收入「其他觀察」摺疊區。 */
+const TOP_FINDINGS = 2;
 
 const money = (n: number) => `HK$${Math.round(n).toLocaleString()}`;
 
@@ -72,8 +77,6 @@ export default function MvpResult({
   goals,
   selectedFindings = [],
   photoPreview,
-  customerName,
-  customerPhone,
   onReset,
   pregnant = false,
 }: {
@@ -83,10 +86,6 @@ export default function MvpResult({
   selectedFindings?: FindingKey[];
   /** 客人張相（dataURL，只存在於瀏覽器狀態）—— 有埋 landmarks 先會出真相版觀察圖 */
   photoPreview?: string;
-  /** 客人稱呼（可選）—— 預約訊息會帶埋 */
-  customerName?: string;
-  /** 客人電話（ContactCard 必填）—— 預約訊息會帶埋 */
-  customerPhone?: string;
   onReset: () => void;
   /** 剔咗懷孕就會硬過濾所有禁忌療程 —— 一個建議都冇嘅時候要講返真正原因 */
   pregnant?: boolean;
@@ -105,22 +104,32 @@ export default function MvpResult({
   const showPhoto = canPhoto && view === 'photo';
   const overallVal = highlights.overall_skin ?? 0;
   const recs = data.recommendations.slice(0, TOP_N);
-  const top = [...a.findings].sort((x, y) => y.severity - x.severity).slice(0, 4);
+  const sortedFindings = [...a.findings].sort((x, y) => y.severity - x.severity);
+  const top = sortedFindings.slice(0, TOP_FINDINGS);
+  const otherFindings = sortedFindings.slice(TOP_FINDINGS);
+  const categoryScores = computeCategoryScores(a.findings);
+
+  // 正面觀察：只係「有觀察到嘢、信心唔低、結果係良好」嘅範疇先出。
+  // findingCount=0（clear）唔算 —— 冇觀察唔代表好，只係相片冇顯示問題。
+  // 唔夠兩樣就出一樣；一樣都冇就成個卡唔出 —— 唔硬作讚美。
+  const positives = categoryScores
+    .filter((c) => c.band === 'good' && !c.lowConfidence && c.findingCount > 0)
+    .slice(0, 2);
+
   const link = buildReportBookingUrl({
     phone: process.env.NEXT_PUBLIC_WHATSAPP,
     goals,
     findings: top
       .filter((f) => f.key in FINDING_LABELS)
       .map((f) => ({ key: f.key, label: FINDING_LABELS[f.key as FindingKey], severity: f.severity })),
-    categories: computeCategoryScores(a.findings)
+    categories: categoryScores
       .filter((c) => c.band === 'improvable' || c.band === 'attention')
       .sort((x, y) => x.score - y.score)
       .map((c) => ({ label: c.label, score: c.score })),
     treatments: recs.map((r) => r.treatment.name),
-    customerName,
-    customerPhone,
-    recordSaved: Boolean(data.record?.saved && data.record.persistent),
   });
+  const doctorLink = buildDoctorBookingUrl(process.env.NEXT_PUBLIC_WHATSAPP);
+  const skinCheckLink = buildSkinCheckUrl(process.env.NEXT_PUBLIC_WHATSAPP);
 
   const totalMin = recs.reduce((s, r) => s + r.estCostHKD.min, 0);
   const totalMax = recs.reduce((s, r) => s + r.estCostHKD.max, 0);
@@ -166,6 +175,32 @@ export default function MvpResult({
             偵測到化妝 —— 色斑同泛紅嘅判斷會冇咁準。素顏重拍會準確好多。
           </div>
         )
+      )}
+
+      {/* 你揀嘅目標：報告第一時間答返客人「我聽到你想改善咩」。
+          放喺質素警示之後、觀察圖之前。 */}
+      {goals.length > 0 && (
+        <div className="card" style={{ padding: '12px 16px' }}>
+          <p style={{ margin: 0, fontSize: '0.9rem' }}>
+            你想改善：<b>{goals.map((g) => GOALS.find((x) => x.key === g)?.label ?? g).join('、')}</b>
+            —— 下面嘅觀察同建議會集中講呢啲。
+          </p>
+        </div>
+      )}
+
+      {/* 正面觀察：有相片支持先出（觀察到、信心唔低、結果良好）。
+          一樣都冇就成卡唔出 —— 唔硬作讚美，硬作嘅讚美會拖垮成份報告嘅可信度。 */}
+      {positives.length > 0 && (!data.usability || data.usability.ok) && (
+        <div className="card" style={{ padding: '12px 16px', background: 'var(--accent-soft)' }}>
+          <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: 1.7 }}>
+            👍 相片所見嘅正面之處：
+            {positives.map((c) => (
+              <span key={c.key}>
+                <br />· <b>{c.label}</b>狀態良好
+              </span>
+            ))}
+          </p>
+        </div>
       )}
 
       {/* 面部觀察圖：成份報告嘅「一眼版」。放喺質素警示之後、分數之前。 */}
@@ -232,6 +267,12 @@ export default function MvpResult({
           唔可以擺一個睇落好肯定嘅分數版面 */}
       <CategoryScores findings={a.findings} collapsible />
 
+      {/* 外觀年齡估算：flag 冇開（meta 冇呢個欄）就唔會出。
+          驗證未達標之前預設關閉 —— 見 docs/age-estimate-validation.md */}
+      {data.meta.ageEstimate !== undefined && (
+        <AgeEstimateCard estimate={data.meta.ageEstimate} retakeHints={data.usability?.retakeHints} />
+      )}
+
       <div className="card">
         <h2>我哋睇到咩</h2>
         <ClampText text={a.overallSummary} />
@@ -255,6 +296,39 @@ export default function MvpResult({
               </div>
             );
           })}
+        {/* 其餘觀察摺埋：報告要有重點，但資料冇少咗 —— 想睇嘅客人撳開就有 */}
+        {otherFindings.length > 0 && (
+          <details style={{ marginTop: 10 }}>
+            <summary style={{ cursor: 'pointer', fontSize: '0.85rem', color: 'var(--accent)' }}>
+              其他觀察（{otherFindings.length} 項）
+            </summary>
+            {otherFindings.map((f) => {
+              const key = f.key as FindingKey;
+              const region = key in FINDING_LABELS ? primaryRegionOf(key) : null;
+              return (
+                <div className="finding" key={f.key}>
+                  <div className="top">
+                    <b>
+                      {FINDING_LABELS[key] ?? f.key}
+                      {region && <span className="region-tag">{REGION_LABEL[region]}</span>}
+                    </b>
+                    <em>{f.severity >= 66 ? '明顯' : f.severity >= 41 ? '中度' : '輕微'}</em>
+                  </div>
+                  <div className="bar">
+                    <i style={{ width: `${f.severity}%` }} />
+                  </div>
+                  <ClampText text={f.observation} />
+                </div>
+              );
+            })}
+          </details>
+        )}
+        {/* 誠實界線：相片睇到咩、你話咗咩、咩一定要到店先判斷到 ——
+            三樣嘢分開講，唔好撈埋當係 AI 嘅判斷 */}
+        <p style={{ fontSize: '0.78rem', color: 'var(--text-dim)', lineHeight: 1.7, margin: '12px 0 0' }}>
+          以上係呢張相片睇到嘅外觀觀察。皮膚深層狀況（水份、膠原、色素層次）、輪廓問題嘅實際成因
+          （脂肪／肌肉／鬆弛），單靠自拍判斷唔到 —— 呢啲要到店用皮膚分析儀或者由醫生評估先確定到。
+        </p>
       </div>
 
       <div className="card">
@@ -456,13 +530,18 @@ export default function MvpResult({
         </div>
       )}
 
-      {/* ── 轉化 ── */}
+      {/* ── 轉化：三個自願動作，分清楚性質 ──
+          1) 保存報告（自願留電話，SaveReportCard）
+          2) 一般美容服務查詢（WhatsApp，帶簡短摘要，唔帶個人資料）
+          3) 醫生面診（醫療服務，預填最短 —— 醫療嘢由客人自己講） */}
       <div className="card" style={{ textAlign: 'center' }}>
-        <h2>想知邊個方案最啱你？</h2>
+        <h2>下一步，你話事</h2>
         <p className="sub" style={{ marginBottom: 16 }}>
-          份報告係初步方向 —— 邊樣先做、幾耐做一次、實際預算，醫生面診就可以幫你敲實。
-          全份報告關咗頁就睇唔返 —— 想留低，一撳傳去 WhatsApp。
+          份報告係初步方向 —— 邊樣先做、適唔適合你，要現場評估先敲得實。
         </p>
+
+        <SaveReportCard reportId={data.meta.reportId} />
+
         {link ? (
           <>
             <a
@@ -473,26 +552,63 @@ export default function MvpResult({
               onClick={() => trackStep('booking_clicked')}
               style={{ display: 'block', textDecoration: 'none', marginTop: 0, boxSizing: 'border-box' }}
             >
-              📲 傳送報告去 WhatsApp（順便留返底）
+              💬 WhatsApp 查詢我嘅護理方向
             </a>
             <p style={{ fontSize: '0.72rem', color: 'var(--text-dim)', margin: '8px 0 0' }}>
-              份摘要會留喺你自己嘅 WhatsApp 對話入面，第時隨時翻睇（唔包相片）——你睇晒內容、撳「發送」先算送出。
-              我哋辦公時間覆你：解答問題定安排預約，你話事。
+              會幫你預填一段簡短摘要（目標＋觀察重點＋建議方向，唔包你嘅電話、年齡或者相片）
+              —— 你喺 WhatsApp 睇晒、撳「發送」先算送出，內容可以自己改。
             </p>
           </>
         ) : (
           <div className="alert warn" style={{ textAlign: 'left', marginBottom: 0 }}>
-            未設定 <code>NEXT_PUBLIC_WHATSAPP</code>，預約按鈕唔會顯示。喺 <code>.env</code> 填入診所 WhatsApp
+            未設定 <code>NEXT_PUBLIC_WHATSAPP</code>，查詢按鈕唔會顯示。喺 <code>.env</code> 填入診所 WhatsApp
             號碼（國際格式，例如 <code>85212345678</code>）後重新 build。
           </div>
         )}
+
+        {skinCheckLink && (
+          <>
+            <a
+              href={skinCheckLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ghost"
+              onClick={() => trackStep('booking_clicked')}
+              style={{ display: 'block', textDecoration: 'none', marginTop: 10, boxSizing: 'border-box' }}
+            >
+              🎁 預約免費到店皮膚檢測
+            </a>
+            <p style={{ fontSize: '0.72rem', color: 'var(--text-dim)', margin: '8px 0 0' }}>
+              皮膚分析儀檢測，由診所團隊進行（非醫生檢查）—— 比自拍準一步，睇到毛孔、色素層次呢啲相片睇唔到嘅嘢。
+            </p>
+          </>
+        )}
+
+        {doctorLink && (
+          <>
+            <a
+              href={doctorLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ghost"
+              onClick={() => trackStep('booking_clicked')}
+              style={{ display: 'block', textDecoration: 'none', marginTop: 10, boxSizing: 'border-box' }}
+            >
+              🩺 了解醫生面診安排及費用
+            </a>
+            <p style={{ fontSize: '0.72rem', color: 'var(--text-dim)', margin: '8px 0 0' }}>
+              涉及醫療程序嘅嘢（例如注射）一定要註冊醫生評估先做到 —— 面診安排同收費直接問最準。
+            </p>
+          </>
+        )}
+
         <button className="ghost" onClick={onReset} style={{ marginTop: 12, width: '100%' }}>
           再分析一次
         </button>
         {typeof data.meta.remainingAnalyses === 'number' && (
           <p style={{ fontSize: '0.74rem', color: 'var(--text-dim)', margin: '10px 0 0' }}>
             {data.meta.remainingAnalyses > 0
-              ? `你呢個電話仲有 ${data.meta.remainingAnalyses} 次免費分析。`
+              ? `你今日仲有 ${data.meta.remainingAnalyses} 次免費分析。`
               : '你嘅免費分析次數已經用晒 —— 想跟進就用上面個掣直接搵我哋啦。'}
           </p>
         )}

@@ -669,8 +669,10 @@ console.log('\n── 速率限制 ──');
   setRateLimitStore(createMemoryStore()); // 唔好污染後面
 }
 
+// funnel 而家係 async（D1 實作）—— 記憶體版嘅 promise 即刻 resolve，
+// 包一層 IIFE 等 CJS transform 唔會當佢 top-level await。
 console.log('\n── 漏斗統計 ──');
-{
+(async () => {
   setFunnelStore(createMemoryFunnel());
 
   check(
@@ -679,10 +681,10 @@ console.log('\n── 漏斗統計 ──');
     FUNNEL_STEPS.filter((s) => !STEP_LABELS[s]).join(','),
   );
 
-  track('page_view', '2026-01-01');
-  track('page_view', '2026-01-01');
-  track('photo_added', '2026-01-01');
-  const snap = funnelSnapshot();
+  await track('page_view', '2026-01-01');
+  await track('page_view', '2026-01-01');
+  await track('photo_added', '2026-01-01');
+  const snap = await funnelSnapshot();
   check('計數正確', snap['2026-01-01']?.page_view === 2 && snap['2026-01-01']?.photo_added === 1,
     JSON.stringify(snap));
 
@@ -699,15 +701,15 @@ console.log('\n── 漏斗統計 ──');
 
   // 保留期：長期跑落去唔可以無限食記憶體
   setFunnelStore(createMemoryFunnel());
-  for (let i = 1; i <= 40; i++) track('page_view', `2026-02-${String(i).padStart(2, '0')}`);
-  const kept = Object.keys(funnelSnapshot());
+  for (let i = 1; i <= 40; i++) await track('page_view', `2026-02-${String(i).padStart(2, '0')}`);
+  const kept = Object.keys(await funnelSnapshot());
   check('只保留最近 30 日', kept.length === 30, `保留咗 ${kept.length} 日`);
   check('刮走最舊嗰啲', !kept.includes('2026-02-01') && !kept.includes('2026-02-10'));
   check('留低最新嗰日（最新嘅數據唔可以被刮走）', kept.includes('2026-02-40'));
   check('snapshot 由新到舊排', kept[0] === '2026-02-40', kept[0]);
 
   setFunnelStore(createMemoryFunnel());
-}
+})();
 
 {
   // camera_fallback：側事件，要收（唔收就唔知全站相機死咗），但唔入

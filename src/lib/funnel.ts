@@ -12,8 +12,10 @@
  * 亦唔想再多一份私隱聲明要寫。呢度只記事件計數，冇 cookie、冇 IP、
  * 冇任何可以識別到個人嘅嘢。
  *
- * ⚠️ 記憶體儲存，重啟即清零，serverless 多 instance 亦唔會加埋一齊。
- *    要長期趨勢就換去資料庫 —— 見 FunnelStore 介面。
+ * ⚠️ 儲存：有 VISITS_DB binding 就用 D1（funnel-d1.ts，跨 isolate
+ *    準確、重啟唔會清零）；冇 binding 先落記憶體（本機 dev / demo）。
+ *    記憶體版嘅數字喺 Workers 上冇決策價值 —— 正式環境冇 D1 嘅話，
+ *    修好 D1 先好睇漏斗。
  */
 
 export type FunnelStep =
@@ -25,7 +27,8 @@ export type FunnelStep =
   | 'analyze_succeeded' // 收到報告
   | 'analyze_failed' // 分析失敗
   | 'camera_fallback' // 頁面內相機開唔到，退咗去揀相
-  | 'booking_clicked'; // 撳咗 WhatsApp 預約
+  | 'booking_clicked' // 撳咗 WhatsApp 查詢
+  | 'report_saved'; // 客人自願留電話保存報告（結果頁嘅自願流程）
 
 export const FUNNEL_STEPS: FunnelStep[] = [
   'page_view',
@@ -37,6 +40,7 @@ export const FUNNEL_STEPS: FunnelStep[] = [
   'analyze_failed',
   'camera_fallback',
   'booking_clicked',
+  'report_saved',
 ];
 
 export const STEP_LABELS: Record<FunnelStep, string> = {
@@ -48,19 +52,20 @@ export const STEP_LABELS: Record<FunnelStep, string> = {
   analyze_succeeded: '收到報告',
   analyze_failed: '分析失敗',
   camera_fallback: '相機開唔到，退回揀相',
-  booking_clicked: '撳預約',
+  booking_clicked: '撳查詢',
+  report_saved: '自願保存報告',
 };
 
 export interface FunnelStore {
-  bump(day: string, step: FunnelStep): void;
-  snapshot(): Record<string, Partial<Record<FunnelStep, number>>>;
+  bump(day: string, step: FunnelStep): Promise<void>;
+  snapshot(): Promise<Record<string, Partial<Record<FunnelStep, number>>>>;
 }
 
 class MemoryFunnel implements FunnelStore {
   private data = new Map<string, Map<FunnelStep, number>>();
   private readonly keepDays = 30;
 
-  bump(day: string, step: FunnelStep) {
+  async bump(day: string, step: FunnelStep) {
     let d = this.data.get(day);
     if (!d) {
       d = new Map();
@@ -70,7 +75,7 @@ class MemoryFunnel implements FunnelStore {
     d.set(step, (d.get(step) ?? 0) + 1);
   }
 
-  snapshot() {
+  async snapshot() {
     const out: Record<string, Partial<Record<FunnelStep, number>>> = {};
     for (const [day, steps] of [...this.data].sort((a, b) => b[0].localeCompare(a[0]))) {
       out[day] = Object.fromEntries(steps);
@@ -86,9 +91,11 @@ class MemoryFunnel implements FunnelStore {
   }
 }
 
-let store: FunnelStore = new MemoryFunnel();
+let injected: FunnelStore | null = null;
+/** 測試或者換其他後端用。 */
 export function setFunnelStore(s: FunnelStore) {
-  store = s;
+  injected = s;
+  resolved = s;
 }
 
 /** 測試用：開一個乾淨嘅記憶體 store，測嘅係真正嘅實作。 */
@@ -96,12 +103,39 @@ export function createMemoryFunnel(): FunnelStore {
   return new MemoryFunnel();
 }
 
-export function track(step: FunnelStep, day = new Date().toISOString().slice(0, 10)) {
-  store.bump(day, step);
+let resolved: FunnelStore | null = null;
+const memorySingleton = new MemoryFunnel();
+
+/**
+ * 攞 store：注入 > D1（有 VISITS_DB binding 先有）> 記憶體單例。
+ * 同 visits.ts 一樣用動態 import 載入 D1 版：@opennextjs/cloudflare
+ * 係 ESM-only，test-engine（tsx CJS）同瀏覽器 bundle 都唔可以掂到佢。
+ *
+ * ⚠️ 記憶體 fallback 喺 Workers 每個 isolate 各自計數、重啟清零 ——
+ *    嗰個狀態下嘅 funnel 數字冇決策價值，正式環境一定要有 D1。
+ */
+async function getStore(): Promise<FunnelStore> {
+  if (injected) return injected;
+  if (resolved) return resolved;
+  let store: FunnelStore;
+  try {
+    const mod = await import('./funnel-d1');
+    store = mod.tryCreateD1Funnel() ?? memorySingleton;
+  } catch {
+    store = memorySingleton;
+  }
+  resolved = store;
+  return store;
 }
 
-export function funnelSnapshot() {
-  return store.snapshot();
+export async function track(step: FunnelStep, day = new Date().toISOString().slice(0, 10)) {
+  const s = await getStore();
+  await s.bump(day, step);
+}
+
+export async function funnelSnapshot() {
+  const s = await getStore();
+  return s.snapshot();
 }
 
 /** 由計數算出每一步嘅通過率，直接指出邊一步跌最多人。 */

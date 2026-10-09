@@ -78,10 +78,24 @@ export function buildUserPrompt(opts: {
   notes?: string;
   age?: number;
   gender?: string;
+  /** 估齡功能：開咗先叫模型填 appearanceAge。開嘅時候 opts.age 一定係 undefined（route 層保證） */
+  estimateAge?: boolean;
 }): string {
   const parts: string[] = [];
 
   parts.push('以下係客人嘅自拍相，請按系統指示做影像觀察。');
+
+  if (opts.estimateAge) {
+    parts.push(
+      '請另外提供 appearanceAge：呢張相**睇落**嘅年齡範圍（整數歲，例如 28–34）。\n' +
+        '規則：\n' +
+        '- 你唔會收到客人嘅真實年齡，唔好猜佢填咗咩；淨係按相片可見特徵估算。\n' +
+        '- 範圍闊度反映不確定性，但唔好超過 15 年；超過即係冇把握，成個欄位唔好填。\n' +
+        '- 化妝濃、美顏濾鏡、光線差、角度偏、相片矇 → 唔好填。\n' +
+        '- 相中人可能未成年 → 唔好填。\n' +
+        '- basis 用一句廣東話講你依據咗邊啲可見特徵，唔准寫「信心 X%」。',
+    );
+  }
 
   if (opts.age || opts.gender) {
     const bits = [opts.age ? `年齡約 ${opts.age}` : null, opts.gender ? `性別：${opts.gender}` : null].filter(Boolean);

@@ -22,14 +22,21 @@ export default function ConcernPicker({
   onChange,
   goals,
   onGoals,
+  maxSelections,
 }: {
   selected: FindingKey[];
   onChange: (f: FindingKey[]) => void;
   goals: GoalKey[];
   onGoals: (g: GoalKey[]) => void;
+  /** 兩條路（面圖問題＋目標掣）合計嘅上限。客人版限 2：揀太多等於冇揀，報告冇重點 */
+  maxSelections?: number;
 }) {
   const [tab, setTab] = useState<'map' | 'goals'>('map');
   const [activeRegion, setActiveRegion] = useState<FaceRegionKey | null>(null);
+  const [notice, setNotice] = useState(false);
+
+  const total = selected.length + goals.length;
+  const atCap = maxSelections !== undefined && total >= maxSelections;
 
   const counts: Partial<Record<FaceRegionKey, number>> = {};
   for (const r of FACE_REGIONS) {
@@ -40,10 +47,28 @@ export default function ConcernPicker({
   const region = activeRegion ? FACE_REGIONS.find((r) => r.key === activeRegion) : null;
 
   function toggleFinding(f: FindingKey) {
-    onChange(selected.includes(f) ? selected.filter((x) => x !== f) : [...selected, f]);
+    if (selected.includes(f)) {
+      setNotice(false);
+      onChange(selected.filter((x) => x !== f));
+      return;
+    }
+    if (atCap) {
+      setNotice(true);
+      return;
+    }
+    onChange([...selected, f]);
   }
   function toggleGoal(g: GoalKey) {
-    onGoals(goals.includes(g) ? goals.filter((x) => x !== g) : [...goals, g]);
+    if (goals.includes(g)) {
+      setNotice(false);
+      onGoals(goals.filter((x) => x !== g));
+      return;
+    }
+    if (atCap) {
+      setNotice(true);
+      return;
+    }
+    onGoals([...goals, g]);
   }
 
   return (
@@ -72,7 +97,7 @@ export default function ConcernPicker({
       {tab === 'map' ? (
         <>
           <p className="sub" style={{ margin: '10px 0 4px' }}>
-            撳你關注嘅部位，再剔選具體問題（可以揀多過一個部位）。
+            撳你關注嘅部位，再剔選具體問題{maxSelections ? `（最多 ${maxSelections} 樣）` : ''}。
           </p>
           <FaceMap
             mode="picker"
@@ -118,7 +143,7 @@ export default function ConcernPicker({
       ) : (
         <>
           <p className="sub" style={{ margin: '10px 0 4px' }}>
-            可以揀多過一項。
+            {maxSelections ? `最多揀 ${maxSelections} 項，揀最緊要嗰啲。` : '可以揀多過一項。'}
           </p>
           <div className="goals">
             {GOALS.map((g) => (
@@ -134,6 +159,12 @@ export default function ConcernPicker({
             ))}
           </div>
         </>
+      )}
+
+      {notice && maxSelections !== undefined && (
+        <p style={{ color: 'var(--danger)', fontSize: '0.8rem', margin: '8px 0 0' }} role="alert">
+          最多揀 {maxSelections} 樣 —— 想換的話，先撳走一個已揀嘅。
+        </p>
       )}
 
       {selected.length > 0 && (

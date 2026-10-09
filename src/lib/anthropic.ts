@@ -110,6 +110,8 @@ export interface AnalyzeOptions {
   age?: number;
   gender?: string;
   tier: Tier;
+  /** 估齡功能開關（AGE_ESTIMATE_ENABLED）。開嘅時候 age 一定係 undefined —— 估算唔可以被答案影響 */
+  estimateAge?: boolean;
 }
 
 export interface AnalyzeResult {
@@ -147,7 +149,7 @@ export async function analyzeOnce(opts: AnalyzeOptions): Promise<AnalyzeResult> 
   }
   content.push({
     type: 'text',
-    text: buildUserPrompt({ goals: opts.goals, notes: opts.notes, age: opts.age, gender: opts.gender }),
+    text: buildUserPrompt({ goals: opts.goals, notes: opts.notes, age: opts.age, gender: opts.gender, estimateAge: opts.estimateAge }),
   });
 
   // 系統提示長期不變 → 設 cache breakpoint，重複請求慳約 90% input 成本
@@ -312,8 +314,21 @@ export async function analyzeWithConsensus(opts: AnalyzeOptions, passes: number)
     issues: [...new Set(runs.flatMap((r) => r.analysis.imageQuality.issues.map((i) => i.trim())))].filter(Boolean),
   };
 
+  // ── 外觀年齡：取各次中位數，過半數次數冇估就當不可靠 ──
+  // 同 findings 嘅「少於一半當雜訊」同一邏輯：估齡本身方差大，
+  // 幾次獨立跑先係真正嘅穩定性指標。
+  const ageRuns = runs.map((r) => r.analysis.appearanceAge).filter((x) => x != null);
+  const appearanceAge =
+    ageRuns.length >= Math.ceil(passes / 2) && ageRuns.length > 0
+      ? {
+          rangeMin: Math.round(median(ageRuns.map((x) => x.rangeMin))),
+          rangeMax: Math.round(median(ageRuns.map((x) => x.rangeMax))),
+          basis: ageRuns[Math.floor(ageRuns.length / 2)].basis,
+        }
+      : undefined;
+
   return {
-    analysis: { ...base.analysis, findings: merged, redFlags, imageQuality },
+    analysis: { ...base.analysis, findings: merged, redFlags, imageQuality, appearanceAge },
     usage: {
       inputTokens: runs.reduce((s, r) => s + r.usage.inputTokens, 0),
       outputTokens: runs.reduce((s, r) => s + r.usage.outputTokens, 0),

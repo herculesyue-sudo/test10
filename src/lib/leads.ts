@@ -56,6 +56,7 @@ interface LeadRow {
   status: string;
   source: string;
   utm: string | null;
+  marketing_opt_in?: number | null;
 }
 
 function fromRow(r: LeadRow): LeadRecord {
@@ -69,6 +70,7 @@ function fromRow(r: LeadRow): LeadRecord {
     status: (LEAD_STATUSES as readonly string[]).includes(r.status) ? (r.status as LeadStatus) : 'new',
     source: r.source === 'pro' ? 'pro' : 'customer',
     utm: r.utm ?? undefined,
+    marketingOptIn: r.marketing_opt_in === 1,
   };
 }
 
@@ -99,6 +101,13 @@ class D1LeadStore implements LeadStore {
         } catch {
           /* 欄已存在 */
         }
+        // 遷移：推廣 opt-in（PDPO 直接促銷同意，2026-10 加）。
+        // 舊行預設 0 = 冇推廣同意 —— 唔可以當舊 lead 已同意收推廣。
+        try {
+          await this.db.prepare(`ALTER TABLE leads ADD COLUMN marketing_opt_in INTEGER NOT NULL DEFAULT 0`).run();
+        } catch {
+          /* 欄已存在 */
+        }
       });
     }
     return this.ready;
@@ -108,7 +117,7 @@ class D1LeadStore implements LeadStore {
     await this.ensure();
     await this.db
       .prepare(
-        `INSERT INTO leads (id, phone, name, created_at, goals, top_findings, status, source, utm) VALUES (?,?,?,?,?,?,?,?,?)`,
+        `INSERT INTO leads (id, phone, name, created_at, goals, top_findings, status, source, utm, marketing_opt_in) VALUES (?,?,?,?,?,?,?,?,?,?)`,
       )
       .bind(
         lead.id,
@@ -120,6 +129,7 @@ class D1LeadStore implements LeadStore {
         lead.status,
         lead.source,
         lead.utm ?? null,
+        lead.marketingOptIn ? 1 : 0,
       )
       .run();
   }
