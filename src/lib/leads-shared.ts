@@ -1,0 +1,39 @@
+/**
+ * 跟進名單嘅型別同常量 —— 獨立檔案係因為前端（/records 頁）都要用，
+ * 而 leads.ts 用咗 @opennextjs/cloudflare（ESM-only、server-only），
+ * 唔入得 client bundle。同 quota-config.ts 一樣嘅拆法。
+ */
+
+export const LEAD_STATUSES = ['new', 'contacted', 'booked', 'no_interest'] as const;
+export type LeadStatus = (typeof LEAD_STATUSES)[number];
+
+export const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
+  new: '新',
+  contacted: '已聯絡',
+  booked: '已預約',
+  no_interest: '冇興趣',
+};
+
+export interface LeadRecord {
+  id: string;
+  /** 已標準化嘅 8 位手機號碼（客人同意先儲原文） */
+  phone: string;
+  name?: string;
+  /** ISO 8601 UTC */
+  createdAt: string;
+  goals: string[];
+  /** 嚴重度最高頭 3 項，俾職員一眼睇到跟進切入點 */
+  topFindings: { key: string; severity: number }[];
+  status: LeadStatus;
+  source: 'customer' | 'pro';
+  /** 廣告來源標記（utm_campaign/utm_source，server 已消毒）—— 度 Meta 廣告邊條路值錢 */
+  utm?: string;
+  /**
+   * 日後推廣 opt-in（PDPO 直接促銷）：客人**另外剔**咗先係 true。
+   * 冇剔 / 冇呢個欄（舊紀錄）= 唔可以發推廣訊息，只可以跟進今次分析。
+   * 跟進同推廣係兩個同意，唔好撈埋。
+   */
+  marketingOptIn?: boolean;
+  /** WeChat ID（可選，內地客好多冇 WhatsApp）—— 職員人手加佢跟進 */
+  wechat?: string;
+}

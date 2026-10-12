@@ -1,0 +1,584 @@
+:root {
+  --bg: #fbfaf8;
+  --surface: #ffffff;
+  --surface-2: #f4f2ee;
+  --border: #e3ded6;
+  --text: #1c1a17;
+  --text-dim: #6b6459;
+  --accent: #9a5b3f;
+  --accent-soft: #f2e4dc;
+  --ok: #3f7a52;
+  --warn: #a8781f;
+  --danger: #b03a2e;
+  --radius: 14px;
+  --shadow: 0 1px 2px rgba(28, 26, 23, 0.05), 0 8px 24px rgba(28, 26, 23, 0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #16150f;
+    --surface: #201e18;
+    --surface-2: #2a2721;
+    --border: #3a352c;
+    --text: #f0ece4;
+    --text-dim: #a49b8c;
+    --accent: #d99872;
+    --accent-soft: #3a2a20;
+    --ok: #7bb98d;
+    --warn: #d9b25f;
+    --danger: #e08074;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25);
+  }
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang HK', 'Hiragino Sans CNS',
+    'Microsoft JhengHei', 'Noto Sans HK', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.65;
+  overflow-x: hidden;
+}
+
+.wrap { max-width: 620px; margin: 0 auto; padding: 0 16px 96px; }
+
+/* 嵌入版：背景透明跟父頁面，底部留白細好多（父頁面自己有 footer），
+   而且唔可以有自己嘅 scroll —— 高度靠 postMessage 同步上去。 */
+.wrap.embed { padding: 0 12px 24px; }
+body:has(.wrap.embed) { background: transparent; overflow: hidden; }
+
+header.site {
+  padding: 28px 0 20px;
+  text-align: center;
+}
+header.site h1 {
+  margin: 0 0 4px;
+  font-size: 1.45rem;
+  letter-spacing: -0.01em;
+}
+header.site p { margin: 0; color: var(--text-dim); font-size: 0.87rem; }
+
+.steps {
+  display: flex;
+  gap: 6px;
+  margin: 0 0 22px;
+}
+.steps div {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--border);
+  transition: background 0.25s;
+}
+.steps div.on { background: var(--accent); }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow);
+}
+.card h2 { margin: 0 0 4px; font-size: 1.05rem; }
+.card .sub { margin: 0 0 16px; color: var(--text-dim); font-size: 0.85rem; }
+
+/* ── 相片格 ── */
+.shots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.shot {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  border-radius: 10px;
+  border: 1.5px dashed var(--border);
+  background: var(--surface-2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  overflow: hidden;
+  padding: 0;
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  font-family: inherit;
+}
+.shot.filled { border-style: solid; border-color: var(--accent); }
+.shot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.shot .tag {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: rgba(0, 0, 0, 0.55); color: #fff;
+  font-size: 0.7rem; padding: 3px 0; text-align: center;
+}
+.shot .req { color: var(--accent); font-weight: 600; }
+
+/* ── 目標選擇 ── */
+.goals { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.goal {
+  text-align: left;
+  border: 1.5px solid var(--border);
+  background: var(--surface-2);
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--text);
+  transition: border-color 0.15s, background 0.15s;
+}
+.goal:hover { border-color: var(--accent); }
+.goal.on { border-color: var(--accent); background: var(--accent-soft); }
+.goal b { display: block; font-size: 0.9rem; }
+.goal span { font-size: 0.74rem; color: var(--text-dim); }
+
+/* ── 表單 ── */
+label.f { display: block; font-size: 0.82rem; color: var(--text-dim); margin: 14px 0 5px; }
+input, select, textarea {
+  width: 100%;
+  font-family: inherit;
+  font-size: 0.92rem;
+  padding: 10px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+}
+textarea { resize: vertical; min-height: 72px; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.check { display: flex; align-items: flex-start; gap: 9px; margin-top: 12px; font-size: 0.86rem; }
+.check input { width: auto; margin-top: 3px; flex-shrink: 0; }
+
+/* ── 按鈕 ── */
+button.primary {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 11px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  margin-top: 18px;
+}
+button.primary:disabled { opacity: 0.45; cursor: not-allowed; }
+button.ghost {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 10px 16px;
+  border-radius: 9px;
+  font-family: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+/* ── 報告 ── */
+.bar { height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; margin-top: 5px; }
+.bar > i { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+
+.finding { padding: 13px 0; border-bottom: 1px solid var(--border); }
+.finding:last-child { border-bottom: none; }
+.finding .top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.finding .top b { font-size: 0.94rem; }
+.finding .top em { font-style: normal; font-size: 0.78rem; color: var(--text-dim); white-space: nowrap; }
+.finding p { margin: 6px 0 0; font-size: 0.85rem; color: var(--text-dim); }
+
+.rec { border: 1px solid var(--border); border-radius: 11px; padding: 14px; margin-bottom: 10px; background: var(--surface-2); }
+.rec .hd { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.rec .hd b { font-size: 0.97rem; }
+.rec .hd .score {
+  background: var(--accent); color: #fff; font-size: 0.72rem;
+  padding: 2px 8px; border-radius: 20px; white-space: nowrap; font-weight: 600;
+}
+.rec .brand { font-size: 0.76rem; color: var(--text-dim); margin: 1px 0 8px; }
+
+/* 療程類型：擺喺療程名上面，做細細個標籤 —— 客人一眼掃到「打針定做機」 */
+.rec .kind {
+  display: inline-block;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 9px;
+  margin-bottom: 6px;
+}
+
+/* 逐張卡之前先講清楚成張方案有邊幾類 */
+.kinds {
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  background: var(--surface-2);
+}
+.kinds p { margin: 0 0 6px; font-size: 0.82rem; color: var(--text-dim); line-height: 1.55; }
+.kinds p:last-child { margin-bottom: 0; }
+.kinds .lead { font-size: 0.9rem; color: var(--text); margin-bottom: 9px; }
+.rec p { margin: 0 0 9px; font-size: 0.85rem; }
+.meta { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 12px; font-size: 0.78rem; color: var(--text-dim); }
+.meta span b { color: var(--text); font-weight: 600; }
+.flags { margin-top: 9px; font-size: 0.78rem; }
+.flags div { color: var(--warn); }
+.pill {
+  display: inline-block; font-size: 0.7rem; padding: 2px 7px; border-radius: 20px;
+  background: var(--surface); border: 1px solid var(--border); margin: 0 4px 4px 0; color: var(--text-dim);
+}
+
+.alert { border-radius: 10px; padding: 12px 14px; font-size: 0.85rem; margin-bottom: 12px; }
+.alert.danger { background: color-mix(in srgb, var(--danger) 12%, transparent); border: 1px solid var(--danger); }
+.alert.warn { background: color-mix(in srgb, var(--warn) 12%, transparent); border: 1px solid var(--warn); }
+
+.disclaimer {
+  font-size: 0.76rem; color: var(--text-dim); line-height: 1.6;
+  border-top: 1px solid var(--border); padding-top: 14px; margin-top: 22px;
+}
+
+.spinner {
+  width: 34px; height: 34px; margin: 30px auto 14px;
+  border: 3px solid var(--border); border-top-color: var(--accent);
+  border-radius: 50%; animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.cost { font-size: 0.75rem; color: var(--text-dim); text-align: center; margin-top: 16px; }
+
+@media (max-width: 400px) {
+  .goals, .row { grid-template-columns: 1fr; }
+}
+
+/* ══════════════ 海報（/share）══════════════ */
+.poster-sheet {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px 22px;
+  text-align: center;
+  background: var(--surface-2);
+}
+.poster-clinic { font-size: 0.9rem; letter-spacing: 0.16em; color: var(--accent); margin-bottom: 14px; }
+.poster-title { font-size: 2rem; font-weight: 700; line-height: 1.25; margin-bottom: 20px; }
+.poster-qr { width: 100%; max-width: 230px; height: auto; display: block; margin: 0 auto 18px; }
+.poster-steps { font-size: 1rem; line-height: 1.7; margin-bottom: 14px; }
+.poster-url { font-size: 0.78rem; color: var(--text-dim); word-break: break-all; margin-bottom: 16px; }
+.poster-fine { font-size: 0.68rem; color: var(--text-dim); line-height: 1.5; }
+
+/* 印嘅時候只留海報本身：診所要嘅係一張貼得出去嘅嘢，
+   唔係一版連住說明同複製掣嘅網頁截圖。 */
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff; color: #000; }
+  .wrap { max-width: none; padding: 0; }
+  .card.poster { border: 0; padding: 0; margin: 0; background: #fff; box-shadow: none; }
+  .poster-sheet {
+    border: 0;
+    background: #fff;
+    padding: 0;
+    /* 用足一版 A4，QR 先夠大俾人隔幾步掃到 */
+    min-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .poster-clinic { color: #000; }
+  .poster-title { font-size: 3.2rem; }
+  .poster-qr { max-width: 62%; }
+  .poster-steps { font-size: 1.35rem; }
+  .poster-url, .poster-fine { color: #444; }
+}
+
+/* ══════════ 影相指引 ══════════ */
+.guide { }
+.guide-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  font-size: 0.76rem; padding: 4px 10px; border-radius: 999px;
+  background: var(--accent-soft); color: var(--accent); border: 1px solid transparent;
+}
+.guide-toggle {
+  /* 44px 高：Apple 同 Google 都建議嘅最細撳得中範圍。
+     之前得 25px，喺 320px 闊嘅螢幕上面手指好易撳唔中。 */
+  background: none; border: 0; padding: 12px 2px 8px; margin-top: 2px;
+  min-height: 44px; display: inline-flex; align-items: center;
+  color: var(--accent); font-family: inherit; font-size: 0.82rem;
+  cursor: pointer; text-decoration: underline;
+}
+.guide-detail { margin-top: 10px; border-top: 1px solid var(--border); padding-top: 12px; }
+.guide-lead { font-size: 0.8rem; color: var(--text-dim); margin: 0 0 12px; line-height: 1.6; }
+.guide-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 420px) { .guide-cols { grid-template-columns: 1fr; } }
+.guide-cols h4 { margin: 0 0 6px; font-size: 0.76rem; letter-spacing: 0.06em; }
+.guide-cols h4.yes { color: var(--ok); }
+.guide-cols h4.no { color: var(--danger); }
+.guide-cols ul { margin: 0; padding: 0; list-style: none; }
+.guide-cols li { margin-bottom: 8px; }
+.guide-cols li b { display: block; font-size: 0.81rem; }
+.guide-cols li span { display: block; font-size: 0.74rem; color: var(--text-dim); line-height: 1.5; }
+
+/* ══════════ 兩條快問 ══════════ */
+.qf-label { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 7px; }
+.qf-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.qf-chip {
+  /* 44px 高：手指撳得中。細過呢個喺手機上面就會撳極都唔中 */
+  min-height: 40px; padding: 8px 14px; border-radius: 10px;
+  border: 1.5px solid var(--border); background: var(--surface-2);
+  color: var(--text); font-family: inherit; font-size: 0.86rem; cursor: pointer;
+}
+.qf-chip.on { border-color: var(--accent); background: var(--accent-soft); }
+.qf-check {
+  display: flex; gap: 10px; align-items: flex-start;
+  border-top: 1px solid var(--border); padding-top: 14px; cursor: pointer;
+}
+.qf-check input { width: auto; margin-top: 3px; flex-shrink: 0; }
+.qf-check b { display: block; font-size: 0.87rem; }
+.qf-check em { display: block; font-style: normal; font-size: 0.76rem; color: var(--text-dim); line-height: 1.55; margin-top: 3px; }
+
+/* 手機上面 13px 嘅方格太細撳 —— 放大到 20px。
+   （包住佢嘅 label 本身都撳得，但客人會直覺去撳個方格。） */
+.qf-check input[type="checkbox"],
+.check input[type="checkbox"] {
+  width: 20px; height: 20px; accent-color: var(--accent);
+}
+
+/* ══════════ 頁面內即時相機 ══════════ */
+.cam-start { margin-top: 0; }
+.cam-stage {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #000;
+}
+.cam-stage video {
+  width: 100%; height: 100%; object-fit: cover;
+  /* 預覽鏡像，睇落先自然（同照鏡一樣）。
+     ⚠️ 存落嚟嗰張唔會鏡像 —— 見 CameraCapture.tsx，
+     否則報告會左右調轉，醫生對唔返位。 */
+  transform: scaleX(-1);
+}
+.cam-guide {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  pointer-events: none;
+}
+.cam-guide ellipse {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.85);
+  stroke-width: 0.7;
+  stroke-dasharray: 3 2.4;
+}
+.cam-hint {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  padding: 8px 10px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.72));
+  color: #fff; font-size: 0.8rem; text-align: center;
+}
+.cam-hint.dark, .cam-hint.bright { color: #ffd479; font-weight: 600; }
+.cam-shoot { margin-top: 12px; }
+.shot-issue {
+  color: var(--text-dim); font-size: 0.82rem; margin: 6px 0 0; line-height: 1.5;
+}
+.shot-issue.bad { color: var(--danger); }
+
+/* ══════════ 8 大範疇評分 ══════════ */
+.radar { display: block; width: 100%; max-width: 300px; margin: 0 auto 6px; }
+
+/* ══════════ 視覺化改版（面圖 / 揀問題 / 等待 / 時間線 / 路線圖）══════════
+   ⚠️ 呢段只准 append —— 上面所有 selector 同員工頁（/pro /records /share）共用，
+   一改就唔止影響客人版。 */
+
+/* —— 面部示意圖 —— */
+.facemap { display: block; width: 100%; max-width: 300px; margin: 6px auto 0; }
+.facemap.mini { max-width: 74px; margin: 0; }
+.facemap .region { cursor: pointer; }
+.facemap .region .zone {
+  fill: var(--accent); fill-opacity: 0.07;
+  stroke: var(--border); stroke-width: 1; stroke-dasharray: 3 3;
+  transition: fill-opacity 0.15s;
+}
+.facemap .region.has .zone { fill-opacity: 0.2; stroke: var(--accent); stroke-dasharray: none; }
+.facemap .region.active .zone { fill-opacity: 0.32; stroke: var(--accent); stroke-dasharray: none; }
+.facemap .region:focus-visible { outline: none; }
+.facemap .region:focus-visible .zone { stroke: var(--accent); stroke-width: 2.5; }
+.facemap .badge circle { fill: var(--accent); }
+.facemap .badge text {
+  fill: #fff; font-size: 9px; font-weight: 700;
+  text-anchor: middle; dominant-baseline: central;
+}
+.fm-legend {
+  display: flex; justify-content: center; gap: 16px;
+  font-size: 0.74rem; color: var(--text-dim); margin: 8px 0 0;
+}
+.fm-legend span { display: flex; align-items: center; gap: 5px; }
+.fm-legend i { width: 12px; height: 12px; border-radius: 3px; background: var(--accent); display: inline-block; }
+.fm-caption { font-size: 0.72rem; color: var(--text-dim); text-align: center; margin: 8px 0 0; }
+
+/* —— 揀選方式 tabs —— */
+.seg-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 4px; }
+.seg-tabs button {
+  min-height: 44px; border: 1px solid var(--border); border-radius: 10px;
+  background: var(--surface); color: var(--text-dim); font-size: 0.88rem; cursor: pointer;
+}
+.seg-tabs button.on {
+  background: var(--accent-soft); border-color: var(--accent);
+  color: var(--text); font-weight: 600;
+}
+
+/* —— 整體膚質 chip（面圖以外嘅第 12 區）—— */
+.chip.overall {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; min-height: 44px; margin-top: 8px;
+  border: 1px dashed var(--border); border-radius: 10px;
+  background: var(--surface); font-size: 0.86rem; color: var(--text); cursor: pointer;
+}
+.chip.overall.has, .chip.overall.on { border-style: solid; border-color: var(--accent); background: var(--accent-soft); }
+.chip.overall .n {
+  background: var(--accent); color: #fff; border-radius: 999px;
+  min-width: 20px; height: 20px; line-height: 20px; font-size: 0.74rem; text-align: center;
+}
+
+/* —— 區域問題面板（inline 展開，唔用 fixed —— embed 高度同步靠內容增長）—— */
+.concern-panel {
+  margin-top: 10px; padding: 12px; border-radius: 12px;
+  background: var(--surface-2); border: 1px solid var(--border);
+}
+.concern-panel .hd { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.concern-panel .hd b { font-size: 0.95rem; }
+.concern-panel .done {
+  min-height: 36px; padding: 0 14px; border: none; border-radius: 999px;
+  background: var(--accent); color: #fff; font-size: 0.82rem; cursor: pointer;
+}
+.concern-panel .opts { display: flex; flex-wrap: wrap; gap: 8px; }
+.concern-panel .opt {
+  min-height: 44px; padding: 8px 14px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--surface);
+  font-size: 0.85rem; color: var(--text); cursor: pointer;
+}
+.concern-panel .opt.on { background: var(--accent-soft); border-color: var(--accent); font-weight: 600; }
+
+/* —— 已揀問題 chips —— */
+.chips-removable { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.chips-removable button {
+  min-height: 36px; padding: 4px 12px; border-radius: 999px;
+  border: 1px solid var(--accent); background: var(--accent-soft);
+  font-size: 0.8rem; color: var(--text); cursor: pointer;
+}
+.chips-removable button span { color: var(--text-dim); margin-left: 2px; }
+
+/* —— 分析等待卡 —— */
+.progress-card h2 { text-align: center; }
+.progress-steps { max-width: 260px; margin: 12px auto 0; }
+.progress-steps .step {
+  display: flex; align-items: center; gap: 10px;
+  min-height: 34px; color: var(--text-dim); font-size: 0.88rem;
+}
+.progress-steps .dot {
+  width: 22px; height: 22px; flex: 0 0 22px; border-radius: 50%;
+  border: 2px solid var(--border); display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; color: #fff;
+}
+.progress-steps .step.done { color: var(--text); }
+.progress-steps .step.done .dot { background: var(--accent); border-color: var(--accent); }
+.progress-steps .step.now { color: var(--text); font-weight: 600; }
+.progress-steps .step.now .dot {
+  border-color: var(--accent); border-top-color: transparent;
+  animation: spin 0.9s linear infinite;
+}
+
+/* —— 療程時間線 —— */
+.timeline { margin: 10px 0 2px; }
+.tl-track {
+  display: flex; height: 10px; border-radius: 999px; overflow: hidden;
+  background: var(--surface); border: 1px solid var(--border);
+}
+.tl-track .tl-onset {
+  background: repeating-linear-gradient(45deg, var(--accent-soft), var(--accent-soft) 5px, transparent 5px, transparent 9px);
+}
+.tl-track .tl-dur { background: var(--accent); opacity: 0.45; }
+.tl-labels {
+  display: flex; flex-wrap: wrap; gap: 4px 16px;
+  font-size: 0.74rem; color: var(--text-dim); margin-top: 6px;
+}
+.tl-labels span { display: flex; align-items: center; gap: 5px; }
+.tl-labels .sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block; border: 1px solid var(--border); }
+.tl-labels .sw.onset {
+  background: repeating-linear-gradient(45deg, var(--accent-soft), var(--accent-soft) 3px, transparent 3px, transparent 6px);
+}
+.tl-labels .sw.dur { background: var(--accent); opacity: 0.45; }
+
+/* —— 療程卡迷你面圖 —— */
+.rec-mini { flex: 0 0 74px; text-align: center; }
+.rec-mini span { display: block; font-size: 0.62rem; color: var(--text-dim); margin-top: 2px; }
+
+/* —— 建議次序路線圖 —— */
+.roadmap { margin-top: 4px; }
+.roadmap .phase { display: flex; gap: 12px; }
+.roadmap .rail { display: flex; flex-direction: column; align-items: center; }
+.roadmap .rail .dot {
+  width: 26px; height: 26px; flex: 0 0 26px; border-radius: 50%;
+  background: var(--accent); color: #fff; font-size: 0.82rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.roadmap .rail .line { flex: 1; width: 2px; background: var(--border); margin: 4px 0; }
+.roadmap .body { flex: 1; padding-bottom: 16px; min-width: 0; }
+.roadmap .phase:last-child .body { padding-bottom: 2px; }
+.roadmap .body .hd { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-top: 3px; }
+.roadmap .body .hd b { font-size: 0.92rem; }
+.roadmap .timing {
+  font-size: 0.72rem; color: var(--text-dim);
+  background: var(--surface-2); border-radius: 999px; padding: 2px 9px;
+}
+.roadmap .items { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+.roadmap .items .pill {
+  font-size: 0.78rem; padding: 4px 10px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--surface-2);
+}
+.roadmap .items .pill em { font-style: normal; color: var(--text-dim); margin-left: 5px; font-size: 0.7rem; }
+
+/* —— 報告細節 —— */
+.region-tag {
+  font-size: 0.66rem; color: var(--text-dim); background: var(--surface-2);
+  border-radius: 6px; padding: 1px 6px; margin-left: 6px; vertical-align: 1px;
+}
+.clamp2 {
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.expand-hint { color: var(--accent); font-size: 0.78rem; }
+.expand-toggle {
+  display: block; width: 100%; min-height: 40px; margin-top: 6px;
+  border: none; background: none; color: var(--accent);
+  font-size: 0.82rem; cursor: pointer;
+}
+
+/* —— 可選卡收埋式 toggle —— */
+.card-toggle {
+  display: flex; justify-content: space-between; align-items: center;
+  width: 100%; min-height: 48px; cursor: pointer;
+  font-size: 0.88rem; color: var(--text-dim); text-align: left;
+}
+.card-toggle span { color: var(--accent); }
+
+/* —— 真相版面部觀察圖 —— */
+.pfm {
+  position: relative; max-width: 300px; margin: 6px auto 0;
+  border-radius: 12px; overflow: hidden;
+}
+.pfm img { display: block; width: 100%; height: auto; border-radius: 12px; }
+.pfm-overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+
+/* —— 觀察圖模式切換 —— */
+.fm-toggle {
+  display: flex; justify-content: center; gap: 6px; margin: 2px 0 4px;
+}
+.fm-toggle button {
+  min-height: 36px; padding: 4px 16px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--surface);
+  font-size: 0.8rem; color: var(--text-dim); cursor: pointer;
+}
+.fm-toggle button[aria-pressed='true'] {
+  background: var(--accent-soft); border-color: var(--accent);
+  color: var(--text); font-weight: 600;
+}
