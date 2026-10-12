@@ -614,6 +614,27 @@ export default function MvpResult({
         )}
       </div>
 
+      {/* Google 評論：對所有完成分析嘅客人一視同仁（Google 政策唔准
+          review gating／著數換評價）。放喺 CTA 之後、免責聲明之前，
+          唔同「查詢／預約」搶位 —— 佢係信譽基建，唔係即時轉化。 */}
+      {CLINIC_POLICY.googleReviewUrl && (
+        <div className="card" style={{ textAlign: 'center', padding: '14px 16px' }}>
+          <p style={{ margin: 0, fontSize: '0.88rem' }}>
+            覺得呢個分析有用？喺 Google 留個評價，幫到其他同你一樣諗緊嘅人。
+          </p>
+          <a
+            href={CLINIC_POLICY.googleReviewUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ghost"
+            onClick={() => trackStep('review_clicked')}
+            style={{ display: 'block', textDecoration: 'none', marginTop: 10, boxSizing: 'border-box' }}
+          >
+            ⭐ 去 Google 留評價
+          </a>
+        </div>
+      )}
+
       <div className="disclaimer">
         呢份報告由 AI 根據相片產生，屬<b>初步參考</b>，並非醫學診斷，唔可以取代註冊醫生嘅面對面檢查。
         光線、角度、化妝都會影響判斷。喺香港，注射類療程（肉毒、透明質酸等）須由<b>註冊醫生</b>施行；所有療程喺進行之前，均須經<b>註冊醫生</b>評估。

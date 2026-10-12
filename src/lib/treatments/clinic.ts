@@ -66,6 +66,14 @@ export const CLINIC_POLICY = {
   payPerSessionNote: '單次消費，唔需要買套票',
   address: '佐敦彌敦道 241–243 號香港健康檢查中心 14 樓 1403 室',
   hours: '二至五 12:00–21:00 · 六及公眾假期 10:00–19:00 · 逢一休息',
+  /**
+   * Google 評論入口（2026-10 加）：而家係主站實際用緊嘅 Maps 搜尋連結。
+   * ⚠️ 升級位：GBP 後台「索取評論」攞到嘅 g.page/r/... 直達連結會直接
+   *    彈出評分窗，少兩步。攞到之後換呢個值就得。
+   *    合規：Google 政策唔准 review gating（淨係問滿意嘅客人）或者
+   *    用著數換評價 —— 所以呢個入口對所有完成分析嘅客人一視同仁。
+   */
+  googleReviewUrl: 'https://www.google.com/maps/search/Dr+Timeless+Jordan+Hong+Kong',
 };
 
 export const CLINIC_TREATMENTS: Treatment[] = [

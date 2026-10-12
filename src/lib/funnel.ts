@@ -28,7 +28,8 @@ export type FunnelStep =
   | 'analyze_failed' // 分析失敗
   | 'camera_fallback' // 頁面內相機開唔到，退咗去揀相
   | 'booking_clicked' // 撳咗 WhatsApp 查詢
-  | 'report_saved'; // 客人自願留電話保存報告（結果頁嘅自願流程）
+  | 'report_saved' // 客人自願留電話保存報告（結果頁嘅自願流程）
+  | 'review_clicked'; // 撳咗 Google 評論連結
 
 export const FUNNEL_STEPS: FunnelStep[] = [
   'page_view',
@@ -41,6 +42,7 @@ export const FUNNEL_STEPS: FunnelStep[] = [
   'camera_fallback',
   'booking_clicked',
   'report_saved',
+  'review_clicked',
 ];
 
 export const STEP_LABELS: Record<FunnelStep, string> = {
@@ -54,6 +56,7 @@ export const STEP_LABELS: Record<FunnelStep, string> = {
   camera_fallback: '相機開唔到，退回揀相',
   booking_clicked: '撳查詢',
   report_saved: '自願保存報告',
+  review_clicked: '撳 Google 評論',
 };
 
 export interface FunnelStore {
